@@ -4,3 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+tonic = "0.9"                                  # gRPC 实现库
+prost = "0.11"                                 # Protocol Buffers 编解码库
+tokio = { version = "1", features = ["full"] } # 异步运行时
+
+[build-dependencies]
+tonic-build = "0.9"
