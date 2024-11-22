@@ -3,10 +3,15 @@ use grpc_service::greeter_server::{Greeter, GreeterServer};
 use grpc_service::{ClientRequest, ServerResponse};
 use tonic::{transport::Server, Request, Response, Status};
 
-// 自动生成的 gRPC 模块
-pub mod grpc_service {
-    tonic::include_proto!("grpc_service"); // 包名要与 .proto 文件中的 package 名字匹配
-}
+// // 自动生成的 gRPC 模块
+// pub mod grpc_service {
+//     tonic::include_proto!("grpc_service"); // 包名要与 .proto 文件中的 package 名字匹配
+// }
+
+mod grpc_service {
+    include!("grpc/grpc_service.rs");
+} // 引用生成的模块文件 src/grpc/grpc_service.rs
+
 
 #[derive(Debug, Default)]
 pub struct MyGreeter {}
@@ -35,12 +40,13 @@ impl Greeter for MyGreeter {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 定义服务端监听地址
-    let addr = "127.0.0.1:50052".parse().unwrap();
+    // let addr = "127.0.0.1:50052".parse().unwrap();
+    let addr = "0.0.0.0:50052".parse().unwrap();
 
     // 创建 Greeter 服务实例
     let greeter = MyGreeter::default();
 
-    println!(">>>>>> EuclidOLAP Server is listening on {} >>>>>>", addr);
+    println!(">>> EuclidOLAP Server is listening on {} <<<", addr);
 
     // 启动 gRPC 服务端
     Server::builder()
