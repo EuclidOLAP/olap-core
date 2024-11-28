@@ -9,9 +9,9 @@ use tonic::{transport::Server, Request, Response, Status};
 // }
 
 mod grpc_service {
+    // 引用生成的模块文件 src/grpc/grpc_service.rs
     include!("grpc/grpc_service.rs");
-} // 引用生成的模块文件 src/grpc/grpc_service.rs
-
+}
 
 #[derive(Debug, Default)]
 pub struct MyGreeter {}
