@@ -6,7 +6,7 @@ package euclidolap;
 
 // 定义OLAP服务
 // Definition of the OLAP service
-service OLAPService {
+service OlapApi {
   // 执行OLAP操作的RPC方法，接受OLAPRequest并返回OLAPResponse
   // RPC method for executing OLAP operation, accepts OLAPRequest and returns OLAPResponse
   rpc ExecuteOperation(OLAPRequest) returns (OLAPResponse);
