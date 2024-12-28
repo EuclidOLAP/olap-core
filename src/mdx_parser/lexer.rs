@@ -1,11 +1,11 @@
 use nom::{
     branch::alt,
-    // bytes::complete::is_not,
-    bytes::complete::{tag, tag_no_case},
+    bytes::complete::{is_not, tag, tag_no_case},
     character::complete::digit1,
     // character::complete::{alpha1, space0},
     combinator::map,
     multi::many1,
+    sequence::delimited,
     IResult,
 };
 
@@ -27,6 +27,7 @@ pub enum Token {
     BracketOpen,  // [
     BracketClose, // ]
     UnsignedLong(u64),
+    BracketString(String),
 }
 
 fn keyword(input: &str) -> IResult<&str, Token> {
@@ -113,11 +114,38 @@ fn unsigned_long(input: &str) -> IResult<&str, Token> {
     map(digit1, |s: &str| Token::UnsignedLong(s.parse().unwrap()))(input)
 }
 
+// 最终解析器：匹配 '['，然后匹配一到多个解析器E，最后匹配 ']'
+fn bracket_string(input: &str) -> IResult<&str, Token> {
+    map(
+        delimited(
+            bracket_open,
+            many1(alt((is_not("]"), tag("]]")))),
+            bracket_close,
+        ),
+        |content: Vec<&str>| {
+            // 合并解析出的内容，将其转化为 BracketString 类型的 Token
+            // Token::BracketString(content.into_iter().collect::<Vec<String>>().join(""))
+
+            // for nn_str in content {
+            //     println!("------------------+++++++++++++++++++ {:?}", nn_str);
+            // }
+
+            let ooppoo = content.into_iter().collect::<Vec<&str>>().join("");
+
+            println!("8080------------------+ ooppoo: {}", ooppoo);
+
+            // Token::BracketString(String::from("XXXXXXXXXXXXXXXXXX ccc"))
+            Token::BracketString(ooppoo)
+        },
+    )(input)
+}
+
 // 词法解析函数
 pub fn lex(input: &str) -> IResult<&str, Vec<Token>> {
     many1(alt((
         keyword, // number,
         // identifier,
+        bracket_string,
         whitespace,
         semicolon,
         comma,
@@ -143,13 +171,41 @@ mod tests {
         let mdx = r###"
 select 
 {
-    ( &600000000000005[].&300000000004670[].&1111111111[] ),
+    ( &600000000000005[>[[[[[[[[[[[[[[[[[[[[[[[[ ]] ]] ]] ]] ]] ]] ]] ]] ]] ]] ]] ]] ]] ]] ]] ]] ]] ]]<].&300000000004670[].&1111111111[] ),
     (),
     (),
 } ON ROws,
 {} on columNS 
-fRoM &0000099999[];
+fRoM &0000099999[[one[[[ Cube ]] %^&];
 ;;;;;;;;;;;;;;;;;;;;;;;
+"###;
+
+        let mdx = r###"
+select
+{
+( &600000000000007[333].&300000000004718[Online Store], &600000000000006[22].&300000000004685[VIP客户] ),
+( &600000000000007[333].&300000000004718[Online Store], &600000000000006[22].&300000000004692[企业客户] ),
+( &600000000000007[333].&300000000004719[Retail Store], &600000000000006[22].&300000000004685[VIP客户] ),
+( &600000000000007[333].&300000000004719[Retail Store], &600000000000006[22].&300000000004692[企业客户] )
+}
+on rows,
+{
+( &600000000000004[gggg].&300000000004570[中国], &600000000000005[11].&300000000004670[Credit Card], &600000000000001[rr].&300000000001515[2024] ),
+( &600000000000004[gggg].&300000000004570[中国], &600000000000005[11].&300000000004670[Credit Card], &600000000000001[rr].&300000000001548[2024-02] ),
+( &600000000000004[gggg].&300000000004570[中国], &600000000000005[11].&300000000004670[Credit Card], &600000000000001[rr].&300000000001641[2024-05] ),
+( &600000000000004[gggg].&300000000004570[中国], &600000000000005[11].&300000000004672[PayPal], &600000000000001[rr].&300000000001515[2024] ),
+( &600000000000004[gggg].&300000000004570[中国], &600000000000005[11].&300000000004672[PayPal], &600000000000001[rr].&300000000001548[2024-02] ),
+( &600000000000004[gggg].&300000000004570[中国], &600000000000005[11].&300000000004672[PayPal], &600000000000001[rr].&300000000001641[2024-05] ),
+( &600000000000004[gggg].&300000000004571[上海], &600000000000005[11].&300000000004670[Credit Card], &600000000000001[rr].&300000000001515[2024] ),
+( &600000000000004[gggg].&300000000004571[上海], &600000000000005[11].&300000000004670[Credit Card], &600000000000001[rr].&300000000001548[2024-02] ),
+( &600000000000004[gggg].&300000000004571[上海], &600000000000005[11].&300000000004670[Credit Card], &600000000000001[rr].&300000000001641[2024-05] ),
+( &600000000000004[gggg].&300000000004571[上海], &600000000000005[11].&300000000004672[PayPal], &600000000000001[rr].&300000000001515[2024] ),
+( &600000000000004[gggg].&300000000004571[上海], &600000000000005[11].&300000000004672[PayPal], &600000000000001[rr].&300000000001548[2024-02] ),
+( &600000000000004[gggg].&300000000004571[上海], &600000000000005[11].&300000000004672[PayPal], &600000000000001[rr].&300000000001641[2024-05] )
+}
+on columns
+from &500000000000001;
+        ;;;;;;
 "###;
 
         let result = lex(mdx);
@@ -162,6 +218,12 @@ fRoM &0000099999[];
         assert!(result.is_ok());
 
         let tokens = result.unwrap().1;
+
+        // // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! printing for testing, can be deleted later
+        // for kkk in &tokens {
+        //     println!("KKKKKKKKKKKKKKKKKKKKKKKKKKK {:?}", kkk);
+        // }
+        // // ????????????????????????????????
 
         // 判断最后五个tokens是否符合四个分号和一个换行符
         let last_five_tokens = &tokens[tokens.len().saturating_sub(5)..];
@@ -182,5 +244,4 @@ fRoM &0000099999[];
         println!("---------------------------------------------\n\n");
         println!("Pass >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 0 MDX");
     }
-
 }
