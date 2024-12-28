@@ -7,7 +7,9 @@ edition = "2021"
 tonic = "0.9"                                  # gRPC 实现库
 prost = "0.11"                                 # Protocol Buffers 编解码库
 tokio = { version = "1", features = ["full"] } # 异步运行时
-nom = "7"                                      # 解析器组合库
+# regex = "1.11.1"                               # 正则表达式库
+nom = "7.1"                                     # 解析器组合库
+# nom-regex = "0.1"
 
 [build-dependencies]
 tonic-build = "0.9"

@@ -62,6 +62,19 @@ impl OlapApi for EuclidOLAPService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // 测试nom词法解析，测试完成后可以删除
+    {
+        let result = mdx_parser::lexer::lex("SELECT");
+        assert!(result.is_ok());
+        let tokens = result.unwrap().1;
+        assert_eq!(
+            tokens,
+            vec![mdx_parser::lexer::Token::Keyword("SELECT".to_string()),]
+        );
+    }
+    // ?????????????????????????????
+
     // 定义服务端监听地址
     // let addr = "127.0.0.1:50052".parse().unwrap();
     let addr = "0.0.0.0:50052".parse().unwrap();
