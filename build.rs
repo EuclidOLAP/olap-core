@@ -24,4 +24,10 @@ fn main() {
     // 文件更改监控
     println!("cargo:rerun-if-changed={}", service_file);
     println!("cargo:rerun-if-changed={}", euclidolap_file);
+
+    // // genarate mdx parser code
+    // lalrpop::process_root().unwrap_or_else(|e| {
+    //     eprintln!("LALRPOP code generation failed with error: {}", e);
+    //     std::process::exit(1);
+    // });
 }
