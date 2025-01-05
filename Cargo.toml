@@ -1,19 +1,11 @@
 [package]
 name = "olap-core"
 version = "0.1.0"
+authors = ["Niko Matsakis <niko@alum.mit.edu>"]
 edition = "2021"
-authors = ["Patrick LaFontaine <32135464+Pat-Lafon@users.noreply.github.com>"]
-publish = false
 
-[build-dependencies]
+[build-dependencies] # <-- We added this and everything after! 我们添加了这个和之后的所有内容！
 lalrpop = "0.22.0"
 
 [dependencies]
-lalrpop-util = { version = "0.22.0", features = [ "unicode" ] }
-logos = "=0.14.2"
-logos-derive = "=0.14.2"
-logos-codegen = "=0.14.2"
-
-[features]
-default = []
-bit = []
+lalrpop-util = { version = "0.21.0", features = ["lexer", "unicode"] }

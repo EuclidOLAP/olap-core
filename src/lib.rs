@@ -1,10 +1,7 @@
-pub mod ast;
-pub mod lexer;
-pub mod tokens;
+// // lalrpop_mod!(grammar);
 
-use lalrpop_util::lalrpop_mod;
-
-lalrpop_mod!(pub grammar);
-
-#[cfg(test)]
-mod test;
+// lalrpop_mod!(
+//     #[allow(clippy::ptr_arg)]
+//     #[rustfmt::skip]
+//     parser
+// );
