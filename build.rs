@@ -30,4 +30,6 @@ fn main() {
     //     eprintln!("LALRPOP code generation failed with error: {}", e);
     //     std::process::exit(1);
     // });
+    lalrpop::process_src().unwrap();
+
 }
