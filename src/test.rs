@@ -4,10 +4,12 @@ use crate::lexer::Lexer;
 #[test]
 fn main() {
     let source_code = "var a = 42;
-var b = 23;
+Var b = 23;
 
 # a comment
-print (a - 1 + b);";
+  -- other one comment
+prINT (a - 1 + b);
+-- other one comment";
 
     let lexer = Lexer::new(source_code);
     let parser = ScriptParser::new();
