@@ -1,13 +1,18 @@
 use crate::grammar::ScriptParser;
 use crate::lexer::Lexer;
 
+use crate::mdx_grammar::MdxStatementParser;
+use crate::mdx_lexer::Lexer as MdxLexer;
+
 #[test]
 fn main() {
     let source_code = "var a = 42;
-var b = 23;
+Var b = 23;
 
 # a comment
-print (a - 1 + b);";
+  -- other one comment
+prINT (a - 1 + b);
+-- other one comment";
 
     let lexer = Lexer::new(source_code);
     let parser = ScriptParser::new();
@@ -44,4 +49,15 @@ print xxx * 1000 + (a - 1 + b);";
     let ast = parser.parse(lexer).unwrap();
 
     println!("GGG---------------------------------------{:?}", ast);
+}
+
+#[test]
+fn mdx_test_01() {
+    let source_code = "Select --{}\n on from where";
+
+    let lexer = MdxLexer::new(source_code);
+    let parser = MdxStatementParser::new();
+    let ast = parser.parse(lexer).unwrap();
+
+    println!("VUP---------------------------------------{:?}", ast);
 }

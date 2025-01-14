@@ -16,11 +16,11 @@ impl From<ParseIntError> for LexicalError {
 }
 
 #[derive(Logos, Clone, Debug, PartialEq)]
-#[logos(skip r"[ \t\n\f]+", skip r"#.*\n?", error = LexicalError)]
+#[logos(skip r"[ \t\n\f]+", skip r"#.*\n?", skip r"--.*\n?", error = LexicalError)]
 pub enum Token {
-    #[token("var")]
+    #[regex("(?i)var")]
     KeywordVar,
-    #[token("print")]
+    #[regex("(?i)print")]
     KeywordPrint,
 
     #[regex("[_a-zA-Z][_0-9a-zA-Z]*", |lex| lex.slice().to_string())]
