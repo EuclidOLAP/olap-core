@@ -62,6 +62,19 @@ pub Seg: mdx_ast::AstSeg = {
   },
 }
 
+pub Segments: Vec<mdx_ast::AstSeg> = {
+  <seg:Seg> => {
+    let mut list = Vec::with_capacity(6);
+    list.push(seg);
+    list
+  },
+  <segs:Segments> "." <seg:Seg> => {
+    let mut list = segs;
+    list.push(seg);
+    list
+  }
+}
+
 
 // pub BlocksChain: Vec<String> = {
 //   <bra_str:"BracketedString"> => {
