@@ -8,6 +8,7 @@ use crate::mdx_grammar::SegmentsParser;
 use crate::mdx_grammar::SegmentsWrapParser;
 use crate::mdx_grammar::TupleWrapParser;
 use crate::mdx_grammar::SetWrapParser;
+use crate::mdx_grammar::AxisParser;
 
 use crate::mdx_lexer::Lexer as MdxLexer;
 
@@ -123,6 +124,22 @@ fn mdx_test_06() {
 ( &600000000000007[333].&300000000004719[Retail Store], &600000000000006[22].&300000000004692[企业客户] )
 }";
     let ast_node = SetWrapParser::new().parse(MdxLexer::new(mdx_fragment)).unwrap();
+    println!("{:?}", ast_node);
+
+    println!("\n\n");
+}
+
+// AxisParser
+#[test]
+fn mdx_test_07() {
+    println!("\n\n");
+    println!(">>> 07 AxisParser >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+
+    let mdx_fragment = "{
+( &600000000000007[333].&300000000004718[Online Store], &600000000000006[22].&300000000004685[VIP客户] ),
+( &600000000000007[333].&300000000004719[Retail Store], &600000000000006[22].&300000000004692[企业客户] )
+} on 090";
+    let ast_node = AxisParser::new().parse(MdxLexer::new(mdx_fragment)).unwrap();
     println!("{:?}", ast_node);
 
     println!("\n\n");

@@ -120,6 +120,16 @@ pub SetWrap: mdx_ast::AstSet = {
   }
 }
 
+// COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
+pub Axis: mdx_ast::AstAxis = {
+  <ast_set:SetWrap> "on" <axpos:"int"> => {
+    mdx_ast::AstAxis::Def{
+      ast_set,
+      pos: axpos,
+    }
+  }
+}
+
 
 // pub BlocksChain: Vec<String> = {
 //   <bra_str:"BracketedString"> => {
