@@ -39,6 +39,13 @@ pub enum AstAxis {
     },
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstSelectionStatement {
+    pub axes: Vec<AstAxis>,
+    pub cube: Vec<AstSeg>,
+    pub basic_slice: Option<AstTuple>,
+}
+
 
 
 // #[derive(Clone, Debug, PartialEq)]

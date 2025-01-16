@@ -160,6 +160,24 @@ pub MdxStatement: mdx_ast::ExtMDXStatement = {
   }
 }
 
+// AstSelectionStatement
+pub SelectionMDX: mdx_ast::AstSelectionStatement = {
+  "select" <axes:Axes> "from" <cube:Segments> => {
+    mdx_ast::AstSelectionStatement {
+      axes,
+      cube,
+      basic_slice: None,
+    }
+  },
+  "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> => {
+    mdx_ast::AstSelectionStatement {
+      axes,
+      cube,
+      basic_slice: Some(tuple),
+    }
+  }
+}
+
 
 
 
