@@ -1,19 +1,19 @@
 use logos::Logos;
 use std::fmt; // to implement the Display trait
-// use std::num::ParseIntError;
+use std::num::ParseIntError;
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub enum LexicalError {
-    // InvalidInteger(ParseIntError),
+    InvalidInteger(ParseIntError),
     #[default]
     InvalidToken,
 }
 
-// impl From<ParseIntError> for LexicalError {
-//     fn from(err: ParseIntError) -> Self {
-//         LexicalError::InvalidInteger(err)
-//     }
-// }
+impl From<ParseIntError> for LexicalError {
+    fn from(err: ParseIntError) -> Self {
+        LexicalError::InvalidInteger(err)
+    }
+}
 
 #[derive(Logos, Clone, Debug, PartialEq)]
 #[logos(skip r"[ \t\n\f]+", skip r"#.*\n?", skip r"--.*\n?", error = LexicalError)]
@@ -27,6 +27,33 @@ pub enum Token {
     From,
     #[regex("(?i)where")]
     Where,
+    #[regex(r"\[(?:[^\]]|\]\])*\]", |lex| {
+        let raw = lex.slice();
+        raw[1..raw.len()-1].replace("]]", "]")
+    })]
+    BracketedString(String),
+
+    #[token("{")]
+    CurlyBraceLeft,
+    #[token("}")]
+    CurlyBraceRight,
+
+    #[token("(")]
+    RoundBracketLeft,
+    #[token(")")]
+    RoundBracketRight,
+
+    #[token(",")]
+    Comma,
+    #[token(".")]
+    Dot,
+    #[token("&")]
+    Ampersand,
+    #[token(";")]
+    Semicolon,
+
+    #[regex("[0-9]+", |lex| lex.slice().parse())]
+    Integer(u64),
 
 
 

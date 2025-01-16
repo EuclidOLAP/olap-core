@@ -132,7 +132,7 @@ fn bracket_string(input: &str) -> IResult<&str, Token> {
 
             let ooppoo = content.into_iter().collect::<Vec<&str>>().join("");
 
-            println!("8080------------------+ ooppoo: {}", ooppoo);
+            // println!("8080------------------+ ooppoo: {}", ooppoo);
 
             // Token::BracketString(String::from("XXXXXXXXXXXXXXXXXX ccc"))
             Token::BracketString(ooppoo)
@@ -236,12 +236,12 @@ from &500000000000001;
         ];
         assert_eq!(last_five_tokens, &expected_tokens[..]);
 
-        println!("\n\n---------------------------------------------Tokens of MDX:");
+        // println!("\n\n---------------------------------------------Tokens of MDX:");
         // 循环打印每个 token
-        for token in &tokens {
-            println!("{:?}", token);
+        for _token in &tokens {
+            // println!("{:?}", _token);
         }
-        println!("---------------------------------------------\n\n");
-        println!("Pass >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 0 MDX");
+        // println!("---------------------------------------------\n\n");
+        // println!("Pass >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 0 MDX");
     }
 }
