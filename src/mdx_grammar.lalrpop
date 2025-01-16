@@ -103,6 +103,44 @@ pub TupleWrap: mdx_ast::AstTuple = {
   }
 }
 
+Set: Vec<mdx_ast::AstTuple> = {
+  <ast_tp:TupleWrap> => {
+    vec![ast_tp]
+  },
+  <set:Set> "," <ast_tp:TupleWrap> => {
+    let mut list = set;
+    list.push(ast_tp);
+    list
+  }
+}
+
+pub SetWrap: mdx_ast::AstSet = {
+  "{" <tuples:Set> "}" => {
+    mdx_ast::AstSet::Tuples(tuples)
+  }
+}
+
+// COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
+pub Axis: mdx_ast::AstAxis = {
+  <ast_set:SetWrap> "on" <axpos:"int"> => {
+    mdx_ast::AstAxis::Def{
+      ast_set,
+      pos: axpos,
+    }
+  }
+}
+
+pub Axes: Vec<mdx_ast::AstAxis> = {
+  <axis:Axis> => {
+    vec![axis]
+  },
+  <axes:Axes> "," <axis:Axis> => {
+    let mut list = axes;
+    list.push(axis);
+    list
+  }
+}
+
 
 // pub BlocksChain: Vec<String> = {
 //   <bra_str:"BracketedString"> => {
@@ -119,6 +157,24 @@ pub TupleWrap: mdx_ast::AstTuple = {
 pub MdxStatement: mdx_ast::ExtMDXStatement = {
   "select" "on" "from" "where" => {
     mdx_ast::ExtMDXStatement::Querying { basic_cube: mdx_ast::AstCube{} }
+  }
+}
+
+// AstSelectionStatement
+pub SelectionMDX: mdx_ast::AstSelectionStatement = {
+  "select" <axes:Axes> "from" <cube:Segments> => {
+    mdx_ast::AstSelectionStatement {
+      axes,
+      cube,
+      basic_slice: None,
+    }
+  },
+  "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> => {
+    mdx_ast::AstSelectionStatement {
+      axes,
+      cube,
+      basic_slice: Some(tuple),
+    }
   }
 }
 

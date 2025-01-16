@@ -26,6 +26,25 @@ pub enum AstTuple {
     SegsList(Vec<AstSegments>),
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstSet {
+    Tuples(Vec<AstTuple>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstAxis {
+    Def{
+        ast_set: AstSet,
+        pos: u64
+    },
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstSelectionStatement {
+    pub axes: Vec<AstAxis>,
+    pub cube: Vec<AstSeg>,
+    pub basic_slice: Option<AstTuple>,
+}
 
 
 
