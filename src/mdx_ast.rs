@@ -10,7 +10,11 @@ pub struct AstCube {
 
 }
 
-
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstSeg {
+    pub gid: Option<u64>,
+    pub seg_str: Option<String>,
+}
 
 
 

@@ -14,9 +14,11 @@ extern {
     "on" => Token::On,
     "from" => Token::From,
     "where" => Token::Where,
+    "BracketedString" => Token::BracketedString(<String>),
 
-
-
+    "&" => Token::Ampersand,
+    "." => Token::Dot,
+    "int" => Token::Integer(<u64>),
 
 
     // "var" => Token::KeywordVar,
@@ -36,6 +38,42 @@ extern {
     // "<<" => Token::OperatorShl,
   }
 }
+
+
+// multi-dimensional object segment
+pub Seg: mdx_ast::AstSeg = {
+  "&" <int:"int"> => {
+    mdx_ast::AstSeg {
+      gid: Some(int),
+      seg_str: None,
+    }
+  },
+  "&" <int:"int"> <bra_str:"BracketedString"> => {
+    mdx_ast::AstSeg {
+      gid: Some(int),
+      seg_str: Some(bra_str),
+    }
+  },
+  <bra_str:"BracketedString"> => {
+    mdx_ast::AstSeg {
+      gid: None,
+      seg_str: Some(bra_str),
+    }
+  },
+}
+
+
+// pub BlocksChain: Vec<String> = {
+//   <bra_str:"BracketedString"> => {
+//     vec![bra_str.to_string()]
+//   },
+//   <chain:BlocksChain> "." <bra_str:"BracketedString"> => {
+//     // format!("{}.{}", chain, bra_str)
+//     let mut list = chain;
+//     list.push(bra_str.to_string());
+//     list
+//   }
+// }
 
 pub MdxStatement: mdx_ast::ExtMDXStatement = {
   "select" "on" "from" "where" => {

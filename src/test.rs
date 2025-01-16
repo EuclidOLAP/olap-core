@@ -2,6 +2,8 @@ use crate::grammar::ScriptParser;
 use crate::lexer::Lexer;
 
 use crate::mdx_grammar::MdxStatementParser;
+// use crate::mdx_grammar::BlocksChainParser;
+use crate::mdx_grammar::SegParser;
 use crate::mdx_lexer::Lexer as MdxLexer;
 
 #[test]
@@ -59,5 +61,15 @@ fn mdx_test_01() {
     let parser = MdxStatementParser::new();
     let ast = parser.parse(lexer).unwrap();
 
-    println!("VUP---------------------------------------{:?}", ast);
+    println!("MDX---------------------------------------{:?}", ast);
+}
+
+#[test]
+fn mdx_test_02() {
+    let ast_node = SegParser::new().parse(MdxLexer::new("&0000000000000000000000000300000000321")).unwrap();
+    println!("MDX TEST 02 >>>>>>>>>>>>>>>>>>>>> {:?}", ast_node);
+    let ast_node = SegParser::new().parse(MdxLexer::new("&0000000000000000000000000000000000000000000000000000000000000000000300000000345[LA]")).unwrap();
+    println!("MDX TEST 02 >>>>>>>>>>>>>>>>>>>>> {:?}", ast_node);
+    let ast_node = SegParser::new().parse(MdxLexer::new("[[iPhone 16]] pro max]")).unwrap();
+    println!("MDX TEST 02 >>>>>>>>>>>>>>>>>>>>> {:?}", ast_node);
 }
