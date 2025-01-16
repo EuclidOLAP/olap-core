@@ -130,6 +130,17 @@ pub Axis: mdx_ast::AstAxis = {
   }
 }
 
+pub Axes: Vec<mdx_ast::AstAxis> = {
+  <axis:Axis> => {
+    vec![axis]
+  },
+  <axes:Axes> "," <axis:Axis> => {
+    let mut list = axes;
+    list.push(axis);
+    list
+  }
+}
+
 
 // pub BlocksChain: Vec<String> = {
 //   <bra_str:"BracketedString"> => {
