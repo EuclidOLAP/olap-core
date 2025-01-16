@@ -2,7 +2,7 @@ use euclidolap::olap_api_server::{OlapApi, OlapApiServer};
 use euclidolap::{OlapRequest, OlapResponse, Row};
 use tonic::{transport::Server, Request, Response, Status};
 
-mod mdx_parser;
+// mod mdx_parser;
 
 mod euclidolap {
     include!("grpc/euclidolap.rs");
