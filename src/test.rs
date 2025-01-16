@@ -5,6 +5,9 @@ use crate::mdx_grammar::MdxStatementParser;
 // use crate::mdx_grammar::BlocksChainParser;
 use crate::mdx_grammar::SegParser;
 use crate::mdx_grammar::SegmentsParser;
+use crate::mdx_grammar::SegmentsWrapParser;
+use crate::mdx_grammar::TupleWrapParser;
+
 use crate::mdx_lexer::Lexer as MdxLexer;
 
 #[test]
@@ -83,4 +86,25 @@ fn mdx_test_03_segments() {
     println!(">>> mdx_test_03_segments {:?}", ast_node);
     let ast_node = SegmentsParser::new().parse(MdxLexer::new("[丰田].&100000123[兰德酷路泽].&100000123")).unwrap();
     println!(">>> mdx_test_03_segments {:?}", ast_node);
+}
+
+// SegmentsWrapParser
+#[test]
+fn mdx_test_04() {
+    println!(">>> 04 SegmentsWrapParser >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    let ast_node = SegmentsWrapParser::new().parse(MdxLexer::new("&100000123.&100000123.&100000123[>[[]]]]<]")).unwrap();
+    println!(">>> 04 SegmentsWrapParser {:?}", ast_node);
+}
+
+// TupleWrapParser
+#[test]
+fn mdx_test_05() {
+    println!("\n\n");
+
+    println!(">>> 05 TupleWrapParser >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    let ast_node = TupleWrapParser::new().parse(MdxLexer::new(
+        "( [丰田].&100000123[兰德酷路泽].&100000123, [丰田].&100000123[兰德酷路泽], [丰田] )")).unwrap();
+    println!("{:?}", ast_node);
+
+    println!("\n\n");
 }
