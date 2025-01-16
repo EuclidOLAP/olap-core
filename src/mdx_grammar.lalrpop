@@ -16,10 +16,15 @@ extern {
     "where" => Token::Where,
     "BracketedString" => Token::BracketedString(<String>),
 
+    "," => Token::Comma,
     "&" => Token::Ampersand,
     "." => Token::Dot,
     "int" => Token::Integer(<u64>),
 
+    "(" => Token::RoundBracketLeft,
+    ")" => Token::RoundBracketRight,
+    "{" => Token::CurlyBraceLeft,
+    "}" => Token::CurlyBraceRight,
 
     // "var" => Token::KeywordVar,
     // "print" => Token::KeywordPrint,
@@ -72,6 +77,29 @@ pub Segments: Vec<mdx_ast::AstSeg> = {
     let mut list = segs;
     list.push(seg);
     list
+  }
+}
+
+pub SegmentsWrap: mdx_ast::AstSegments = {
+  <segs:Segments> => {
+    mdx_ast::AstSegments::Segs(segs)
+  }
+}
+
+Tuple: Vec<mdx_ast::AstSegments> = {
+  <sw:SegmentsWrap> => {
+    vec![sw]
+  },
+  <tuple:Tuple> "," <sw:SegmentsWrap> => {
+    let mut list = tuple;
+    list.push(sw);
+    list
+  }
+}
+
+pub TupleWrap: mdx_ast::AstTuple = {
+  "(" <tuple:Tuple> ")" => {
+    mdx_ast::AstTuple::SegsList(tuple)
   }
 }
 

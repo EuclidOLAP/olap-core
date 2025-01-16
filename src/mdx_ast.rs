@@ -16,9 +16,15 @@ pub struct AstSeg {
     pub seg_str: Option<String>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstSegments {
+    Segs(Vec<AstSeg>),
+}
 
-
-
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstTuple {
+    SegsList(Vec<AstSegments>),
+}
 
 
 
