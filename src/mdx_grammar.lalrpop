@@ -103,6 +103,23 @@ pub TupleWrap: mdx_ast::AstTuple = {
   }
 }
 
+Set: Vec<mdx_ast::AstTuple> = {
+  <ast_tp:TupleWrap> => {
+    vec![ast_tp]
+  },
+  <set:Set> "," <ast_tp:TupleWrap> => {
+    let mut list = set;
+    list.push(ast_tp);
+    list
+  }
+}
+
+pub SetWrap: mdx_ast::AstSet = {
+  "{" <tuples:Set> "}" => {
+    mdx_ast::AstSet::Tuples(tuples)
+  }
+}
+
 
 // pub BlocksChain: Vec<String> = {
 //   <bra_str:"BracketedString"> => {

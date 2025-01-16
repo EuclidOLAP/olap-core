@@ -26,6 +26,10 @@ pub enum AstTuple {
     SegsList(Vec<AstSegments>),
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstSet {
+    Tuples(Vec<AstTuple>),
+}
 
 
 

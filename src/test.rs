@@ -7,6 +7,7 @@ use crate::mdx_grammar::SegParser;
 use crate::mdx_grammar::SegmentsParser;
 use crate::mdx_grammar::SegmentsWrapParser;
 use crate::mdx_grammar::TupleWrapParser;
+use crate::mdx_grammar::SetWrapParser;
 
 use crate::mdx_lexer::Lexer as MdxLexer;
 
@@ -104,6 +105,24 @@ fn mdx_test_05() {
     println!(">>> 05 TupleWrapParser >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     let ast_node = TupleWrapParser::new().parse(MdxLexer::new(
         "( [丰田].&100000123[兰德酷路泽].&100000123, [丰田].&100000123[兰德酷路泽], [丰田] )")).unwrap();
+    println!("{:?}", ast_node);
+
+    println!("\n\n");
+}
+
+// SetWrapParser
+#[test]
+fn mdx_test_06() {
+    println!("\n\n");
+
+    println!(">>> 06 SetWrapParser >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    let mdx_fragment = "{
+( &600000000000007[333].&300000000004718[Online Store], &600000000000006[22].&300000000004685[VIP客户] ),
+( &600000000000007[333].&300000000004718[Online Store], &600000000000006[22].&300000000004692[企业客户] ),
+( &600000000000007[333].&300000000004719[Retail Store], &600000000000006[22].&300000000004685[VIP客户] ),
+( &600000000000007[333].&300000000004719[Retail Store], &600000000000006[22].&300000000004692[企业客户] )
+}";
+    let ast_node = SetWrapParser::new().parse(MdxLexer::new(mdx_fragment)).unwrap();
     println!("{:?}", ast_node);
 
     println!("\n\n");
