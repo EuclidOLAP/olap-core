@@ -25,7 +25,7 @@ impl OlapApi for EuclidOLAPService {
         let statement = olap_request.statement;
 
         println!(
-            "Operation Type: {}, Statement: {}",
+            "Operation Type: {}, Statement: >>>>>>{}<<<<<<",
             operation_type, statement
         );
 
