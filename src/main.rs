@@ -45,10 +45,12 @@ impl OlapApi for EuclidOLAPService {
         let operation_type = olap_request.operation_type;
         let statement = olap_request.statement;
 
-        println!(
-            "Operation Type: {}, Statement: >>>>>>{}<<<<<<",
-            operation_type, statement
-        );
+        // println!(
+        //     "Operation Type: {}, Statement: >>>>>>{}<<<<<<",
+        //     operation_type, statement
+        // );
+
+        handle_stat(operation_type, statement);
 
         // 伪造一个响应，返回结果
         let response = OlapResponse {
@@ -111,6 +113,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     Ok(())
+}
+
+fn handle_stat(optype: String, statement: String) -> () {
+    match optype.as_str() {
+        "MDX" => {
+            println!("\n\n\n>>> @@@ Operation Type: {}", optype);
+            println!(">>> @@@ Statement: {}", statement);
+        },
+        _ => {
+            panic!("In fn `handle_stat()`: Unexpected operation type: {}", optype);
+        }
+    }
+    ()
 }
 
 // #[test]
