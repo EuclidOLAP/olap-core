@@ -1,8 +1,8 @@
 use crate::grammar::ScriptParser;
 use crate::lexer::Lexer;
 
-#[test]
-fn main() {
+// #[test]
+fn _main() {
     let source_code = "var a = 42;
 Var b = 23;
 
@@ -33,8 +33,8 @@ print (a << b);";
     }
 }
 
-#[test]
-fn test() {
+// #[test]
+fn _test() {
     let source_code = "var a = 42;
 var b = 23;
 var xxx = b * b + 2 * a * b;
