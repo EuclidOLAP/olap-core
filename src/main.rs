@@ -83,6 +83,18 @@ impl OlapApi for EuclidOLAPService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    test_parsing_mdx_01();
+    test_parsing_mdx_02();
+    test_parsing_mdx_03();
+    test_parsing_mdx_04();
+    test_parsing_mdx_05();
+    test_parsing_mdx_06();
+    test_parsing_mdx_07();
+    test_parsing_mdx_08();
+    test_parsing_mdx_09();
+    // ????????????????????????????????????????????????????????????????????
+
     // 定义服务端监听地址
     // let addr = "127.0.0.1:50052".parse().unwrap();
     let addr = "0.0.0.0:50052".parse().unwrap();
@@ -101,7 +113,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[test]
+// #[test]
 fn test_parsing_mdx_01() {
     let source_code = "Select --{}\n on from where";
 
@@ -112,7 +124,7 @@ fn test_parsing_mdx_01() {
     println!("MDX---------------------------------------{:?}", ast);
 }
 
-#[test]
+// #[test]
 fn test_parsing_mdx_02() {
     let ast_node = SegParser::new()
         .parse(MdxLexer::new("&0000000000000000000000000300000000321"))
@@ -131,7 +143,7 @@ fn test_parsing_mdx_02() {
 }
 
 // Segments
-#[test]
+// #[test]
 fn test_parsing_mdx_03() {
     println!(">>> mdx_test_03_segments >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     let ast_node = SegmentsParser::new()
@@ -145,7 +157,7 @@ fn test_parsing_mdx_03() {
 }
 
 // SegmentsWrapParser
-#[test]
+// #[test]
 fn test_parsing_mdx_04() {
     println!(">>> 04 SegmentsWrapParser >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     let ast_node = SegmentsWrapParser::new()
@@ -155,7 +167,7 @@ fn test_parsing_mdx_04() {
 }
 
 // TupleWrapParser
-#[test]
+// #[test]
 fn test_parsing_mdx_05() {
     println!("\n\n");
 
@@ -171,7 +183,7 @@ fn test_parsing_mdx_05() {
 }
 
 // SetWrapParser
-#[test]
+// #[test]
 fn test_parsing_mdx_06() {
     println!("\n\n");
 
@@ -191,7 +203,7 @@ fn test_parsing_mdx_06() {
 }
 
 // AxisParser
-#[test]
+// #[test]
 fn test_parsing_mdx_07() {
     println!("\n\n");
     println!(">>> 07 AxisParser >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
@@ -209,7 +221,7 @@ fn test_parsing_mdx_07() {
 }
 
 // AxesParser
-#[test]
+// #[test]
 fn test_parsing_mdx_08() {
     println!("\n\n");
     println!(">>> 08 AxesParser >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
@@ -245,7 +257,7 @@ on 0000";
 }
 
 // SelectionMDXParser
-#[test]
+// #[test]
 fn test_parsing_mdx_09() {
     println!("\n\n");
     println!(">>> 09 SelectionMDXParser >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
