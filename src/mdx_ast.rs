@@ -1,3 +1,5 @@
+use crate::mdd;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ExtMDXStatement {
     Querying {
@@ -44,6 +46,26 @@ pub struct AstSelectionStatement {
     pub axes: Vec<AstAxis>,
     pub cube: Vec<AstSeg>,
     pub basic_slice: Option<AstTuple>,
+}
+
+impl AstSelectionStatement {
+    pub fn build_axes(&self) -> Vec<mdd::Axis> {
+        println!("build_axes .. . ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+
+        let axes_count = self.axes.len();
+        println!(">>> axes_count >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>: {}", axes_count);
+
+        let mut axes:Vec<mdd::Axis> = Vec::with_capacity(axes_count);
+
+        for i in 0..axes_count {
+            let axis = mdd::Axis {
+                pos_num: i as u32,
+            };
+            axes.push(axis);
+        }
+
+        axes
+    }
 }
 
 

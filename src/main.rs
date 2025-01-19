@@ -2,7 +2,12 @@ use euclidolap::olap_api_server::{OlapApi, OlapApiServer};
 use euclidolap::{OlapRequest, OlapResponse, Row};
 use tonic::{transport::Server, Request, Response, Status};
 
+mod mdx_statements;
+use mdx_statements::mdx_demo;
+
 // mod mdx_parser;
+
+mod mdd;
 
 mod euclidolap {
     include!("grpc/euclidolap.rs");
@@ -120,12 +125,30 @@ fn handle_stat(optype: String, statement: String) -> () {
         "MDX" => {
             println!("\n\n\n>>> @@@ Operation Type: {}", optype);
             println!(">>> @@@ Statement: {}", statement);
+            let ast_selstat = SelectionMDXParser::new()
+            .parse(MdxLexer::new(statement.as_str())).unwrap();
+
+            exe_md_query(ast_selstat);
         },
         _ => {
             panic!("In fn `handle_stat()`: Unexpected operation type: {}", optype);
         }
     }
     ()
+}
+
+fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> () {
+    println!("---+++ exe_md_query +++--- {:#?}", ast_selstat);
+
+    /*
+     * 构建真实的多维查询坐标轴
+     */
+    let axes = ast_selstat.build_axes();
+}
+
+#[test]
+fn test_parsing_mdx_00() {
+    handle_stat(String::from("MDX"), mdx_demo());
 }
 
 // #[test]
