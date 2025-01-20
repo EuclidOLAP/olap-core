@@ -140,6 +140,9 @@ fn handle_stat(optype: String, statement: String) -> () {
 fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> () {
     println!("---+++ exe_md_query +++--- {:#?}", ast_selstat);
 
+    // 生成多维查询上下文
+    let context = ast_selstat.gen_md_context();
+
     /*
      * 构建真实的多维查询坐标轴
      */
