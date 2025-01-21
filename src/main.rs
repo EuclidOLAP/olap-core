@@ -175,7 +175,8 @@ fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> () {
     println!("---+++ exe_md_query +++--- {:#?}", ast_selstat);
 
     // 生成多维查询上下文
-    let context = ast_selstat.gen_md_context();
+    let context = tokio::runtime::Runtime::new().unwrap().block_on(ast_selstat.gen_md_context());
+    println!("Multi-Dimensonal Query Context:\n{:#?}", context);
 
     /*
      * 构建真实的多维查询坐标轴
