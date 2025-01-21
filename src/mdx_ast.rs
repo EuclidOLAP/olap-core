@@ -82,8 +82,10 @@ impl AstSelectionStatement {
 
         println!("Final Cube: {:#?}", cube);
 
-        // 返回临时对象
-        mdd::MultiDimensionalContext { cube }
+        mdd::MultiDimensionalContext {
+            cube,
+            ref_tuple: mdd::Tuple {},
+        }
     }
 
     async fn fetch_cube_by_gid(&self, grpc_cli: &mut GrpcClient, gid: u64) -> mdd::Cube {
