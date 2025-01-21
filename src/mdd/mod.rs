@@ -1,7 +1,23 @@
 #[derive(Debug)]
 pub struct MultiDimensionalContext {
     pub cube: Cube,
+    pub ref_tuple: Tuple, // defautl slice tuple
 }
+
+#[derive(Debug)]
+pub struct Tuple {}
+
+#[derive(Debug)]
+pub struct MemberRole {}
+
+#[derive(Debug)]
+pub struct DimensionRole {}
+
+#[derive(Debug)]
+pub struct Dimension {}
+
+#[derive(Debug)]
+pub struct Member {}
 
 #[derive(Debug)]
 pub struct Cube {
