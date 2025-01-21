@@ -58,18 +58,28 @@ impl AstSelectionStatement {
         let cube_pro = &self.cube;
         let ast_seg_opt = cube_pro.get(0);
 
+        let cube: mdd::Cube;
+
         match ast_seg_opt {
             Some(ast_seg) => {
                 let gid_opt = ast_seg.gid;
                 match gid_opt {
                     Some(gid) => {
                         println!("CCDFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF >>> gid >>>: {}", gid);
+                        cube = mdd::Cube {
+                            gid: 3000000000001,
+                            name: String::from("Caa"),
+                        }
                     },
                     None => {
                         let seg_str_opt = &ast_seg.seg_str;
                         match seg_str_opt {
                             Some(seg_str) => {
                                 println!("CCDFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF >>> seg_str >>>: {}", seg_str);
+                                cube = mdd::Cube {
+                                    gid: 3000000000002,
+                                    name: String::from("Css"),
+                                }
                             },
                             None => {
                                 panic!("In method AstSelectionStatement::gen_md_context(): cube seg_str is empty!");
@@ -82,6 +92,8 @@ impl AstSelectionStatement {
                 panic!("In method AstSelectionStatement::gen_md_context(): cube is empty!");
             }
         }
+
+        println!("Cccc Cccc Cccc Cccc Cccc Cccc Cccc : {:#?}", cube);
 
         // todo 返回临时对象
         mdd::MultiDimensionalContext {
