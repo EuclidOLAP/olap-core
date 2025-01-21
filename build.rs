@@ -1,5 +1,6 @@
 fn main() {
     let euclidolap_file = "proto/euclidolap.proto";
+    let olapmeta_file = "proto/olapmeta.proto";
     let out_dir = "src/grpc";
 
     // 编译proto/euclidolap.proto
@@ -11,8 +12,18 @@ fn main() {
         std::process::exit(1);
     }
 
+    // 编译proto/olapmeta.proto
+    if let Err(e) = tonic_build::configure()
+        .out_dir(out_dir)
+        .compile(&[olapmeta_file], &["proto"])
+    {
+        eprintln!("Failed to compile {}, the error is: {}", olapmeta_file, e);
+        std::process::exit(1);
+    }
+
     // 文件更改监控
     println!("cargo:rerun-if-changed={}", euclidolap_file);
+    println!("cargo:rerun-if-changed={}", olapmeta_file);
 
     // // genarate mdx parser code
     // lalrpop::process_root().unwrap_or_else(|e| {

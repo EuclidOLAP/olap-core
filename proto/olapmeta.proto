@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package olapmeta;
+
+// 定义 CubeMeta 对象
+message CubeMeta {
+    uint64 gid = 1;    // 无符号 64 位整数
+    string name = 2;    // 字符串名称
+}
+
+// 根据无符号 64 位整数查询 Cube
+message CubeGidRequest {
+    uint64 gid = 1;    // 请求的 GID
+}
+
+// 根据字符串查询 Cube
+message CubeNameRequest {
+    string name = 1;   // 请求的 Cube 名称
+}
+
+message CubeMetaResponse {
+    CubeMeta cubeMeta = 1;    // 返回的 Cube 对象
+}
+
+// 定义 OLAP 服务接口
+service OlapMetaService {
+    rpc GetCubeByGid (CubeGidRequest) returns (CubeMetaResponse);
+    rpc GetCubeByName (CubeNameRequest) returns (CubeMetaResponse);
+}

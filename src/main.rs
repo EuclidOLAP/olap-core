@@ -5,6 +5,9 @@ use tonic::{transport::Server, Request, Response, Status};
 mod mdx_statements;
 use mdx_statements::mdx_demo;
 
+mod olapmeta_grpc_client;
+use crate::olapmeta_grpc_client::GrpcClient;
+
 // mod mdx_parser;
 
 mod mdd;
@@ -91,6 +94,33 @@ impl OlapApi for EuclidOLAPService {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // 创建 gRPC 客户端
+    let mut client = GrpcClient::new("http://192.168.66.51:50051".to_string())
+        .await
+        .expect("Failed to create client");
+
+    // 测试通过 GID 查询 Cube
+    match client.get_cube_by_gid(314).await {
+        Ok(response) => {
+            println!("Received Cube by GID: {:?}", response);
+        }
+        Err(e) => {
+            println!("Error fetching Cube by GID: {}", e);
+        }
+    }
+
+    // 测试通过名称查询 Cube
+    match client.get_cube_by_name("Tata.SSS".to_string()).await {
+        Ok(response) => {
+            println!("Received Cube by Name: {:?}", response);
+        }
+        Err(e) => {
+            println!("Error fetching Cube by Name: {}", e);
+        }
+    }
+    // ????????????????????????????????????????????????????????????????????
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     test_parsing_mdx_01();
     test_parsing_mdx_02();
     test_parsing_mdx_03();
@@ -126,12 +156,16 @@ fn handle_stat(optype: String, statement: String) -> () {
             println!("\n\n\n>>> @@@ Operation Type: {}", optype);
             println!(">>> @@@ Statement: {}", statement);
             let ast_selstat = SelectionMDXParser::new()
-            .parse(MdxLexer::new(statement.as_str())).unwrap();
+                .parse(MdxLexer::new(statement.as_str()))
+                .unwrap();
 
             exe_md_query(ast_selstat);
-        },
+        }
         _ => {
-            panic!("In fn `handle_stat()`: Unexpected operation type: {}", optype);
+            panic!(
+                "In fn `handle_stat()`: Unexpected operation type: {}",
+                optype
+            );
         }
     }
     ()
