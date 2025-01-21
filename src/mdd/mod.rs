@@ -8,6 +8,18 @@ pub struct MultiDimensionalContext {
 pub struct Tuple {}
 
 #[derive(Debug)]
+pub struct MemberRole {}
+
+#[derive(Debug)]
+pub struct DimensionRole {}
+
+#[derive(Debug)]
+pub struct Dimension {}
+
+#[derive(Debug)]
+pub struct Member {}
+
+#[derive(Debug)]
 pub struct Cube {
     pub gid: u64,
     pub name: String,
