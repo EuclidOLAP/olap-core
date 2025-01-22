@@ -44,11 +44,11 @@ impl GrpcClient {
             .into_inner()
             .dimension_roles
             .into_iter()
-            .map(|grpc_dr| mdd::DimensionRole {
-                gid: grpc_dr.gid,
-                name: grpc_dr.name,
-                cube_gid: grpc_dr.cube_gid,
-                dimension_gid: grpc_dr.dimension_gid,
+            .map(|_grpc_dr| mdd::DimensionRole {
+                // gid: grpc_dr.gid,
+                // name: grpc_dr.name,
+                // cube_gid: grpc_dr.cube_gid,
+                // dimension_gid: grpc_dr.dimension_gid,
             })
             .collect();
 
