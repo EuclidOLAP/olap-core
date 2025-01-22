@@ -145,15 +145,15 @@ impl AstSelectionStatement {
     }
 
     pub fn build_axes(&self) -> Vec<mdd::Axis> {
-        println!(
-            "build_axes .. . ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        );
+        // println!(
+        //     "build_axes .. . ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        // );
 
         let axes_count = self.axes.len();
-        println!(
-            ">>> axes_count >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>: {}",
-            axes_count
-        );
+        // println!(
+        //     ">>> axes_count >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>: {}",
+        //     axes_count
+        // );
 
         let mut axes: Vec<mdd::Axis> = Vec::with_capacity(axes_count);
 

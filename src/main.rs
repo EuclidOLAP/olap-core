@@ -29,7 +29,7 @@ impl OlapApi for EuclidOLAPService {
         &self,
         request: Request<OlapRequest>, // 从客户端接收的请求
     ) -> Result<Response<OlapResponse>, Status> {
-        println!("Received request: {:?}", request);
+        // println!("Received request: {:?}", request);
 
         // 从请求中解析操作类型和语句
         let olap_request = request.into_inner();
@@ -98,8 +98,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 async fn handle_stat(optype: String, statement: String) -> () {
     match optype.as_str() {
         "MDX" => {
-            println!("\n\n\n>>> @@@ Operation Type: {}", optype);
-            println!(">>> @@@ Statement: {}", statement);
+            // println!("\n\n\n>>> @@@ Operation Type: {}", optype);
+            // println!(">>> @@@ Statement: {}", statement);
             let ast_selstat = SelectionMDXParser::new()
                 .parse(MdxLexer::new(statement.as_str()))
                 .unwrap();
