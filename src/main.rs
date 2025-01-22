@@ -3,7 +3,7 @@ use euclidolap::{OlapRequest, OlapResponse, Row};
 use tonic::{transport::Server, Request, Response, Status};
 
 mod mdx_statements;
-use mdx_statements::mdx_demo;
+use mdx_statements::{mdx_demo, mdx_demo_2_axposstr};
 
 mod olapmeta_grpc_client;
 use crate::olapmeta_grpc_client::GrpcClient;
@@ -374,4 +374,9 @@ where
 
     println!("{:?}", ast_node);
     println!("\n\n");
+}
+
+#[test]
+fn test_parsing_mdx_demo_2_axposstr() {
+    handle_stat(String::from("MDX"), mdx_demo_2_axposstr());
 }

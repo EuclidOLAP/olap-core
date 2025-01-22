@@ -55,10 +55,16 @@ pub enum Token {
     #[regex("[0-9]+", |lex| lex.slice().parse())]
     Integer(u64),
 
-
-
-
-
+    #[regex("(?i)COLUMNS")]
+    Columns,
+    #[regex("(?i)ROWS")]
+    Rows,
+    #[regex("(?i)PAGES")]
+    Pages,
+    #[regex("(?i)CHAPTERS")]
+    Chapters,
+    #[regex("(?i)SECTIONS")]
+    Sections,
 
     // #[token("var")]
     // KeywordVar,

@@ -16,6 +16,12 @@ extern {
     "where" => Token::Where,
     "BracketedString" => Token::BracketedString(<String>),
 
+    "Columns" => Token::Columns,
+    "Rows" => Token::Rows,
+    "Pages" => Token::Pages,
+    "Chapters" => Token::Chapters,
+    "Sections" => Token::Sections,
+
     "," => Token::Comma,
     "&" => Token::Ampersand,
     "." => Token::Dot,
@@ -124,12 +130,21 @@ pub SetWrap: mdx_ast::AstSet = {
 
 // COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
 pub Axis: mdx_ast::AstAxis = {
-  <ast_set:SetWrap> "on" <axpos:"int"> => {
+  <ast_set:SetWrap> "on" <axpos:AxisPos> => {
     mdx_ast::AstAxis::Def{
       ast_set,
       pos: axpos,
     }
   }
+}
+
+AxisPos: u64 = {
+  <axpos:"int"> => axpos,
+  "Columns"     => 0,
+  "Rows"        => 1,
+  "Pages"       => 2,
+  "Chapters"    => 3,
+  "Sections"    => 4,
 }
 
 pub Axes: Vec<mdx_ast::AstAxis> = {
