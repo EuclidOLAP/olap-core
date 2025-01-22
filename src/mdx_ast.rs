@@ -49,10 +49,7 @@ impl AstSelectionStatement {
         let ast_seg_opt = cube_pro.get(0);
 
         // 初始化默认 Cube
-        let mut cube = mdd::Cube {
-            gid: 0,
-            name: String::from(">>> There is no cube <<<"),
-        };
+        let cube;
 
         // 创建 gRPC 客户端
         let mut grpc_cli = GrpcClient::new("http://192.168.66.51:50051".to_string())
