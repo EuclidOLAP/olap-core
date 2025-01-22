@@ -73,14 +73,10 @@ impl AstSelectionStatement {
             let seg_str = seg_str_opt.as_ref().unwrap_or_else(|| {
                 panic!("In method AstSelectionStatement::gen_md_context(): cube seg_str is empty!")
             });
-            // println!("CCD >>> seg_str: {}", seg_str);
             cube = self.fetch_cube_by_name(&mut grpc_cli, seg_str).await;
         }
 
-        // println!("Final Cube: {:#?}", cube);
-
         let _dimension_roles = grpc_cli.get_dimension_roles_by_cube_gid(cube.gid).await;
-        // println!("Dimension Roles: {:#?}", dimension_roles);
 
         mdd::MultiDimensionalContext {
             cube,
@@ -90,22 +86,19 @@ impl AstSelectionStatement {
 
     async fn fetch_cube_by_gid(&self, grpc_cli: &mut GrpcClient, gid: u64) -> mdd::Cube {
         match grpc_cli.get_cube_by_gid(gid).await {
-            Ok(response) => {
-                // println!("Received Cube by GID: {:?}", response);
-                response
-                    .cube_meta
-                    .map(|meta| mdd::Cube {
-                        gid: meta.gid,
-                        name: meta.name,
-                    })
-                    .unwrap_or_else(|| {
-                        println!("Error fetching Cube by GID: CubeMeta is None");
-                        mdd::Cube {
-                            gid: 0,
-                            name: String::from(">>> No cube found <<<"),
-                        }
-                    })
-            }
+            Ok(response) => response
+                .cube_meta
+                .map(|meta| mdd::Cube {
+                    gid: meta.gid,
+                    name: meta.name,
+                })
+                .unwrap_or_else(|| {
+                    println!("Error fetching Cube by GID: CubeMeta is None");
+                    mdd::Cube {
+                        gid: 0,
+                        name: String::from(">>> No cube found <<<"),
+                    }
+                }),
             Err(e) => {
                 println!("Error fetching Cube by GID: {}", e);
                 mdd::Cube {
