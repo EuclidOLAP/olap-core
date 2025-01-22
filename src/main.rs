@@ -187,6 +187,10 @@ fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> () {
 #[test]
 fn test_parsing_mdx_00() {
     handle_stat(String::from("MDX"), mdx_demo());
+
+    let mut mdx2 = mdx_demo();
+    mdx2.push(';');
+    handle_stat(String::from("MDX"), mdx2);
 }
 
 // #[test]

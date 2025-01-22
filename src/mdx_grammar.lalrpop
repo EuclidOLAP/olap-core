@@ -26,6 +26,8 @@ extern {
     "{" => Token::CurlyBraceLeft,
     "}" => Token::CurlyBraceRight,
 
+    ";" => Token::Semicolon,
+
     // "var" => Token::KeywordVar,
     // "print" => Token::KeywordPrint,
     // "identifier" => Token::Identifier(<String>),
@@ -162,14 +164,14 @@ pub MdxStatement: mdx_ast::ExtMDXStatement = {
 
 // AstSelectionStatement
 pub SelectionMDX: mdx_ast::AstSelectionStatement = {
-  "select" <axes:Axes> "from" <cube:Segments> => {
+  "select" <axes:Axes> "from" <cube:Segments> (";")? => {
     mdx_ast::AstSelectionStatement {
       axes,
       cube,
       basic_slice: None,
     }
   },
-  "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> => {
+  "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
     mdx_ast::AstSelectionStatement {
       axes,
       cube,
