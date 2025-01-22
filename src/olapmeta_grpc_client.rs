@@ -2,6 +2,9 @@
 use tonic::{transport::Channel, Request};
 use olapmeta::olap_meta_service_client::OlapMetaServiceClient;
 use olapmeta::{CubeGidRequest, CubeNameRequest, CubeMetaResponse};
+use olapmeta::GetDimensionRolesByCubeGidRequest;
+
+use crate::mdd;
 
 pub mod olapmeta {
     // include!("generated/olapmeta.rs"); // 通过 tonic-build 生成的模块
@@ -31,5 +34,24 @@ impl GrpcClient {
         let request = Request::new(CubeNameRequest { name });
         let response = self.client.get_cube_by_name(request).await?;
         Ok(response.into_inner())
+    }
+
+    pub async fn get_dimension_roles_by_cube_gid(&mut self, cube_gid: u64) -> Result<Vec<mdd::DimensionRole>, Box<dyn std::error::Error>> {
+        let response = self.client.get_dimension_roles_by_cube_gid(GetDimensionRolesByCubeGidRequest { gid: cube_gid }).await?;
+
+        // 将响应数据解析为 DimensionRole 列表
+        let dimension_roles: Vec<mdd::DimensionRole> = response
+            .into_inner()
+            .dimension_roles
+            .into_iter()
+            .map(|grpc_dr| mdd::DimensionRole {
+                gid: grpc_dr.gid,
+                name: grpc_dr.name,
+                cube_gid: grpc_dr.cube_gid,
+                dimension_gid: grpc_dr.dimension_gid,
+            })
+            .collect();
+
+        Ok(dimension_roles)
     }
 }
