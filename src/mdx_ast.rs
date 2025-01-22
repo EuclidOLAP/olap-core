@@ -82,6 +82,9 @@ impl AstSelectionStatement {
 
         println!("Final Cube: {:#?}", cube);
 
+        let dimension_roles = grpc_cli.get_dimension_roles_by_cube_gid(cube.gid).await;
+        println!("Dimension Roles: {:#?}", dimension_roles);
+
         mdd::MultiDimensionalContext {
             cube,
             ref_tuple: mdd::Tuple {},
