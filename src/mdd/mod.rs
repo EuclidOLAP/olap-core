@@ -11,7 +11,12 @@ pub struct Tuple {}
 pub struct MemberRole {}
 
 #[derive(Debug)]
-pub struct DimensionRole {}
+pub struct DimensionRole {
+    pub gid: u64,
+    pub name: String,
+    pub cube_gid: u64,
+    pub dimension_gid: u64,
+}
 
 #[derive(Debug)]
 pub struct Dimension {}

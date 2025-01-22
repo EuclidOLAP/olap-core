@@ -26,4 +26,24 @@ message CubeMetaResponse {
 service OlapMetaService {
     rpc GetCubeByGid (CubeGidRequest) returns (CubeMetaResponse);
     rpc GetCubeByName (CubeNameRequest) returns (CubeMetaResponse);
+    
+    // 根据 Cube GID 查询非度量维度角色列表
+    rpc GetDimensionRolesByCubeGid (GetDimensionRolesByCubeGidRequest) returns (GetDimensionRolesByCubeGidResponse);
+}
+
+message GrpcDimensionRole {
+    uint64 gid          = 1; // unsinged 64-bit integer
+    string name         = 2;
+    uint64 cubeGid      = 3; // unsinged 64-bit integer
+    uint64 dimensionGid = 4; // unsinged 64-bit integer
+}
+
+// 定义根据 Cube GID 查询 GrpcDimensionRole 列表的请求消息
+message GetDimensionRolesByCubeGidRequest {
+    uint64 gid = 1;    // 请求的 Cube GID
+}
+
+// 定义根据 Cube GID 查询 GrpcDimensionRole 列表的响应消息
+message GetDimensionRolesByCubeGidResponse {
+    repeated GrpcDimensionRole dimensionRoles = 1;    // 返回的非度量维度角色列表
 }
