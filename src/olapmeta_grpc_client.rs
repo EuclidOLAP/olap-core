@@ -67,13 +67,13 @@ impl GrpcClient {
         let grpc_member = response.into_inner();
 
         Ok(mdd::Member {
-            gid: grpc_member.gid,
-            name: grpc_member.name,
-            dimension_gid: grpc_member.dimension_gid,
-            hierarchy_gid: grpc_member.hierarchy_gid,
-            level_gid: grpc_member.level_gid,
-            level: grpc_member.level,
-            parent_gid: grpc_member.parent_gid,
+            // gid: grpc_member.gid,
+            // name: grpc_member.name,
+            // dimension_gid: grpc_member.dimension_gid,
+            // hierarchy_gid: grpc_member.hierarchy_gid,
+            // level_gid: grpc_member.level_gid,
+            // level: grpc_member.level,
+            // parent_gid: grpc_member.parent_gid,
         })
     }
 
