@@ -10,19 +10,19 @@ int yywrap(void);
 
 [ \n\t]+ {
 	// ignore white space
-	// todo: C Lex -> Rust nom: 处理空白字符
+	// to do: C Lex -> Rust nom: 处理空白字符
 }
 
 \x2F\x2F.* {
 	// ASCII 0x2F is '/'
 	// comment
-	// todo: C Lex -> Rust nom: 先不处理注释
+	// to do: C Lex -> Rust nom: 先不处理注释
 }
 
 create {
 	return CREATE;
 	/*
-	todo: C Lex -> Rust nom: 处理关键字，需要对关键字进行分类
+	to do: C Lex -> Rust nom: 处理关键字，需要对关键字进行分类
 	一点一点往nom中加入关键字，逐步完善
 	*/
 }
@@ -496,24 +496,24 @@ DISABLE_RELOAD_MEASURES {
 }
 
 [_a-zA-Z][_a-zA-Z0-9]*	{
-	// todo: C Lex -> Rust nom: 处理标识符
+	// to do: C Lex -> Rust nom: 处理标识符
 	return VAR;
 }
 
 [0-9]+(\x2E[0-9]+)? {
-	// todo: C Lex -> Rust nom: 可以表示整形（8080）和浮点型（3.14）
+	// to do: C Lex -> Rust nom: 可以表示整形（8080）和浮点型（3.14）
 	// ASCII 0x2E is .
 	return DECIMAL;
 }
 
 \x40\x40EXP {
-	// todo: C Lex -> Rust nom: @@exp 是什么？
+	// to do: C Lex -> Rust nom: @@exp 是什么？
 	// ASCII 0x40 is @
 	return FLAG_EXP;
 }
 
 ","	{
-	// todo: C Lex -> Rust nom: 标点符号、数学运算符、逻辑运算符以及其他符号
+	// to do: C Lex -> Rust nom: 标点符号、数学运算符、逻辑运算符以及其他符号
 	return COMMA;
 }
 
@@ -622,7 +622,7 @@ DISABLE_RELOAD_MEASURES {
 
 . {
 	// do nothing
-	// TODO An MDX lexical parsing-related exception should be thrown here.
+	// to do An MDX lexical parsing-related exception should be thrown here.
 }
 
 %%

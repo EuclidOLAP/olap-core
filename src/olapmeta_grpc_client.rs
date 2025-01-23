@@ -3,6 +3,7 @@ use tonic::{transport::Channel, Request};
 use olapmeta::olap_meta_service_client::OlapMetaServiceClient;
 use olapmeta::{CubeGidRequest, CubeNameRequest, CubeMetaResponse};
 use olapmeta::GetDimensionRolesByCubeGidRequest;
+use olapmeta::GetDefaultDimensionMemberRequest;
 
 use crate::mdd;
 
@@ -44,14 +45,36 @@ impl GrpcClient {
             .into_inner()
             .dimension_roles
             .into_iter()
-            .map(|_grpc_dr| mdd::DimensionRole {
+            .map(|grpc_dr| mdd::DimensionRole {
                 // gid: grpc_dr.gid,
                 // name: grpc_dr.name,
                 // cube_gid: grpc_dr.cube_gid,
-                // dimension_gid: grpc_dr.dimension_gid,
+                dimension_gid: grpc_dr.dimension_gid,
             })
             .collect();
 
         Ok(dimension_roles)
     }
+
+
+    pub async fn get_default_dimension_member_by_dimension_gid(&mut self, dimension_gid: u64)
+        -> Result<mdd::Member, Box<dyn std::error::Error>> {
+
+        let request = GetDefaultDimensionMemberRequest { dimension_gid };
+
+        let response = self.client.get_default_dimension_member_by_dimension_gid(request).await?;
+
+        let grpc_member = response.into_inner();
+
+        Ok(mdd::Member {
+            // gid: grpc_member.gid,
+            // name: grpc_member.name,
+            // dimension_gid: grpc_member.dimension_gid,
+            // hierarchy_gid: grpc_member.hierarchy_gid,
+            // level_gid: grpc_member.level_gid,
+            // level: grpc_member.level,
+            // parent_gid: grpc_member.parent_gid,
+        })
+    }
+
 }

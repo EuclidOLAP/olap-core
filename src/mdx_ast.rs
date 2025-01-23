@@ -76,11 +76,29 @@ impl AstSelectionStatement {
             cube = self.fetch_cube_by_name(&mut grpc_cli, seg_str).await;
         }
 
-        let _dimension_roles = grpc_cli.get_dimension_roles_by_cube_gid(cube.gid).await;
+        let mut cube_def_tuple = mdd::Tuple {
+            member_roles: Vec::new(),
+        };
+
+        let dimension_roles = grpc_cli
+            .get_dimension_roles_by_cube_gid(cube.gid)
+            .await
+            .unwrap();
+        for dim_role in dimension_roles {
+            let dim_def_member = grpc_cli
+                .get_default_dimension_member_by_dimension_gid(dim_role.dimension_gid)
+                .await
+                .unwrap();
+
+            cube_def_tuple.member_roles.push(mdd::MemberRole {
+                dim_role,
+                member: dim_def_member,
+            });
+        }
 
         mdd::MultiDimensionalContext {
             cube,
-            ref_tuple: mdd::Tuple {},
+            ref_tuple: cube_def_tuple,
         }
     }
 
