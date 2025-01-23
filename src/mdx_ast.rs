@@ -80,13 +80,15 @@ impl AstSelectionStatement {
             member_roles: Vec::new(),
         };
 
-        let dimension_roles = grpc_cli.get_dimension_roles_by_cube_gid(cube.gid).await.unwrap();
+        let dimension_roles = grpc_cli
+            .get_dimension_roles_by_cube_gid(cube.gid)
+            .await
+            .unwrap();
         for dim_role in dimension_roles {
-            // dim_role.dimension_gid
-            println!("@@@@@@@@@@@@@@@@@@ dim_role.dimension_gid: {}", dim_role.dimension_gid);
-            let dim_def_member 
-                = grpc_cli.get_default_dimension_member_by_dimension_gid(dim_role.dimension_gid).await.unwrap();
-            println!("@ dim_def_member: {:?}", dim_def_member);
+            let dim_def_member = grpc_cli
+                .get_default_dimension_member_by_dimension_gid(dim_role.dimension_gid)
+                .await
+                .unwrap();
 
             cube_def_tuple.member_roles.push(mdd::MemberRole {
                 dim_role,
