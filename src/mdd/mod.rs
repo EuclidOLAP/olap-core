@@ -5,10 +5,15 @@ pub struct MultiDimensionalContext {
 }
 
 #[derive(Debug)]
-pub struct Tuple {}
+pub struct Tuple {
+    pub member_roles: Vec<MemberRole>,
+}
 
-// #[derive(Debug)]
-// pub struct MemberRole {}
+#[derive(Debug)]
+pub struct MemberRole {
+    pub dim_role: DimensionRole,
+    pub member: Member,
+}
 
 #[derive(Debug)]
 pub struct DimensionRole {
