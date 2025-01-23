@@ -15,14 +15,22 @@ pub struct DimensionRole {
     // pub gid: u64,
     // pub name: String,
     // pub cube_gid: u64,
-    // pub dimension_gid: u64,
+    pub dimension_gid: u64,
 }
 
 // #[derive(Debug)]
 // pub struct Dimension {}
 
-// #[derive(Debug)]
-// pub struct Member {}
+#[derive(Debug)]
+pub struct Member {
+    pub gid: u64,
+    pub name: String,
+    pub dimension_gid: u64,
+    pub hierarchy_gid: u64,
+    pub level_gid: u64,
+    pub level: u64,
+    pub parent_gid: u64,
+}
 
 #[derive(Debug)]
 pub struct Cube {

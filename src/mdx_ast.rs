@@ -76,7 +76,14 @@ impl AstSelectionStatement {
             cube = self.fetch_cube_by_name(&mut grpc_cli, seg_str).await;
         }
 
-        let _dimension_roles = grpc_cli.get_dimension_roles_by_cube_gid(cube.gid).await;
+        let dimension_roles = grpc_cli.get_dimension_roles_by_cube_gid(cube.gid).await.unwrap();
+        for dim_role in dimension_roles.iter() {
+            // dim_role.dimension_gid
+            println!("@@@@@@@@@@@@@@@@@@ dim_role.dimension_gid: {}", dim_role.dimension_gid);
+            let dim_def_member 
+                = grpc_cli.get_default_dimension_member_by_dimension_gid(dim_role.dimension_gid).await.unwrap();
+            println!("@ dim_def_member: {:?}", dim_def_member);
+        }
 
         mdd::MultiDimensionalContext {
             cube,

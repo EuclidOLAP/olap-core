@@ -22,6 +22,21 @@ message CubeMetaResponse {
     CubeMeta cubeMeta = 1;    // 返回的 Cube 对象
 }
 
+message GrpcMember {
+    uint64 gid = 1;
+    string name = 2;
+    uint64 dimensionGid = 3;
+    uint64 hierarchyGid = 4;
+    uint64 levelGid = 5;
+    uint64 level = 6;
+    uint64 parentGid = 7;
+}
+
+// 根据维度 GID 查询默认维度成员的请求消息
+message GetDefaultDimensionMemberRequest {
+    uint64 dimensionGid = 1; // 请求的维度 GID
+}
+
 // 定义 OLAP 服务接口
 service OlapMetaService {
     rpc GetCubeByGid (CubeGidRequest) returns (CubeMetaResponse);
@@ -29,6 +44,9 @@ service OlapMetaService {
     
     // 根据 Cube GID 查询非度量维度角色列表
     rpc GetDimensionRolesByCubeGid (GetDimensionRolesByCubeGidRequest) returns (GetDimensionRolesByCubeGidResponse);
+    
+    // 根据维度 GID 查询默认维度成员
+    rpc GetDefaultDimensionMemberByDimensionGid (GetDefaultDimensionMemberRequest) returns (GrpcMember);
 }
 
 message GrpcDimensionRole {
