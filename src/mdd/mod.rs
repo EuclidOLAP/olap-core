@@ -59,6 +59,13 @@ impl MultiDimensionalContext {
             }
         }
     }
+
+    pub async fn find_entity_by_str(&mut self, seg: &String) -> MultiDimensionalEntity {
+        println!("MultiDimensionalContext >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> find_entity_by_str({})", seg);
+        let dim_role
+            = self.grpc_client.get_dimension_role_by_name(self.cube.gid, seg).await.unwrap();
+        MultiDimensionalEntity::DimensionRoleWrap(dim_role)
+    }
 }
 
 #[derive(Debug)]

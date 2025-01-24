@@ -50,11 +50,20 @@ service OlapMetaService {
 
     // 根据 GID 查询 DimensionRole
     rpc GetDimensionRoleByGid (GetDimensionRoleByGidRequest) returns (GrpcDimensionRole);
+
+    // 根据名称查询 DimensionRole
+    rpc GetDimensionRoleByName (GetDimensionRoleByNameRequest) returns (GrpcDimensionRole);
 }
 
 // 定义 DimensionRole 查询请求消息
 message GetDimensionRoleByGidRequest {
     uint64 dimensionRoleGid = 1;    // 请求的 DimensionRole GID
+}
+
+// 新增：根据名称查询 DimensionRole 的请求消息
+message GetDimensionRoleByNameRequest {
+    uint64 cubeGid           = 1;
+    string dimensionRoleName = 2;
 }
 
 message GrpcDimensionRole {

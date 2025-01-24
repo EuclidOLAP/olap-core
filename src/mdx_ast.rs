@@ -27,7 +27,7 @@ impl AstSeg {
                 println!("/////////////////////////////////////////// context.find_entity_by_gid( {} );", gid);
             },
             (None, Some(seg_str)) => {
-                // context.find_entity_by_str(seg_str);
+                context.find_entity_by_str(seg_str).await;
                 println!("/////////////////////////////////////////// context.find_entity_by_str( {} );", seg_str);
             },
             (None, None) => {
