@@ -25,6 +25,19 @@ impl GidType {
     }
 }
 
+// #[derive(Debug)]
+// #[derive(Clone)]
+// #[derive(PartialEq)]
+pub enum MultiDimensionalEntity {
+    DimensionRoleWrap(DimensionRole),
+    // MemberRole(MemberRole),
+    // Cube(Cube),           // 立方体实体
+    // Dimension(Dimension), // 维度实体
+    // Hierarchy(Hierarchy), // 层次实体
+    // Level(Level),         // 层级实体
+    // Member(Member),       // 成员实体
+}
+
 #[derive(Debug)]
 pub struct MultiDimensionalContext {
     pub cube: Cube,
@@ -33,12 +46,13 @@ pub struct MultiDimensionalContext {
 }
 
 impl MultiDimensionalContext {
-    pub async fn find_entity_by_gid(&mut self, gid: u64) /* -> MultiDimensionalEntity */ {
+    pub async fn find_entity_by_gid(&mut self, gid: u64) -> MultiDimensionalEntity {
         println!("MultiDimensionalContext >>>>>>>>>>>>>>>>>>>>>>>> find_entity_by_gid({})", gid);
         match GidType::entity_type(gid) {
             GidType::DimensionRole => {
-                let dim_role = self.grpc_client.get_dimension_role_by_gid(gid).await;
+                let dim_role = self.grpc_client.get_dimension_role_by_gid(gid).await.unwrap();
                 println!("!!!@@@###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~dim_role: {:?}", dim_role);
+                MultiDimensionalEntity::DimensionRoleWrap(dim_role)
             },
             _ => {
                 panic!("Invalid gid type provided. Expected DimensionRole but found a different type.");
