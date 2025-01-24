@@ -16,7 +16,7 @@ pub struct AstSeg {
 }
 
 impl AstSeg {
-    pub fn materialize(&self, context: &mdd::MultiDimensionalContext) /*-> MultiDimensionalEntity*/ {
+    pub async fn materialize(&self, context: &mdd::MultiDimensionalContext) /*-> MultiDimensionalEntity*/ {
         println!("AstSeg::materialize() >---------------------------------");
 
         // 由于是在多维查询上下文中，所以一般应该返回带有角色信息的实体
@@ -43,12 +43,12 @@ pub enum AstSegments {
 }
 
 impl AstSegments {
-    pub fn materialize(&self, context: &mdd::MultiDimensionalContext) /* -> MultiDimensionalEntity */ {
+    pub async fn materialize(&self, context: &mdd::MultiDimensionalContext) /* -> MultiDimensionalEntity */ {
         println!("AstSegments::materialize() >>>>>>>>>>");
         match self {
             AstSegments::Segs(segs) => {
                 let ast_seg = segs.iter().next().unwrap();
-                ast_seg.materialize(context);
+                ast_seg.materialize(context).await;
             },
         }
     }
@@ -60,12 +60,12 @@ pub enum AstTuple {
 }
 
 impl AstTuple {
-    pub fn materialize(&self, context: &mdd::MultiDimensionalContext) {
+    pub async fn materialize(&self, context: &mdd::MultiDimensionalContext) {
         println!("AstTuple::materialize() >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         match self {
             AstTuple::SegsList(segs_list) => {
                 let ast_segments = segs_list.iter().next().unwrap();
-                ast_segments.materialize(context);
+                ast_segments.materialize(context).await;
             },
         }
     }
@@ -202,12 +202,12 @@ impl AstSelectionStatement {
         }
     }
 
-    pub fn build_axes(&self, context: &mdd::MultiDimensionalContext) -> Vec<mdd::Axis> {
+    pub async fn build_axes(&self, context: &mdd::MultiDimensionalContext) -> Vec<mdd::Axis> {
         println!("AstSelectionStatement::build_axes() >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
         // MDX语句中是否包含where
         if let Some(slice) = &self.basic_slice {
-            slice.materialize(context);
+            slice.materialize(context).await;
         } else {
 
         }
