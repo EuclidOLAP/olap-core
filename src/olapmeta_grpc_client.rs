@@ -66,7 +66,7 @@ impl GrpcClient {
 
         let response = self.client.get_default_dimension_member_by_dimension_gid(request).await?;
 
-        let grpc_member = response.into_inner();
+        let _grpc_member = response.into_inner();
 
         Ok(mdd::Member {
             // gid: grpc_member.gid,

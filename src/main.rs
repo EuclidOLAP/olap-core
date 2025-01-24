@@ -140,14 +140,14 @@ mod tests {
     #[test]
     fn test_handle_stat() {
         tokio::runtime::Runtime::new().unwrap().block_on(
-            handle_stat(String::from("MDX"), mdx_demo())    
+            handle_stat(String::from("MDX"), _mdx_demo())    
         );
     }
 
     #[test]
     fn test_handle_stat_2() {
         tokio::runtime::Runtime::new().unwrap().block_on(
-            handle_stat(String::from("MDX"), mdx_demo_2_axposstr())    
+            handle_stat(String::from("MDX"), _mdx_demo_2_axposstr())    
         );
     }
 }
