@@ -121,11 +121,11 @@ async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> () {
 
     // 生成多维查询上下文
     // let context = tokio::runtime::Runtime::new().unwrap().block_on(ast_selstat.gen_md_context());
-    let _context = ast_selstat.gen_md_context().await;
+    let context = ast_selstat.gen_md_context().await;
     // println!("Multi-Dimensonal Query Context:\n{:#?}", context);
 
     /*
      * 构建真实的多维查询坐标轴
      */
-    let _axes = ast_selstat.build_axes();
+    let _axes = ast_selstat.build_axes(&context);
 }

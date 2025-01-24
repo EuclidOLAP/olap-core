@@ -155,7 +155,7 @@ impl AstSelectionStatement {
         }
     }
 
-    pub fn build_axes(&self) -> Vec<mdd::Axis> {
+    pub fn build_axes(&self, context: &mdd::MultiDimensionalContext) -> Vec<mdd::Axis> {
         // println!(
         //     "build_axes .. . ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
         // );
