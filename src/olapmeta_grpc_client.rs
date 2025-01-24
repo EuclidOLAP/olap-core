@@ -1,5 +1,6 @@
 // src/olapmeta_grpc_client.rs
 use tonic::{transport::Channel, Request};
+use std::fmt;
 use olapmeta::olap_meta_service_client::OlapMetaServiceClient;
 use olapmeta::{CubeGidRequest, CubeNameRequest, CubeMetaResponse};
 use olapmeta::GetDimensionRolesByCubeGidRequest;
@@ -77,4 +78,10 @@ impl GrpcClient {
         })
     }
 
+}
+
+impl fmt::Debug for GrpcClient {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "<This is a GrpcClient instance.>")
+    }
 }

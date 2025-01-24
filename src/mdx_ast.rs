@@ -99,6 +99,7 @@ impl AstSelectionStatement {
         mdd::MultiDimensionalContext {
             cube,
             ref_tuple: cube_def_tuple,
+            grpc_client: grpc_cli,
         }
     }
 

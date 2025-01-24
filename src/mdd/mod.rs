@@ -1,7 +1,10 @@
+use crate::olapmeta_grpc_client::GrpcClient;
+
 #[derive(Debug)]
 pub struct MultiDimensionalContext {
     pub cube: Cube,
     pub ref_tuple: Tuple, // defautl slice tuple
+    pub grpc_client: GrpcClient,
 }
 
 #[derive(Debug)]
