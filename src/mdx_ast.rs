@@ -1,4 +1,5 @@
 use crate::mdd;
+use crate::mdd::MultiDimensionalEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -16,19 +17,19 @@ pub struct AstSeg {
 }
 
 impl AstSeg {
-    pub async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) /*-> MultiDimensionalEntity*/ {
+    pub async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
         println!("AstSeg::materialize() >---------------------------------");
 
         // 由于是在多维查询上下文中，所以一般应该返回带有角色信息的实体
         // 首先判断是否有 gid，如果有，则通过 gid 查询，如果没有，则通过 seg_str 查询
         match (self.gid, &self.seg_str) {
             (Some(gid), _) => {
-                context.find_entity_by_gid(gid).await;
                 println!("/////////////////////////////////////////// context.find_entity_by_gid( {} );", gid);
+                context.find_entity_by_gid(gid).await
             },
             (None, Some(seg_str)) => {
-                context.find_entity_by_str(seg_str).await;
                 println!("/////////////////////////////////////////// context.find_entity_by_str( {} );", seg_str);
+                context.find_entity_by_str(seg_str).await
             },
             (None, None) => {
                 panic!("Both gid and seg_str are None, cannot query!");
@@ -43,12 +44,12 @@ pub enum AstSegments {
 }
 
 impl AstSegments {
-    pub async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) /* -> MultiDimensionalEntity */ {
+    pub async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
         println!("AstSegments::materialize() >>>>>>>>>>");
         match self {
             AstSegments::Segs(segs) => {
                 let ast_seg = segs.iter().next().unwrap();
-                ast_seg.materialize(context).await;
+                ast_seg.materialize(context).await
             },
         }
     }
@@ -60,12 +61,12 @@ pub enum AstTuple {
 }
 
 impl AstTuple {
-    pub async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) {
+    pub async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
         println!("AstTuple::materialize() >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         match self {
             AstTuple::SegsList(segs_list) => {
                 let ast_segments = segs_list.iter().next().unwrap();
-                ast_segments.materialize(context).await;
+                ast_segments.materialize(context).await
             },
         }
     }
