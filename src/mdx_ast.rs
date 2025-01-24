@@ -15,14 +15,60 @@ pub struct AstSeg {
     pub seg_str: Option<String>,
 }
 
+impl AstSeg {
+    pub fn materialize(&self, context: &mdd::MultiDimensionalContext) /*-> MultiDimensionalEntity*/ {
+        println!("AstSeg::materialize() >---------------------------------");
+
+        // 由于是在多维查询上下文中，所以一般应该返回带有角色信息的实体
+        // 首先判断是否有 gid，如果有，则通过 gid 查询，如果没有，则通过 seg_str 查询
+        match (self.gid, &self.seg_str) {
+            (Some(gid), _) => {
+                // context.find_entity_by_gid(gid);
+                println!("/////////////////////////////////////////// context.find_entity_by_gid( {} );", gid);
+            },
+            (None, Some(seg_str)) => {
+                // context.find_entity_by_str(seg_str);
+                println!("/////////////////////////////////////////// context.find_entity_by_str( {} );", seg_str);
+            },
+            (None, None) => {
+                panic!("Both gid and seg_str are None, cannot query!");
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstSegments {
     Segs(Vec<AstSeg>),
 }
 
+impl AstSegments {
+    pub fn materialize(&self, context: &mdd::MultiDimensionalContext) /* -> MultiDimensionalEntity */ {
+        println!("AstSegments::materialize() >>>>>>>>>>");
+        match self {
+            AstSegments::Segs(segs) => {
+                let ast_seg = segs.iter().next().unwrap();
+                ast_seg.materialize(context);
+            },
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstTuple {
     SegsList(Vec<AstSegments>),
+}
+
+impl AstTuple {
+    pub fn materialize(&self, context: &mdd::MultiDimensionalContext) {
+        println!("AstTuple::materialize() >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+        match self {
+            AstTuple::SegsList(segs_list) => {
+                let ast_segments = segs_list.iter().next().unwrap();
+                ast_segments.materialize(context);
+            },
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -157,6 +203,16 @@ impl AstSelectionStatement {
     }
 
     pub fn build_axes(&self, context: &mdd::MultiDimensionalContext) -> Vec<mdd::Axis> {
+        println!("AstSelectionStatement::build_axes() >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+
+        // MDX语句中是否包含where
+        if let Some(slice) = &self.basic_slice {
+            slice.materialize(context);
+        } else {
+
+        }
+
+
         // println!(
         //     "build_axes .. . ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
         // );
