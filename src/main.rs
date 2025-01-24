@@ -1,8 +1,10 @@
 use euclidolap::olap_api_server::{OlapApi, OlapApiServer};
 use euclidolap::{OlapRequest, OlapResponse, Row};
 use tonic::{transport::Server, Request, Response, Status};
+
 mod olapmeta_grpc_client;
 mod mdd;
+mod mdx_statements;
 
 mod euclidolap {
     include!("grpc/euclidolap.rs");
@@ -128,4 +130,24 @@ async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> () {
      * 构建真实的多维查询坐标轴
      */
     let _axes = ast_selstat.build_axes(&context);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mdx_statements::*;
+
+    #[test]
+    fn test_handle_stat() {
+        tokio::runtime::Runtime::new().unwrap().block_on(
+            handle_stat(String::from("MDX"), mdx_demo())    
+        );
+    }
+
+    #[test]
+    fn test_handle_stat_2() {
+        tokio::runtime::Runtime::new().unwrap().block_on(
+            handle_stat(String::from("MDX"), mdx_demo_2_axposstr())    
+        );
+    }
 }
