@@ -66,7 +66,7 @@ impl GrpcClient {
 
         let response = self.client.get_default_dimension_member_by_dimension_gid(request).await?;
 
-        let grpc_member = response.into_inner();
+        let _grpc_member = response.into_inner();
 
         Ok(mdd::Member {
             // gid: grpc_member.gid,
@@ -95,6 +95,32 @@ impl GrpcClient {
             };
 
             Ok(dim_role)
+    }
+
+    pub async fn get_dimension_role_by_name(
+        &mut self,
+        cube_gid: u64,
+        dimension_role_name: &String,
+    ) -> Result<mdd::DimensionRole, Box<dyn std::error::Error>> {
+        // 构造请求数据
+        let request = Request::new(olapmeta::GetDimensionRoleByNameRequest {
+            cube_gid,
+            dimension_role_name: dimension_role_name.clone(),
+        });
+    
+        // 调用 gRPC 服务
+        let response = self.client.get_dimension_role_by_name(request).await?;
+    
+        // 提取响应数据
+        let grpc_dim_role = response.into_inner();
+    
+        // 将 grpc response 转换为 mdd::DimensionRole
+        let dim_role = mdd::DimensionRole {
+            dimension_gid: grpc_dim_role.dimension_gid,
+            // 这里可以根据需要添加其他字段
+        };
+    
+        Ok(dim_role)
     }
 
 }

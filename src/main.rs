@@ -123,13 +123,13 @@ async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> () {
 
     // 生成多维查询上下文
     // let context = tokio::runtime::Runtime::new().unwrap().block_on(ast_selstat.gen_md_context());
-    let context = ast_selstat.gen_md_context().await;
+    let mut context = ast_selstat.gen_md_context().await;
     // println!("Multi-Dimensonal Query Context:\n{:#?}", context);
 
     /*
      * 构建真实的多维查询坐标轴
      */
-    let _axes = ast_selstat.build_axes(&context);
+    let _axes = ast_selstat.build_axes(&mut context).await;
 }
 
 #[cfg(test)]
@@ -140,14 +140,14 @@ mod tests {
     #[test]
     fn test_handle_stat() {
         tokio::runtime::Runtime::new().unwrap().block_on(
-            handle_stat(String::from("MDX"), mdx_demo())    
+            handle_stat(String::from("MDX"), _mdx_demo())    
         );
     }
 
     #[test]
     fn test_handle_stat_2() {
         tokio::runtime::Runtime::new().unwrap().block_on(
-            handle_stat(String::from("MDX"), mdx_demo_2_axposstr())    
+            handle_stat(String::from("MDX"), _mdx_demo_2_axposstr())    
         );
     }
 }
