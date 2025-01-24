@@ -47,6 +47,14 @@ service OlapMetaService {
     
     // 根据维度 GID 查询默认维度成员
     rpc GetDefaultDimensionMemberByDimensionGid (GetDefaultDimensionMemberRequest) returns (GrpcMember);
+
+    // 根据 GID 查询 DimensionRole
+    rpc GetDimensionRoleByGid (GetDimensionRoleByGidRequest) returns (GrpcDimensionRole);
+}
+
+// 定义 DimensionRole 查询请求消息
+message GetDimensionRoleByGidRequest {
+    uint64 dimensionRoleGid = 1;    // 请求的 DimensionRole GID
 }
 
 message GrpcDimensionRole {
