@@ -5,6 +5,7 @@ use olapmeta::olap_meta_service_client::OlapMetaServiceClient;
 use olapmeta::{CubeGidRequest, CubeNameRequest, CubeMetaResponse};
 use olapmeta::GetDimensionRolesByCubeGidRequest;
 use olapmeta::GetDefaultDimensionMemberRequest;
+use olapmeta::GetDimensionRoleByGidRequest;
 
 use crate::mdd;
 
@@ -76,6 +77,24 @@ impl GrpcClient {
             // level: grpc_member.level,
             // parent_gid: grpc_member.parent_gid,
         })
+    }
+
+    pub async fn get_dimension_role_by_gid(&mut self, dim_role_gid: u64)
+        -> Result<mdd::DimensionRole, Box<dyn std::error::Error>> {
+
+            let req = GetDimensionRoleByGidRequest {
+                dimension_role_gid: dim_role_gid
+            };
+
+            let response = self.client.get_dimension_role_by_gid(req).await?;
+
+            let grpc_dim_role = response.into_inner();
+
+            let dim_role = mdd::DimensionRole {
+                dimension_gid: grpc_dim_role.dimension_gid,
+            };
+
+            Ok(dim_role)
     }
 
 }
