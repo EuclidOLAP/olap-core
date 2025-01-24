@@ -41,7 +41,7 @@ pub enum MultiDimensionalEntity {
 #[derive(Debug)]
 pub struct MultiDimensionalContext {
     pub cube: Cube,
-    pub ref_tuple: Tuple, // defautl slice tuple
+    pub def_tuple: Tuple, // defautl slice tuple
     pub grpc_client: GrpcClient,
 }
 

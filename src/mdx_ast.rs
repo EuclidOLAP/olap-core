@@ -145,7 +145,7 @@ impl AstSelectionStatement {
 
         mdd::MultiDimensionalContext {
             cube,
-            ref_tuple: cube_def_tuple,
+            def_tuple: cube_def_tuple,
             grpc_client: grpc_cli,
         }
     }
@@ -205,6 +205,13 @@ impl AstSelectionStatement {
 
     pub async fn build_axes(&self, context: &mut mdd::MultiDimensionalContext) -> Vec<mdd::Axis> {
         println!("AstSelectionStatement::build_axes() >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+
+        /* TODO
+         * MultiDimensionalContext.def_tuple表示Cube的默认Tuple，
+         * 这里需要根据MDX语句中的where子句来生成新的Tuple，
+         * 并将其与MultiDimensionalContext.def_tuple进行合并，
+         * 目前还没有实现，先用默认的Cube的Tuple代替。
+         */
 
         // MDX语句中是否包含where
         if let Some(slice) = &self.basic_slice {
