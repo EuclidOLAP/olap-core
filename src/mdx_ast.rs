@@ -80,7 +80,7 @@ pub enum AstSet {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstAxis {
-    Def { ast_set: AstSet, pos: u64 },
+    SetDefinition { ast_set: AstSet, pos: u64 },
 }
 
 #[derive(Clone, Debug, PartialEq)]
