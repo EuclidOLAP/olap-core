@@ -83,6 +83,12 @@ pub enum AstAxis {
     SetDefinition { ast_set: AstSet, pos: u64 },
 }
 
+// // TODO: 这里需要实现 AstAxis::generate_fiducial_tuple() 方法
+// impl AstAxis {
+//     // fn generate_fiducial_tuple(&self, context: &mut mdd::MultiDimensionalContext) -> mdd::Tuple {
+//     // }
+// }
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct AstSelectionStatement {
     pub axes: Vec<AstAxis>,
