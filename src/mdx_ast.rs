@@ -2,6 +2,10 @@ use crate::mdd;
 use crate::mdd::MultiDimensionalEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
 
+trait Materializable {
+    async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity;
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ExtMDXStatement {
     Querying { basic_cube: AstCube },
@@ -16,18 +20,18 @@ pub struct AstSeg {
     pub seg_str: Option<String>,
 }
 
-impl AstSeg {
-    pub async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
+impl Materializable for AstSeg {
+    async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
 
         // 由于是在多维查询上下文中，所以一般应该返回带有角色信息的实体
         // 首先判断是否有 gid，如果有，则通过 gid 查询，如果没有，则通过 seg_str 查询
         match (self.gid, &self.seg_str) {
             (Some(gid), _) => {
-                println!("/////////////////////////////////////////// context.find_entity_by_gid( {} );", gid);
+                println!("@#/////////////////////////////////////////// context.find_entity_by_gid( {} );", gid);
                 context.find_entity_by_gid(gid).await
             },
             (None, Some(seg_str)) => {
-                println!("/////////////////////////////////////////// context.find_entity_by_str( {} );", seg_str);
+                println!("#@/////////////////////////////////////////// context.find_entity_by_str( {} );", seg_str);
                 context.find_entity_by_str(seg_str).await
             },
             (None, None) => {
@@ -42,8 +46,8 @@ pub enum AstSegments {
     Segs(Vec<AstSeg>),
 }
 
-impl AstSegments {
-    pub async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
+impl Materializable for  AstSegments {
+    async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
         match self {
             AstSegments::Segs(segs) => {
                 let ast_seg = segs.iter().next().unwrap();
@@ -58,8 +62,8 @@ pub enum AstTuple {
     SegsList(Vec<AstSegments>),
 }
 
-impl AstTuple {
-    pub async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
+impl Materializable for  AstTuple {
+    async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
         match self {
             AstTuple::SegsList(segs_list) => {
                 let ast_segments = segs_list.iter().next().unwrap();
