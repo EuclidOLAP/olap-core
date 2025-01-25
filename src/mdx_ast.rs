@@ -1,5 +1,10 @@
 use crate::mdd;
+use crate::mdd::MultiDimensionalEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
+
+trait Materializable {
+    async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity;
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ExtMDXStatement {
@@ -15,20 +20,19 @@ pub struct AstSeg {
     pub seg_str: Option<String>,
 }
 
-impl AstSeg {
-    pub async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) /*-> MultiDimensionalEntity*/ {
-        println!("AstSeg::materialize() >---------------------------------");
+impl Materializable for AstSeg {
+    async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
 
         // 由于是在多维查询上下文中，所以一般应该返回带有角色信息的实体
         // 首先判断是否有 gid，如果有，则通过 gid 查询，如果没有，则通过 seg_str 查询
         match (self.gid, &self.seg_str) {
             (Some(gid), _) => {
-                context.find_entity_by_gid(gid).await;
-                println!("/////////////////////////////////////////// context.find_entity_by_gid( {} );", gid);
+                println!("@#/////////////////////////////////////////// context.find_entity_by_gid( {} );", gid);
+                context.find_entity_by_gid(gid).await
             },
             (None, Some(seg_str)) => {
-                context.find_entity_by_str(seg_str).await;
-                println!("/////////////////////////////////////////// context.find_entity_by_str( {} );", seg_str);
+                println!("#@/////////////////////////////////////////// context.find_entity_by_str( {} );", seg_str);
+                context.find_entity_by_str(seg_str).await
             },
             (None, None) => {
                 panic!("Both gid and seg_str are None, cannot query!");
@@ -42,13 +46,12 @@ pub enum AstSegments {
     Segs(Vec<AstSeg>),
 }
 
-impl AstSegments {
-    pub async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) /* -> MultiDimensionalEntity */ {
-        println!("AstSegments::materialize() >>>>>>>>>>");
+impl Materializable for  AstSegments {
+    async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
         match self {
             AstSegments::Segs(segs) => {
                 let ast_seg = segs.iter().next().unwrap();
-                ast_seg.materialize(context).await;
+                ast_seg.materialize(context).await
             },
         }
     }
@@ -59,13 +62,12 @@ pub enum AstTuple {
     SegsList(Vec<AstSegments>),
 }
 
-impl AstTuple {
-    pub async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) {
-        println!("AstTuple::materialize() >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+impl Materializable for  AstTuple {
+    async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
         match self {
             AstTuple::SegsList(segs_list) => {
                 let ast_segments = segs_list.iter().next().unwrap();
-                ast_segments.materialize(context).await;
+                ast_segments.materialize(context).await
             },
         }
     }
@@ -144,7 +146,7 @@ impl AstSelectionStatement {
 
         mdd::MultiDimensionalContext {
             cube,
-            ref_tuple: cube_def_tuple,
+            def_tuple: cube_def_tuple,
             grpc_client: grpc_cli,
         }
     }
@@ -205,6 +207,13 @@ impl AstSelectionStatement {
     pub async fn build_axes(&self, context: &mut mdd::MultiDimensionalContext) -> Vec<mdd::Axis> {
         println!("AstSelectionStatement::build_axes() >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
+        /* TODO
+         * MultiDimensionalContext.def_tuple表示Cube的默认Tuple，
+         * 这里需要根据MDX语句中的where子句来生成新的Tuple，
+         * 并将其与MultiDimensionalContext.def_tuple进行合并，
+         * 目前还没有实现，先用默认的Cube的Tuple代替。
+         */
+
         // MDX语句中是否包含where
         if let Some(slice) = &self.basic_slice {
             slice.materialize(context).await;
@@ -218,6 +227,17 @@ impl AstSelectionStatement {
         // );
 
         let axes_count = self.axes.len();
+
+        // /* TODO
+        //  * 核心逻辑
+        //  */
+        // for i in 0..axes_count {
+        //     for j in 0..axes_count {
+        //         // 在这里可以使用 i 和 j 进行嵌套的循环操作
+        //         println!("Processing axes ({}, {})", i, j);
+        //     }
+        // }
+
         // println!(
         //     ">>> axes_count >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>: {}",
         //     axes_count
