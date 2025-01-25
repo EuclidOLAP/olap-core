@@ -226,6 +226,17 @@ impl AstSelectionStatement {
         // );
 
         let axes_count = self.axes.len();
+
+        // /* TODO
+        //  * 核心逻辑
+        //  */
+        // for i in 0..axes_count {
+        //     for j in 0..axes_count {
+        //         // 在这里可以使用 i 和 j 进行嵌套的循环操作
+        //         println!("Processing axes ({}, {})", i, j);
+        //     }
+        // }
+
         // println!(
         //     ">>> axes_count >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>: {}",
         //     axes_count
