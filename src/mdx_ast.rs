@@ -1,9 +1,12 @@
 use crate::mdd;
-use crate::mdd::{ MultiDimensionalEntity, Tuple };
+use crate::mdd::{MultiDimensionalEntity, Tuple};
 use crate::olapmeta_grpc_client::GrpcClient;
 
 trait Materializable {
-    async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity;
+    async fn materialize(
+        &self,
+        context: &mut mdd::MultiDimensionalContext,
+    ) -> MultiDimensionalEntity;
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -21,19 +24,21 @@ pub struct AstSeg {
 }
 
 impl Materializable for AstSeg {
-    async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
-
+    async fn materialize(
+        &self,
+        context: &mut mdd::MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
         // 由于是在多维查询上下文中，所以一般应该返回带有角色信息的实体
         // 首先判断是否有 gid，如果有，则通过 gid 查询，如果没有，则通过 seg_str 查询
         match (self.gid, &self.seg_str) {
             (Some(gid), _) => {
                 println!("@#/////////////////////////////////////////// context.find_entity_by_gid( {} );", gid);
                 context.find_entity_by_gid(gid).await
-            },
+            }
             (None, Some(seg_str)) => {
                 println!("#@/////////////////////////////////////////// context.find_entity_by_str( {} );", seg_str);
                 context.find_entity_by_str(seg_str).await
-            },
+            }
             (None, None) => {
                 panic!("Both gid and seg_str are None, cannot query!");
             }
@@ -46,13 +51,16 @@ pub enum AstSegments {
     Segs(Vec<AstSeg>),
 }
 
-impl Materializable for  AstSegments {
-    async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
+impl Materializable for AstSegments {
+    async fn materialize(
+        &self,
+        context: &mut mdd::MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
         match self {
             AstSegments::Segs(segs) => {
                 let ast_seg = segs.iter().next().unwrap();
                 ast_seg.materialize(context).await
-            },
+            }
         }
     }
 }
@@ -62,13 +70,16 @@ pub enum AstTuple {
     SegsList(Vec<AstSegments>),
 }
 
-impl Materializable for  AstTuple {
-    async fn materialize(&self, context: &mut mdd::MultiDimensionalContext) -> MultiDimensionalEntity {
+impl Materializable for AstTuple {
+    async fn materialize(
+        &self,
+        context: &mut mdd::MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
         match self {
             AstTuple::SegsList(segs_list) => {
                 let ast_segments = segs_list.iter().next().unwrap();
                 ast_segments.materialize(context).await
-            },
+            }
         }
     }
 }
@@ -240,7 +251,6 @@ impl AstSelectionStatement {
             // slice_tuple = context.cube_def_tuple.clone();
             // ????????????????????????????????????????
         }
-
 
         // println!(
         //     "build_axes .. . ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
