@@ -69,18 +69,18 @@ impl MultiDimensionalContext {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Tuple {
     pub member_roles: Vec<MemberRole>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MemberRole {
     pub dim_role: DimensionRole,
     pub member: Member,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DimensionRole {
     // pub gid: u64,
     // pub name: String,
@@ -91,7 +91,7 @@ pub struct DimensionRole {
 // #[derive(Debug)]
 // pub struct Dimension {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Member {
     // pub gid: u64,
     // pub name: String,
