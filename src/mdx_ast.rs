@@ -5,6 +5,7 @@ use crate::olapmeta_grpc_client::GrpcClient;
 trait Materializable {
     async fn materialize(
         &self,
+        slice_tuple: &Tuple,
         context: &mut mdd::MultiDimensionalContext,
     ) -> MultiDimensionalEntity;
 }
@@ -26,17 +27,18 @@ pub struct AstSeg {
 impl Materializable for AstSeg {
     async fn materialize(
         &self,
+        slice_tuple: &Tuple,
         context: &mut mdd::MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         // 由于是在多维查询上下文中，所以一般应该返回带有角色信息的实体
         // 首先判断是否有 gid，如果有，则通过 gid 查询，如果没有，则通过 seg_str 查询
         match (self.gid, &self.seg_str) {
             (Some(gid), _) => {
-                println!("@#/////////////////////////////////////////// context.find_entity_by_gid( {} );", gid);
+                // println!("@#/////////////////////////////////////////// context.find_entity_by_gid( {} );", gid);
                 context.find_entity_by_gid(gid).await
             }
             (None, Some(seg_str)) => {
-                println!("#@/////////////////////////////////////////// context.find_entity_by_str( {} );", seg_str);
+                // println!("#@/////////////////////////////////////////// context.find_entity_by_str( {} );", seg_str);
                 context.find_entity_by_str(seg_str).await
             }
             (None, None) => {
@@ -54,12 +56,13 @@ pub enum AstSegments {
 impl Materializable for AstSegments {
     async fn materialize(
         &self,
+        slice_tuple: &Tuple,
         context: &mut mdd::MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         match self {
             AstSegments::Segs(segs) => {
                 let ast_seg = segs.iter().next().unwrap();
-                ast_seg.materialize(context).await
+                ast_seg.materialize(slice_tuple, context).await
             }
         }
     }
@@ -73,12 +76,13 @@ pub enum AstTuple {
 impl Materializable for AstTuple {
     async fn materialize(
         &self,
+        slice_tuple: &Tuple,
         context: &mut mdd::MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         match self {
             AstTuple::SegsList(segs_list) => {
                 let ast_segments = segs_list.iter().next().unwrap();
-                ast_segments.materialize(context).await
+                ast_segments.materialize(slice_tuple, context).await
             }
         }
     }
@@ -222,10 +226,10 @@ impl AstSelectionStatement {
     }
 
     pub async fn build_axes(&self, context: &mut mdd::MultiDimensionalContext) -> Vec<mdd::Axis> {
-        println!("AstSelectionStatement::build_axes() >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+        // println!("AstSelectionStatement::build_axes() >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
         // 在解析AST时向函数调用栈深处传递的用于限定Cube切片范围的Tuple
-        let slice_tuple: Tuple;
+        let slice_tuple = context.cube_def_tuple.clone();
 
         /* TODO
          * MultiDimensionalContext.def_tuple表示Cube的默认Tuple，
@@ -235,7 +239,7 @@ impl AstSelectionStatement {
          */
         if let Some(slice) = &self.basic_slice {
             // mdx with `where statement`
-            // let ssssssssssssssssssssssss = slice.materialize(context).await;
+            let md_entity = slice.materialize(&slice_tuple, context).await;
 
             // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // let where_tuple = match slice.materialize(context).await {
@@ -245,11 +249,6 @@ impl AstSelectionStatement {
 
             // slice_tuple = (&context.cube_def_tuple).merge(&where_tuple);
             // ???????????????????????????????????????
-        } else {
-            // mdx without `where statement`
-            // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // slice_tuple = context.cube_def_tuple.clone();
-            // ????????????????????????????????????????
         }
 
         // println!(
