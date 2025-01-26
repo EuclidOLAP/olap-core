@@ -131,7 +131,7 @@ pub SetWrap: mdx_ast::AstSet = {
 // COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
 pub Axis: mdx_ast::AstAxis = {
   <ast_set:SetWrap> "on" <axpos:AxisPos> => {
-    mdx_ast::AstAxis::Def{
+    mdx_ast::AstAxis::SetDefinition {
       ast_set,
       pos: axpos,
     }

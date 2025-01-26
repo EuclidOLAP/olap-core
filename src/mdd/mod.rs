@@ -30,6 +30,7 @@ impl GidType {
 // #[derive(PartialEq)]
 pub enum MultiDimensionalEntity {
     DimensionRoleWrap(DimensionRole),
+    TupleWrap(Tuple),
     // MemberRole(MemberRole),
     // Cube(Cube),           // 立方体实体
     // Dimension(Dimension), // 维度实体
@@ -41,7 +42,7 @@ pub enum MultiDimensionalEntity {
 #[derive(Debug)]
 pub struct MultiDimensionalContext {
     pub cube: Cube,
-    pub def_tuple: Tuple, // defautl slice tuple
+    pub cube_def_tuple: Tuple, // defautl slice tuple, MDX `where statement`
     pub grpc_client: GrpcClient,
 }
 
