@@ -19,30 +19,29 @@ pub enum ExtMDXStatement {
 pub struct AstCube {}
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct AstSeg {
-    pub gid: Option<u64>,
-    pub seg_str: Option<String>,
+pub enum AstSeg {
+    Gid(u64),
+    Str(String),
+    GidStr(u64, String),
 }
 
 impl Materializable for AstSeg {
     async fn materialize(
         &self,
-        slice_tuple: &Tuple,
+        _slice_tuple: &Tuple,
         context: &mut mdd::MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         // 由于是在多维查询上下文中，所以一般应该返回带有角色信息的实体
         // 首先判断是否有 gid，如果有，则通过 gid 查询，如果没有，则通过 seg_str 查询
-        match (self.gid, &self.seg_str) {
-            (Some(gid), _) => {
-                // println!("@#/////////////////////////////////////////// context.find_entity_by_gid( {} );", gid);
-                context.find_entity_by_gid(gid).await
+        match self {
+            AstSeg::Gid(gid) => {
+                context.find_entity_by_gid(*gid).await
             }
-            (None, Some(seg_str)) => {
-                // println!("#@/////////////////////////////////////////// context.find_entity_by_str( {} );", seg_str);
+            AstSeg::Str(seg_str) => {
                 context.find_entity_by_str(seg_str).await
             }
-            (None, None) => {
-                panic!("Both gid and seg_str are None, cannot query!");
+            AstSeg::GidStr(gid, _) => {
+                context.find_entity_by_gid(*gid).await
             }
         }
     }
@@ -131,18 +130,16 @@ impl AstSelectionStatement {
             None => panic!("In method AstSelectionStatement::gen_md_context(): cube is empty!"),
         };
 
-        // 通过 gid 或 seg_str 查询 Cube
-        let gid_opt = ast_seg.gid;
-
-        if let Some(gid) = gid_opt {
-            // println!("CCD >>> gid: {}", gid);
-            cube = self.fetch_cube_by_gid(&mut grpc_cli, gid).await;
-        } else {
-            let seg_str_opt = &ast_seg.seg_str;
-            let seg_str = seg_str_opt.as_ref().unwrap_or_else(|| {
-                panic!("In method AstSelectionStatement::gen_md_context(): cube seg_str is empty!")
-            });
-            cube = self.fetch_cube_by_name(&mut grpc_cli, seg_str).await;
+        match ast_seg {
+            AstSeg::Gid(gid) => {
+                cube = self.fetch_cube_by_gid(&mut grpc_cli, *gid).await;
+            }
+            AstSeg::Str(seg_str) => {
+                cube = self.fetch_cube_by_name(&mut grpc_cli, seg_str).await;
+            }
+            AstSeg::GidStr(gid, _) => {
+                cube = self.fetch_cube_by_gid(&mut grpc_cli, *gid).await;
+            }
         }
 
         let mut cube_def_tuple = mdd::Tuple {

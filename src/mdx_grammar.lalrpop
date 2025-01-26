@@ -56,22 +56,13 @@ extern {
 // multi-dimensional object segment
 pub Seg: mdx_ast::AstSeg = {
   "&" <int:"int"> => {
-    mdx_ast::AstSeg {
-      gid: Some(int),
-      seg_str: None,
-    }
+    mdx_ast::AstSeg::Gid(int)
   },
   "&" <int:"int"> <bra_str:"BracketedString"> => {
-    mdx_ast::AstSeg {
-      gid: Some(int),
-      seg_str: Some(bra_str),
-    }
+    mdx_ast::AstSeg::GidStr(int, bra_str)
   },
   <bra_str:"BracketedString"> => {
-    mdx_ast::AstSeg {
-      gid: None,
-      seg_str: Some(bra_str),
-    }
+    mdx_ast::AstSeg::Str(bra_str)
   },
 }
 
