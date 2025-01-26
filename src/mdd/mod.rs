@@ -42,7 +42,7 @@ pub enum MultiDimensionalEntity {
 #[derive(Debug)]
 pub struct MultiDimensionalContext {
     pub cube: Cube,
-    pub where_tuple: Tuple, // defautl slice tuple, MDX `where statement`
+    pub cube_def_tuple: Tuple, // defautl slice tuple, MDX `where statement`
     pub grpc_client: GrpcClient,
 }
 
