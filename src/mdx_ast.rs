@@ -224,9 +224,21 @@ impl AstSelectionStatement {
          */
         if let Some(slice) = &self.basic_slice {
             // mdx with `where statement`
-            slice.materialize(context).await;
+            // let ssssssssssssssssssssssss = slice.materialize(context).await;
+
+            // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // let where_tuple = match slice.materialize(context).await {
+            //     MultiDimensionalEntity::TupleWrap(tuple) => tuple,
+            //     _ => panic!("The entity is not a TupleWrap variant."),
+            // };
+
+            // slice_tuple = (&context.cube_def_tuple).merge(&where_tuple);
+            // ???????????????????????????????????????
         } else {
             // mdx without `where statement`
+            // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // slice_tuple = context.cube_def_tuple.clone();
+            // ????????????????????????????????????????
         }
 
 
