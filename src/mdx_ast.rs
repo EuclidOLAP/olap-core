@@ -62,6 +62,36 @@ impl Materializable for AstSegments {
             AstSegments::Segs(segs) => {
                 let ast_seg = segs.iter().next().unwrap();
                 ast_seg.materialize(slice_tuple, context).await
+
+
+                // TODO 示例代码 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                /*
+                以下是一个 Rust 程序片段，展示了如何获取一个迭代器，取出第一个元素进行特殊处理，然后循环迭代完剩余的元素。
+                在这个示例中，使用一个整数向量的迭代器来进行演示。
+
+                fn main() {
+                    // 创建一个整数向量
+                    let numbers = vec![1, 2, 3, 4, 5];
+
+                    // 获取向量的迭代器
+                    let mut iter = numbers.into_iter();
+
+                    // 使用 next 方法取出第一个元素
+                    if let Some(first_element) = iter.next() {
+                        // 对第一个元素进行特殊处理
+                        println!("第一个元素是: {}", first_element);
+                        println!("对第一个元素进行特殊处理，比如将其乘以 10: {}", first_element * 10);
+                    }
+
+                    // 循环迭代剩余的元素
+                    for element in iter {
+                        println!("剩余元素: {}", element);
+                    }
+                }
+                 */
+                // ???????????????????????????????????????????????????????????????????????????????
+
+
             }
         }
     }
