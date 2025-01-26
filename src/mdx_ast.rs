@@ -1,5 +1,5 @@
 use crate::mdd;
-use crate::mdd::MultiDimensionalEntity;
+use crate::mdd::{ MultiDimensionalEntity, Tuple };
 use crate::olapmeta_grpc_client::GrpcClient;
 
 trait Materializable {
@@ -213,18 +213,20 @@ impl AstSelectionStatement {
     pub async fn build_axes(&self, context: &mut mdd::MultiDimensionalContext) -> Vec<mdd::Axis> {
         println!("AstSelectionStatement::build_axes() >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
+        // 在解析AST时向函数调用栈深处传递的用于限定Cube切片范围的Tuple
+        let slice_tuple: Tuple;
+
         /* TODO
          * MultiDimensionalContext.def_tuple表示Cube的默认Tuple，
          * 这里需要根据MDX语句中的where子句来生成新的Tuple，
          * 并将其与MultiDimensionalContext.def_tuple进行合并，
          * 目前还没有实现，先用默认的Cube的Tuple代替。
          */
-
-        // MDX语句中是否包含where
         if let Some(slice) = &self.basic_slice {
+            // mdx with `where statement`
             slice.materialize(context).await;
         } else {
-
+            // mdx without `where statement`
         }
 
 
