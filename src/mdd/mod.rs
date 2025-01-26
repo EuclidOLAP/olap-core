@@ -74,6 +74,42 @@ pub struct Tuple {
     pub member_roles: Vec<MemberRole>,
 }
 
+impl Tuple {
+    /*
+     * self:   [Goods], [Transport], [starting region], [ending region], [starting date], [completion date], [**MeasureDimRole**]
+     * other:  [Transport], [completion date], [Goods], [starting region], [ending region]
+     * result: [starting date], [**MeasureDimRole**], [Transport], [completion date], [Goods], [starting region], [ending region]
+     */
+    pub fn merge(&self, other: &Tuple) -> Self {
+        let mut result_member_roles = Vec::new();
+
+        // 遍历 self 的 member_roles
+        for ctx_mr in &self.member_roles {
+            let mut found = false;
+            // 检查 other 中是否有相同的 DimensionRole
+            for f_mr in &other.member_roles {
+                if ctx_mr.dim_role == f_mr.dim_role {
+                    found = true;
+                    break;
+                }
+            }
+            // 如果没有找到相同 gid 的 DimensionRole，则添加到结果中
+            if!found {
+                result_member_roles.push(ctx_mr.clone());
+            }
+        }
+
+        // 添加 other 的所有 member_roles 到结果中
+        for f_mr in &other.member_roles {
+            result_member_roles.push(f_mr.clone());
+        }
+
+        Tuple {
+            member_roles: result_member_roles,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct MemberRole {
     pub dim_role: DimensionRole,
