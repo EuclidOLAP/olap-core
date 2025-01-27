@@ -266,7 +266,7 @@ impl AstSelectionStatement {
          */
         if let Some(slice) = &self.basic_slice {
             // mdx with `where statement`
-            let md_entity = slice.materialize(&slice_tuple, context).await;
+            let _md_entity = slice.materialize(&slice_tuple, context).await;
 
             // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // let where_tuple = match slice.materialize(context).await {
