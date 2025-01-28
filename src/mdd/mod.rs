@@ -141,7 +141,7 @@ pub struct MemberRole {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DimensionRole {
-    // pub gid: u64,
+    pub gid: u64,
     // pub name: String,
     // pub cube_gid: u64,
     pub dimension_gid: u64,

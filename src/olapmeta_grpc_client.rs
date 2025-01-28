@@ -50,7 +50,7 @@ impl GrpcClient {
             .dimension_roles
             .into_iter()
             .map(|grpc_dr| mdd::DimensionRole {
-                // gid: grpc_dr.gid,
+                gid: grpc_dr.gid,
                 // name: grpc_dr.name,
                 // cube_gid: grpc_dr.cube_gid,
                 dimension_gid: grpc_dr.dimension_gid,
@@ -93,6 +93,7 @@ impl GrpcClient {
             let grpc_dim_role = response.into_inner();
 
             let dim_role = mdd::DimensionRole {
+                gid: grpc_dim_role.gid,
                 dimension_gid: grpc_dim_role.dimension_gid,
             };
 
@@ -118,6 +119,7 @@ impl GrpcClient {
     
         // 将 grpc response 转换为 mdd::DimensionRole
         let dim_role = mdd::DimensionRole {
+            gid: grpc_dim_role.gid,
             dimension_gid: grpc_dim_role.dimension_gid,
             // 这里可以根据需要添加其他字段
         };
