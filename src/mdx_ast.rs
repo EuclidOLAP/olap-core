@@ -165,7 +165,7 @@ impl AstSelectionStatement {
                 cube = self.fetch_cube_by_gid(&mut grpc_cli, *gid).await;
             }
             AstSeg::Str(seg_str) => {
-                cube = self.fetch_cube_by_name(&mut grpc_cli, seg_str).await;
+                cube = self.fetch_cube_by_name(&mut grpc_cli, &seg_str).await;
             }
             AstSeg::GidStr(gid, _) => {
                 cube = self.fetch_cube_by_gid(&mut grpc_cli, *gid).await;
