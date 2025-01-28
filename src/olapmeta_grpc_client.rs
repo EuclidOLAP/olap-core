@@ -6,8 +6,10 @@ use olapmeta::{CubeGidRequest, CubeNameRequest, CubeMetaResponse};
 use olapmeta::GetDimensionRolesByCubeGidRequest;
 use olapmeta::GetDefaultDimensionMemberRequest;
 use olapmeta::GetDimensionRoleByGidRequest;
+use olapmeta::LocateOlapEntityRequest;
 
 use crate::mdd;
+use crate::mdd::MultiDimensionalEntity;
 
 pub mod olapmeta {
     // include!("generated/olapmeta.rs"); // 通过 tonic-build 生成的模块
@@ -66,11 +68,11 @@ impl GrpcClient {
 
         let response = self.client.get_default_dimension_member_by_dimension_gid(request).await?;
 
-        let _grpc_member = response.into_inner();
+        let grpc_member = response.into_inner();
 
         Ok(mdd::Member {
-            // gid: grpc_member.gid,
-            // name: grpc_member.name,
+            gid: grpc_member.gid,
+            name: grpc_member.name,
             // dimension_gid: grpc_member.dimension_gid,
             // hierarchy_gid: grpc_member.hierarchy_gid,
             // level_gid: grpc_member.level_gid,
@@ -121,6 +123,32 @@ impl GrpcClient {
         };
     
         Ok(dim_role)
+    }
+
+    pub async fn locate_universal_olap_entity_by_gid(
+        &mut self,
+        origin_gid: u64,
+        target_entity_gid: u64,
+    ) -> Result<MultiDimensionalEntity, Box<dyn std::error::Error>> {
+
+        let request = Request::new(LocateOlapEntityRequest {
+            origin_gid,
+            target_entity_gid,
+            target_entity_name: "".to_string(),
+        });
+
+        let universal_olap_entity
+            = self.client.locate_universal_olap_entity_by_gid(request).await?.into_inner();
+
+        Ok(MultiDimensionalEntity::from_universal_olap_entity(&universal_olap_entity))
+    }
+
+    pub async fn locate_universal_olap_entity_by_name(
+        &mut self,
+        _origin_gid: u64,
+        _target_entity_name: &String,
+    ) -> Result<MultiDimensionalEntity, Box<dyn std::error::Error>> {
+        todo!("locate_universal_olap_entity_by_name not implemented yet.");
     }
 
 }

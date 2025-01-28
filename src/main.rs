@@ -150,4 +150,51 @@ mod tests {
             handle_stat(String::from("MDX"), _mdx_demo_2_axposstr())    
         );
     }
+
+    #[test]
+    fn test_grpc_locate_gid_1() {
+
+        async fn test_grpc_locate_gid_1_async() {
+
+            use mdd::MultiDimensionalEntity;
+            use olapmeta_grpc_client::GrpcClient;
+
+            let params: [(u64, u64); 9] = [
+                (600000000000023	, 300000000004617),
+                (600000000000022	, 300000000004173),
+                (600000000000015	, 300000000004175),
+                (600000000000015	, 300000000004072),
+                (600000000000015	, 300000000004164),
+                (600000000000008	, 300000000004531),
+                (600000000000011	, 300000000000003),
+                (600000000000023	, 300000000004612),
+                (600000000000024	, 300000000004612),
+            ];
+
+            let mut grpc_cli = GrpcClient::new("http://192.168.66.51:50051".to_string())
+                .await
+                .expect("Failed to create client");
+
+            for (origin_gid, target_entity_gid) in params {
+                let olap_entity
+                    = grpc_cli.locate_universal_olap_entity_by_gid(origin_gid, target_entity_gid)
+                    .await.unwrap();
+    
+                match olap_entity {
+                    MultiDimensionalEntity::MemberWrap(member) => {
+                        println!(">>>--->>>--->>>--->>>--->>>--->>>--->>>--->>>--->>>--->>>--->>>--->>>--->>> Member: \n{:#?}", member);
+                    }
+                    _ => {
+                        panic!("Unexpected olap_entity type: {:#?}", olap_entity);
+                    }
+                }
+            }
+
+        }
+
+        let rt = tokio::runtime::Runtime::new().unwrap();
+
+        rt.block_on(test_grpc_locate_gid_1_async());
+
+    }
 }

@@ -1,4 +1,5 @@
 use crate::olapmeta_grpc_client::GrpcClient;
+use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 
 enum GidType {
     Dimension,     // 100000000000001
@@ -25,18 +26,40 @@ impl GidType {
     }
 }
 
-// #[derive(Debug)]
+#[derive(Debug)]
 // #[derive(Clone)]
 // #[derive(PartialEq)]
 pub enum MultiDimensionalEntity {
     DimensionRoleWrap(DimensionRole),
     TupleWrap(Tuple),
+    MemberWrap(Member),
     // MemberRole(MemberRole),
     // Cube(Cube),           // 立方体实体
     // Dimension(Dimension), // 维度实体
     // Hierarchy(Hierarchy), // 层次实体
     // Level(Level),         // 层级实体
     // Member(Member),       // 成员实体
+    Nothing,
+}
+
+impl MultiDimensionalEntity {
+    pub fn from_universal_olap_entity(entity: &UniversalOlapEntity) -> Self {
+
+        let entity_type = entity.olap_entity_class.as_str();
+
+        match entity_type {
+            "Member" => {
+                MultiDimensionalEntity::MemberWrap(Member {
+                    gid: entity.gid,
+                    name: entity.name.clone(),
+                })
+            },
+            _ => {
+                panic!("Unsupported entity class: {}", entity.olap_entity_class);
+            },
+        }
+        // MultiDimensionalEntity::Nothing
+    }
 }
 
 #[derive(Debug)]
@@ -129,8 +152,8 @@ pub struct DimensionRole {
 
 #[derive(Debug, Clone)]
 pub struct Member {
-    // pub gid: u64,
-    // pub name: String,
+    pub gid: u64,
+    pub name: String,
     // pub dimension_gid: u64,
     // pub hierarchy_gid: u64,
     // pub level_gid: u64,
