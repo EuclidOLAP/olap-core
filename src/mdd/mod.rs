@@ -33,7 +33,7 @@ pub enum MultiDimensionalEntity {
     DimensionRoleWrap(DimensionRole),
     TupleWrap(Tuple),
     MemberWrap(Member),
-    // MemberRole(MemberRole),
+    MemberRoleWrap(MemberRole),
     // Cube(Cube),           // 立方体实体
     // Dimension(Dimension), // 维度实体
     // Hierarchy(Hierarchy), // 层次实体

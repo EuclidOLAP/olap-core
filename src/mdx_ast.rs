@@ -60,9 +60,10 @@ impl Materializable for AstSegments {
     ) -> MultiDimensionalEntity {
         match self {
             AstSegments::Segs(segs) => {
-                let ast_seg = segs.iter().next().unwrap();
-                ast_seg.materialize(slice_tuple, context).await
 
+                let mut segs_iter = segs.iter();
+                let ast_seg = segs_iter.next().unwrap();
+                let header: MultiDimensionalEntity = ast_seg.materialize(slice_tuple, context).await;
 
                 // TODO 示例代码 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 /*
@@ -90,7 +91,7 @@ impl Materializable for AstSegments {
                 }
                  */
                 // ???????????????????????????????????????????????????????????????????????????????
-
+                todo!("TODO: 这里需要实现 AstSegments::materialize() 方法");
 
             }
         }
@@ -110,8 +111,19 @@ impl Materializable for AstTuple {
     ) -> MultiDimensionalEntity {
         match self {
             AstTuple::SegsList(segs_list) => {
-                let ast_segments = segs_list.iter().next().unwrap();
-                ast_segments.materialize(slice_tuple, context).await
+                let mut member_roles: Vec<mdd::MemberRole> = Vec::new();
+                for segs in segs_list.iter() {
+                    let member_role_entity = segs.materialize(slice_tuple, context).await;
+                    match member_role_entity {
+                        MultiDimensionalEntity::MemberRoleWrap(member_role) => {
+                            member_roles.push(member_role);
+                        },
+                        _ => {
+                            panic!("The entity is not a MemberRoleWrap variant.");
+                        }
+                    }
+                }
+                MultiDimensionalEntity::TupleWrap(mdd::Tuple { member_roles })
             }
         }
     }
@@ -253,34 +265,24 @@ impl AstSelectionStatement {
     }
 
     pub async fn build_axes(&self, context: &mut mdd::MultiDimensionalContext) -> Vec<mdd::Axis> {
-        // println!("AstSelectionStatement::build_axes() >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
         // 在解析AST时向函数调用栈深处传递的用于限定Cube切片范围的Tuple
-        let slice_tuple = context.cube_def_tuple.clone();
+        let mut slice_tuple = context.cube_def_tuple.clone();
 
         /* TODO
-         * MultiDimensionalContext.def_tuple表示Cube的默认Tuple，
+         * MultiDimensionalContext.cube_def_tuple表示Cube的默认Tuple，
          * 这里需要根据MDX语句中的where子句来生成新的Tuple，
-         * 并将其与MultiDimensionalContext.def_tuple进行合并，
+         * 并将其与MultiDimensionalContext.cube_def_tuple进行合并，
          * 目前还没有实现，先用默认的Cube的Tuple代替。
          */
         if let Some(slice) = &self.basic_slice {
             // mdx with `where statement`
-            let _md_entity = slice.materialize(&slice_tuple, context).await;
-
-            // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // let where_tuple = match slice.materialize(context).await {
-            //     MultiDimensionalEntity::TupleWrap(tuple) => tuple,
-            //     _ => panic!("The entity is not a TupleWrap variant."),
-            // };
-
-            // slice_tuple = (&context.cube_def_tuple).merge(&where_tuple);
-            // ???????????????????????????????????????
+            let where_tuple = match slice.materialize(&slice_tuple, context).await {
+                MultiDimensionalEntity::TupleWrap(tuple) => tuple,
+                _ => panic!("The entity is not a TupleWrap variant."),
+            };
+            slice_tuple = slice_tuple.merge(&where_tuple);
         }
-
-        // println!(
-        //     "build_axes .. . ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        // );
 
         let axes_count = self.axes.len();
 
