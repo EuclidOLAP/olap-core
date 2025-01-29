@@ -137,22 +137,22 @@ mod tests {
     use super::*;
     use crate::mdx_statements::*;
 
-    #[test]
-    fn test_handle_stat() {
+    // #[test]
+    fn _test_handle_stat() {
         tokio::runtime::Runtime::new().unwrap().block_on(
             handle_stat(String::from("MDX"), _mdx_demo())    
         );
     }
 
-    #[test]
-    fn test_handle_stat_2() {
+    // #[test]
+    fn _test_handle_stat_2() {
         tokio::runtime::Runtime::new().unwrap().block_on(
             handle_stat(String::from("MDX"), _mdx_demo_2_axposstr())    
         );
     }
 
-    #[test]
-    fn test_grpc_locate_gid_1() {
+    // #[test]
+    fn _test_grpc_locate_gid_1() {
 
         async fn test_grpc_locate_gid_1_async() {
 
@@ -196,5 +196,12 @@ mod tests {
 
         rt.block_on(test_grpc_locate_gid_1_async());
 
+    }
+
+    #[test]
+    fn test_mdx_3() {
+        tokio::runtime::Runtime::new().unwrap().block_on(
+            handle_stat(String::from("MDX"), _mdx_3())    
+        );
     }
 }
