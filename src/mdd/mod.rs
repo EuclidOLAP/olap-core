@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::mdx_ast::{AstSeg, AstSegments};
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
@@ -284,4 +286,70 @@ pub struct Cube {
 pub struct Axis {
     pub set: Set,
     pub pos_num: u32,
+}
+
+impl Axis {
+    pub fn axis_vec_cartesian_product(axes: &Vec<Axis>) -> Vec<OlapVectorCoordinate> {
+
+        let count = axes.len();
+
+        if count == 0 {
+            panic!("Axis::axis_vec_cartesian_product() axes is empty.");
+        }
+
+        if count == 1 {
+            let mut ov_coordinates: Vec<OlapVectorCoordinate> = Vec::new();
+            let axis = axes.iter().next().unwrap();
+            for ax_tuple in &axis.set.tuples {
+                ov_coordinates.push(
+                    OlapVectorCoordinate {
+                        member_roles: ax_tuple.member_roles.clone(),
+                    }
+                );
+            }
+            return ov_coordinates;
+        }
+
+
+        let mut axes_itor = axes.iter();
+        let axis_left = axes_itor.next().unwrap();
+        let mut finished_tuples: Vec<Tuple> = Vec::new();
+        for ax_tuple in &axis_left.set.tuples {
+            finished_tuples.push(ax_tuple.clone());
+        }
+
+        let mut transitional_tuples: Vec<Tuple>;
+
+        for axis_right in axes_itor {
+
+            transitional_tuples = Vec::new();
+
+            for tuple in finished_tuples.iter() {
+                for rig_tuple in axis_right.set.tuples.iter() {
+                    let merged_tuple = tuple.merge(rig_tuple);
+                    transitional_tuples.push(merged_tuple);
+                }
+            }
+
+            finished_tuples = transitional_tuples;
+
+        }
+
+        let mut ov_coordinates: Vec<OlapVectorCoordinate> = Vec::new();
+        for tuple in finished_tuples {
+            ov_coordinates.push(
+                OlapVectorCoordinate {
+                    member_roles: tuple.member_roles.clone(),
+                }
+            );
+        }
+
+        ov_coordinates
+
+    }
+}
+
+#[derive(Debug)]
+pub struct OlapVectorCoordinate {
+    pub member_roles: Vec<MemberRole>,
 }

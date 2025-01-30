@@ -22,6 +22,8 @@ use crate::mdx_grammar::SelectionMDXParser;
 
 use crate::mdx_lexer::Lexer as MdxLexer;
 
+use mdd::OlapVectorCoordinate;
+
 #[derive(Debug, Default)]
 pub struct EuclidOLAPService {}
 
@@ -129,7 +131,8 @@ async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> () {
     /*
      * 构建真实的多维查询坐标轴
      */
-    let _axes = ast_selstat.build_axes(&mut context).await;
+    let axes = ast_selstat.build_axes(&mut context).await;
+    let _coordinates : Vec<OlapVectorCoordinate> = mdd::Axis::axis_vec_cartesian_product(&axes);
 }
 
 #[cfg(test)]
