@@ -120,16 +120,41 @@ pub enum AstSet {
     Tuples(Vec<AstTuple>),
 }
 
+impl AstSet {
+    async fn generate_fiducial_tuple(
+        &self,
+        slice_tuple: &Tuple,
+        context: &mut mdd::MultiDimensionalContext) -> mdd::Tuple {
+            let result;
+            match self {
+                AstSet::Tuples(tuples) => {
+                    result = match tuples.iter().next().unwrap().materialize(slice_tuple, context).await {
+                        MultiDimensionalEntity::TupleWrap(tuple) => tuple.clone(),
+                        _ => panic!("The entity is not a TupleWrap variant."),
+                    };
+                }
+            }
+            result
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstAxis {
     SetDefinition { ast_set: AstSet, pos: u64 },
 }
 
-// // TODO: 这里需要实现 AstAxis::generate_fiducial_tuple() 方法
-// impl AstAxis {
-//     // fn generate_fiducial_tuple(&self, context: &mut mdd::MultiDimensionalContext) -> mdd::Tuple {
-//     // }
-// }
+impl AstAxis {
+    async fn generate_fiducial_tuple(
+        &self,
+        slice_tuple: &Tuple,
+        context: &mut mdd::MultiDimensionalContext) -> mdd::Tuple {
+            match self {
+                AstAxis::SetDefinition { ast_set, pos } => {
+                    ast_set.generate_fiducial_tuple(slice_tuple, context).await
+                }
+            }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct AstSelectionStatement {
@@ -272,20 +297,12 @@ impl AstSelectionStatement {
 
         let axes_count = self.axes.len();
 
-        // /* TODO
-        //  * 核心逻辑
-        //  */
-        // for i in 0..axes_count {
-        //     for j in 0..axes_count {
-        //         // 在这里可以使用 i 和 j 进行嵌套的循环操作
-        //         println!("Processing axes ({}, {})", i, j);
-        //     }
-        // }
-
-        // println!(
-        //     ">>> axes_count >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>: {}",
-        //     axes_count
-        // );
+        for _ in 0..axes_count {
+            for ast_axis in self.axes.iter() {
+                let fiducial_tuple =   ast_axis.generate_fiducial_tuple(&slice_tuple, context).await;
+                slice_tuple = slice_tuple.merge(&fiducial_tuple);
+            }
+        }
 
         let mut axes: Vec<mdd::Axis> = Vec::with_capacity(axes_count);
 

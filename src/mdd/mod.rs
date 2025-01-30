@@ -33,6 +33,7 @@ impl GidType {
 pub enum MultiDimensionalEntity {
     DimensionRoleWrap(DimensionRole),
     TupleWrap(Tuple),
+    SetWrap(Set),
     MemberWrap(Member),
     MemberRoleWrap(MemberRole),
     // Cube(Cube),           // 立方体实体
@@ -119,6 +120,11 @@ impl MultiDimensionalContext {
 #[derive(Debug, Clone)]
 pub struct Tuple {
     pub member_roles: Vec<MemberRole>,
+}
+
+#[derive(Debug)]
+pub struct Set {
+
 }
 
 impl Tuple {
