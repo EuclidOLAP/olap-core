@@ -339,12 +339,6 @@ impl AstSelectionStatement {
         // 在解析AST时向函数调用栈深处传递的用于限定Cube切片范围的Tuple
         let mut slice_tuple = context.cube_def_tuple.clone();
 
-        /* TODO
-         * MultiDimensionalContext.cube_def_tuple表示Cube的默认Tuple，
-         * 这里需要根据MDX语句中的where子句来生成新的Tuple，
-         * 并将其与MultiDimensionalContext.cube_def_tuple进行合并，
-         * 目前还没有实现，先用默认的Cube的Tuple代替。
-         */
         if let Some(slice) = &self.basic_slice {
             // mdx with `where statement`
             let where_tuple = match slice.materialize(&slice_tuple, context).await {
