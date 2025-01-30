@@ -149,7 +149,7 @@ impl AstAxis {
         slice_tuple: &Tuple,
         context: &mut mdd::MultiDimensionalContext) -> mdd::Tuple {
             match self {
-                AstAxis::SetDefinition { ast_set, pos } => {
+                AstAxis::SetDefinition { ast_set, pos: _ } => {
                     ast_set.generate_fiducial_tuple(slice_tuple, context).await
                 }
             }
