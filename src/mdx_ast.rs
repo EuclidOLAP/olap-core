@@ -140,6 +140,39 @@ impl AstSet {
     }
 }
 
+impl Materializable for AstSet {
+    async fn materialize(
+        &self,
+        slice_tuple: &Tuple,
+        context: &mut mdd::MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+
+        let mut tuple_vec: Vec<Tuple> = Vec::new();
+
+        match self {
+            AstSet::Tuples(tuples) => {
+                for ast_tuple in tuples.iter() {
+                    let tuple_entity = ast_tuple.materialize(slice_tuple, context).await;
+                    match tuple_entity {
+                        MultiDimensionalEntity::TupleWrap(tuple) => {
+                            tuple_vec.push(tuple);
+                        }
+                        _ => {
+                            panic!("The entity is not a TupleWrap variant.");
+                        }
+                    }
+                }
+            }
+        }
+
+        MultiDimensionalEntity::SetWrap(mdd::Set {
+            tuples: tuple_vec,
+        })
+
+        // todo!("Not implemented yet.")
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstAxis {
     SetDefinition { ast_set: AstSet, pos: u64 },
@@ -156,6 +189,34 @@ impl AstAxis {
                 ast_set.generate_fiducial_tuple(slice_tuple, context).await
             }
         }
+    }
+
+    async fn translate_to_axis(
+        &self,
+        slice_tuple: &Tuple,
+        context: &mut mdd::MultiDimensionalContext,
+    ) -> mdd::Axis {
+
+        let axis: mdd::Axis;
+
+        match self {
+            AstAxis::SetDefinition { ast_set, pos } => {
+                let olap_entity = ast_set.materialize(slice_tuple, context).await;
+                match olap_entity {
+                    MultiDimensionalEntity::SetWrap(set) => {
+                        axis = mdd::Axis {
+                            set,
+                            pos_num: *pos as u32,
+                        };
+                    },
+                    _ => {
+                        panic!("The entity is not a SetWrap variant.");
+                    }
+                }
+            }
+        }
+        axis
+        // todo!("Not implemented yet.")
     }
 }
 
@@ -310,10 +371,15 @@ impl AstSelectionStatement {
 
         let mut axes: Vec<mdd::Axis> = Vec::with_capacity(axes_count);
 
-        for i in 0..axes_count {
-            let axis = mdd::Axis { pos_num: i as u32 };
+        for ast_axis in self.axes.iter() {
+            let axis: mdd::Axis = ast_axis.translate_to_axis(&slice_tuple, context).await;
             axes.push(axis);
         }
+
+        // for i in 0..axes_count {
+        //     let axis = mdd::Axis { pos_num: i as u32 };
+        //     axes.push(axis);
+        // }
 
         axes
     }

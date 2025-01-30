@@ -138,7 +138,9 @@ pub struct Tuple {
 }
 
 #[derive(Debug)]
-pub struct Set {}
+pub struct Set {
+    pub tuples: Vec<Tuple>,
+}
 
 impl Tuple {
     /*
@@ -278,6 +280,8 @@ pub struct Cube {
     pub name: String,
 }
 
+#[derive(Debug)]
 pub struct Axis {
+    pub set: Set,
     pub pos_num: u32,
 }
