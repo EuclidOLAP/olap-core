@@ -1,5 +1,6 @@
 use crate::mdd;
 use crate::mdd::{MultiDimensionalEntity, Tuple};
+use crate::mdd::MultiDimensionalEntityLocator;
 use crate::olapmeta_grpc_client::GrpcClient;
 
 trait Materializable {
@@ -60,8 +61,24 @@ impl Materializable for AstSegments {
     ) -> MultiDimensionalEntity {
         match self {
             AstSegments::Segs(segs) => {
-                let ast_seg = segs.iter().next().unwrap();
-                ast_seg.materialize(slice_tuple, context).await
+
+                let result: MultiDimensionalEntity;
+
+                let mut segs_iter = segs.iter();
+                let ast_seg = segs_iter.next().unwrap();
+                let head_entity: MultiDimensionalEntity = ast_seg.materialize(slice_tuple, context).await;
+
+                match head_entity {
+                    MultiDimensionalEntity::DimensionRoleWrap(dim_role) => {
+                        let tail_segs = AstSegments::Segs((&segs[1..]).to_vec());
+                        result = dim_role.locate_entity(&tail_segs, slice_tuple, context).await;
+                    },
+                    _ => {
+                        panic!("In method AstSegments::materialize(): head_entity is not a DimensionRoleWrap!");
+                    }
+                }
+                result
+
             }
         }
     }
@@ -80,8 +97,19 @@ impl Materializable for AstTuple {
     ) -> MultiDimensionalEntity {
         match self {
             AstTuple::SegsList(segs_list) => {
-                let ast_segments = segs_list.iter().next().unwrap();
-                ast_segments.materialize(slice_tuple, context).await
+                let mut member_roles: Vec<mdd::MemberRole> = Vec::new();
+                for segs in segs_list.iter() {
+                    let member_role_entity = segs.materialize(slice_tuple, context).await;
+                    match member_role_entity {
+                        MultiDimensionalEntity::MemberRoleWrap(member_role) => {
+                            member_roles.push(member_role);
+                        },
+                        _ => {
+                            panic!("The entity is not a MemberRoleWrap variant.");
+                        }
+                    }
+                }
+                MultiDimensionalEntity::TupleWrap(mdd::Tuple { member_roles })
             }
         }
     }
@@ -92,16 +120,41 @@ pub enum AstSet {
     Tuples(Vec<AstTuple>),
 }
 
+impl AstSet {
+    async fn generate_fiducial_tuple(
+        &self,
+        slice_tuple: &Tuple,
+        context: &mut mdd::MultiDimensionalContext) -> mdd::Tuple {
+            let result;
+            match self {
+                AstSet::Tuples(tuples) => {
+                    result = match tuples.iter().next().unwrap().materialize(slice_tuple, context).await {
+                        MultiDimensionalEntity::TupleWrap(tuple) => tuple.clone(),
+                        _ => panic!("The entity is not a TupleWrap variant."),
+                    };
+                }
+            }
+            result
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstAxis {
     SetDefinition { ast_set: AstSet, pos: u64 },
 }
 
-// // TODO: 这里需要实现 AstAxis::generate_fiducial_tuple() 方法
-// impl AstAxis {
-//     // fn generate_fiducial_tuple(&self, context: &mut mdd::MultiDimensionalContext) -> mdd::Tuple {
-//     // }
-// }
+impl AstAxis {
+    async fn generate_fiducial_tuple(
+        &self,
+        slice_tuple: &Tuple,
+        context: &mut mdd::MultiDimensionalContext) -> mdd::Tuple {
+            match self {
+                AstAxis::SetDefinition { ast_set, pos } => {
+                    ast_set.generate_fiducial_tuple(slice_tuple, context).await
+                }
+            }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct AstSelectionStatement {
@@ -135,7 +188,7 @@ impl AstSelectionStatement {
                 cube = self.fetch_cube_by_gid(&mut grpc_cli, *gid).await;
             }
             AstSeg::Str(seg_str) => {
-                cube = self.fetch_cube_by_name(&mut grpc_cli, seg_str).await;
+                cube = self.fetch_cube_by_name(&mut grpc_cli, &seg_str).await;
             }
             AstSeg::GidStr(gid, _) => {
                 cube = self.fetch_cube_by_gid(&mut grpc_cli, *gid).await;
@@ -223,51 +276,33 @@ impl AstSelectionStatement {
     }
 
     pub async fn build_axes(&self, context: &mut mdd::MultiDimensionalContext) -> Vec<mdd::Axis> {
-        // println!("AstSelectionStatement::build_axes() >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
         // 在解析AST时向函数调用栈深处传递的用于限定Cube切片范围的Tuple
-        let slice_tuple = context.cube_def_tuple.clone();
+        let mut slice_tuple = context.cube_def_tuple.clone();
 
         /* TODO
-         * MultiDimensionalContext.def_tuple表示Cube的默认Tuple，
+         * MultiDimensionalContext.cube_def_tuple表示Cube的默认Tuple，
          * 这里需要根据MDX语句中的where子句来生成新的Tuple，
-         * 并将其与MultiDimensionalContext.def_tuple进行合并，
+         * 并将其与MultiDimensionalContext.cube_def_tuple进行合并，
          * 目前还没有实现，先用默认的Cube的Tuple代替。
          */
         if let Some(slice) = &self.basic_slice {
             // mdx with `where statement`
-            let md_entity = slice.materialize(&slice_tuple, context).await;
-
-            // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // let where_tuple = match slice.materialize(context).await {
-            //     MultiDimensionalEntity::TupleWrap(tuple) => tuple,
-            //     _ => panic!("The entity is not a TupleWrap variant."),
-            // };
-
-            // slice_tuple = (&context.cube_def_tuple).merge(&where_tuple);
-            // ???????????????????????????????????????
+            let where_tuple = match slice.materialize(&slice_tuple, context).await {
+                MultiDimensionalEntity::TupleWrap(tuple) => tuple,
+                _ => panic!("The entity is not a TupleWrap variant."),
+            };
+            slice_tuple = slice_tuple.merge(&where_tuple);
         }
-
-        // println!(
-        //     "build_axes .. . ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        // );
 
         let axes_count = self.axes.len();
 
-        // /* TODO
-        //  * 核心逻辑
-        //  */
-        // for i in 0..axes_count {
-        //     for j in 0..axes_count {
-        //         // 在这里可以使用 i 和 j 进行嵌套的循环操作
-        //         println!("Processing axes ({}, {})", i, j);
-        //     }
-        // }
-
-        // println!(
-        //     ">>> axes_count >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>: {}",
-        //     axes_count
-        // );
+        for _ in 0..axes_count {
+            for ast_axis in self.axes.iter() {
+                let fiducial_tuple =   ast_axis.generate_fiducial_tuple(&slice_tuple, context).await;
+                slice_tuple = slice_tuple.merge(&fiducial_tuple);
+            }
+        }
 
         let mut axes: Vec<mdd::Axis> = Vec::with_capacity(axes_count);
 

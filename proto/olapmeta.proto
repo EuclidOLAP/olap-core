@@ -2,6 +2,19 @@ syntax = "proto3";
 
 package olapmeta;
 
+// Universal Olap Entity
+message UniversalOlapEntity {
+    string olapEntityClass = 1;
+    uint64 gid = 2;
+    string name = 3;
+}
+
+message LocateOlapEntityRequest {
+    uint64 originGid = 1;
+    uint64 targetEntityGid = 2;
+    string targetEntityName = 3;
+}
+
 // 定义 CubeMeta 对象
 message CubeMeta {
     uint64 gid = 1;    // 无符号 64 位整数
@@ -53,6 +66,10 @@ service OlapMetaService {
 
     // 根据名称查询 DimensionRole
     rpc GetDimensionRoleByName (GetDimensionRoleByNameRequest) returns (GrpcDimensionRole);
+
+    rpc LocateUniversalOlapEntityByGid  (LocateOlapEntityRequest) returns (UniversalOlapEntity);
+
+    rpc LocateUniversalOlapEntityByName (LocateOlapEntityRequest) returns (UniversalOlapEntity);
 }
 
 // 定义 DimensionRole 查询请求消息
