@@ -1,6 +1,6 @@
-use crate::olapmeta_grpc_client::GrpcClient;
+use crate::mdx_ast::{AstSeg, AstSegments};
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
-use crate::mdx_ast::{ AstSeg, AstSegments };
+use crate::olapmeta_grpc_client::GrpcClient;
 
 enum GidType {
     Dimension,     // 100000000000001
@@ -46,19 +46,16 @@ pub enum MultiDimensionalEntity {
 
 impl MultiDimensionalEntity {
     pub fn from_universal_olap_entity(entity: &UniversalOlapEntity) -> Self {
-
         let entity_type = entity.olap_entity_class.as_str();
 
         match entity_type {
-            "Member" => {
-                MultiDimensionalEntity::MemberWrap(Member {
-                    gid: entity.gid,
-                    name: entity.name.clone(),
-                })
-            },
+            "Member" => MultiDimensionalEntity::MemberWrap(Member {
+                gid: entity.gid,
+                name: entity.name.clone(),
+            }),
             _ => {
                 panic!("Unsupported entity class: {}", entity.olap_entity_class);
-            },
+            }
         }
         // MultiDimensionalEntity::Nothing
     }
@@ -96,23 +93,41 @@ pub struct MultiDimensionalContext {
 
 impl MultiDimensionalContext {
     pub async fn find_entity_by_gid(&mut self, gid: u64) -> MultiDimensionalEntity {
-        println!("MultiDimensionalContext >>>>>>>>>>>>>>>>>>>>>>>> find_entity_by_gid({})", gid);
+        println!(
+            "MultiDimensionalContext >>>>>>>>>>>>>>>>>>>>>>>> find_entity_by_gid({})",
+            gid
+        );
         match GidType::entity_type(gid) {
             GidType::DimensionRole => {
-                let dim_role = self.grpc_client.get_dimension_role_by_gid(gid).await.unwrap();
-                println!("!!!@@@###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~dim_role: {:?}", dim_role);
+                let dim_role = self
+                    .grpc_client
+                    .get_dimension_role_by_gid(gid)
+                    .await
+                    .unwrap();
+                println!(
+                    "!!!@@@###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~dim_role: {:?}",
+                    dim_role
+                );
                 MultiDimensionalEntity::DimensionRoleWrap(dim_role)
-            },
+            }
             _ => {
-                panic!("Invalid gid type provided. Expected DimensionRole but found a different type.");
+                panic!(
+                    "Invalid gid type provided. Expected DimensionRole but found a different type."
+                );
             }
         }
     }
 
     pub async fn find_entity_by_str(&mut self, seg: &String) -> MultiDimensionalEntity {
-        println!("MultiDimensionalContext >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> find_entity_by_str({})", seg);
-        let dim_role
-            = self.grpc_client.get_dimension_role_by_name(self.cube.gid, seg).await.unwrap();
+        println!(
+            "MultiDimensionalContext >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> find_entity_by_str({})",
+            seg
+        );
+        let dim_role = self
+            .grpc_client
+            .get_dimension_role_by_name(self.cube.gid, seg)
+            .await
+            .unwrap();
         MultiDimensionalEntity::DimensionRoleWrap(dim_role)
     }
 }
@@ -123,9 +138,7 @@ pub struct Tuple {
 }
 
 #[derive(Debug)]
-pub struct Set {
-
-}
+pub struct Set {}
 
 impl Tuple {
     /*
@@ -147,7 +160,7 @@ impl Tuple {
                 }
             }
             // 如果没有找到相同 gid 的 DimensionRole，则添加到结果中
-            if!found {
+            if !found {
                 result_member_roles.push(ctx_mr.clone());
             }
         }
@@ -178,7 +191,6 @@ pub struct DimensionRole {
 }
 
 impl MultiDimensionalEntityLocator for DimensionRole {
-
     async fn locate_entity(
         &self,
         segs: &AstSegments,
@@ -191,13 +203,17 @@ impl MultiDimensionalEntityLocator for DimensionRole {
                 let seg = seg_list.iter().next().unwrap();
                 entity = match seg {
                     AstSeg::Gid(gid) => self.locate_entity_by_gid(*gid, slice_tuple, context).await,
-                    AstSeg::GidStr(gid, _) => self.locate_entity_by_gid(*gid, slice_tuple, context).await,
+                    AstSeg::GidStr(gid, _) => {
+                        self.locate_entity_by_gid(*gid, slice_tuple, context).await
+                    }
                     AstSeg::Str(seg) => self.locate_entity_by_seg(seg, slice_tuple, context).await,
                 };
             }
         }
         match entity {
-            MultiDimensionalEntity::MemberRoleWrap(member_role) => MultiDimensionalEntity::MemberRoleWrap(member_role),
+            MultiDimensionalEntity::MemberRoleWrap(member_role) => {
+                MultiDimensionalEntity::MemberRoleWrap(member_role)
+            }
             _ => {
                 panic!("[DimRole] locate_entity() Unsupported entity class.");
             }
@@ -210,10 +226,12 @@ impl MultiDimensionalEntityLocator for DimensionRole {
         _slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-
         // let dim_gid = self.dimension_gid;
-        let olap_entity = context.grpc_client
-            .locate_universal_olap_entity_by_gid(self.gid, gid).await.unwrap();
+        let olap_entity = context
+            .grpc_client
+            .locate_universal_olap_entity_by_gid(self.gid, gid)
+            .await
+            .unwrap();
 
         match olap_entity {
             MultiDimensionalEntity::MemberWrap(member) => {
@@ -223,7 +241,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
                 };
                 // return MultiDimensionalEntity::MemberRoleWrap(member_role);
                 MultiDimensionalEntity::MemberRoleWrap(member_role)
-            },
+            }
             _ => {
                 panic!("[DimRole] locate_entity_by_gid() Unsupported entity class.");
             }
