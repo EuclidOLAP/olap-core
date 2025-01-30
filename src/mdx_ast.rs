@@ -1,6 +1,6 @@
 use crate::mdd;
-use crate::mdd::{MultiDimensionalEntity, Tuple};
 use crate::mdd::MultiDimensionalEntityLocator;
+use crate::mdd::{MultiDimensionalEntity, Tuple};
 use crate::olapmeta_grpc_client::GrpcClient;
 
 trait Materializable {
@@ -35,15 +35,9 @@ impl Materializable for AstSeg {
         // 由于是在多维查询上下文中，所以一般应该返回带有角色信息的实体
         // 首先判断是否有 gid，如果有，则通过 gid 查询，如果没有，则通过 seg_str 查询
         match self {
-            AstSeg::Gid(gid) => {
-                context.find_entity_by_gid(*gid).await
-            }
-            AstSeg::Str(seg_str) => {
-                context.find_entity_by_str(seg_str).await
-            }
-            AstSeg::GidStr(gid, _) => {
-                context.find_entity_by_gid(*gid).await
-            }
+            AstSeg::Gid(gid) => context.find_entity_by_gid(*gid).await,
+            AstSeg::Str(seg_str) => context.find_entity_by_str(seg_str).await,
+            AstSeg::GidStr(gid, _) => context.find_entity_by_gid(*gid).await,
         }
     }
 }
@@ -61,24 +55,25 @@ impl Materializable for AstSegments {
     ) -> MultiDimensionalEntity {
         match self {
             AstSegments::Segs(segs) => {
-
                 let result: MultiDimensionalEntity;
 
                 let mut segs_iter = segs.iter();
                 let ast_seg = segs_iter.next().unwrap();
-                let head_entity: MultiDimensionalEntity = ast_seg.materialize(slice_tuple, context).await;
+                let head_entity: MultiDimensionalEntity =
+                    ast_seg.materialize(slice_tuple, context).await;
 
                 match head_entity {
                     MultiDimensionalEntity::DimensionRoleWrap(dim_role) => {
                         let tail_segs = AstSegments::Segs((&segs[1..]).to_vec());
-                        result = dim_role.locate_entity(&tail_segs, slice_tuple, context).await;
-                    },
+                        result = dim_role
+                            .locate_entity(&tail_segs, slice_tuple, context)
+                            .await;
+                    }
                     _ => {
                         panic!("In method AstSegments::materialize(): head_entity is not a DimensionRoleWrap!");
                     }
                 }
                 result
-
             }
         }
     }
@@ -103,7 +98,7 @@ impl Materializable for AstTuple {
                     match member_role_entity {
                         MultiDimensionalEntity::MemberRoleWrap(member_role) => {
                             member_roles.push(member_role);
-                        },
+                        }
                         _ => {
                             panic!("The entity is not a MemberRoleWrap variant.");
                         }
@@ -124,17 +119,57 @@ impl AstSet {
     async fn generate_fiducial_tuple(
         &self,
         slice_tuple: &Tuple,
-        context: &mut mdd::MultiDimensionalContext) -> mdd::Tuple {
-            let result;
-            match self {
-                AstSet::Tuples(tuples) => {
-                    result = match tuples.iter().next().unwrap().materialize(slice_tuple, context).await {
-                        MultiDimensionalEntity::TupleWrap(tuple) => tuple.clone(),
-                        _ => panic!("The entity is not a TupleWrap variant."),
-                    };
+        context: &mut mdd::MultiDimensionalContext,
+    ) -> mdd::Tuple {
+        let result;
+        match self {
+            AstSet::Tuples(tuples) => {
+                result = match tuples
+                    .iter()
+                    .next()
+                    .unwrap()
+                    .materialize(slice_tuple, context)
+                    .await
+                {
+                    MultiDimensionalEntity::TupleWrap(tuple) => tuple.clone(),
+                    _ => panic!("The entity is not a TupleWrap variant."),
+                };
+            }
+        }
+        result
+    }
+}
+
+impl Materializable for AstSet {
+    async fn materialize(
+        &self,
+        slice_tuple: &Tuple,
+        context: &mut mdd::MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+
+        let mut tuple_vec: Vec<Tuple> = Vec::new();
+
+        match self {
+            AstSet::Tuples(tuples) => {
+                for ast_tuple in tuples.iter() {
+                    let tuple_entity = ast_tuple.materialize(slice_tuple, context).await;
+                    match tuple_entity {
+                        MultiDimensionalEntity::TupleWrap(tuple) => {
+                            tuple_vec.push(tuple);
+                        }
+                        _ => {
+                            panic!("The entity is not a TupleWrap variant.");
+                        }
+                    }
                 }
             }
-            result
+        }
+
+        MultiDimensionalEntity::SetWrap(mdd::Set {
+            tuples: tuple_vec,
+        })
+
+        // todo!("Not implemented yet.")
     }
 }
 
@@ -147,12 +182,41 @@ impl AstAxis {
     async fn generate_fiducial_tuple(
         &self,
         slice_tuple: &Tuple,
-        context: &mut mdd::MultiDimensionalContext) -> mdd::Tuple {
-            match self {
-                AstAxis::SetDefinition { ast_set, pos } => {
-                    ast_set.generate_fiducial_tuple(slice_tuple, context).await
+        context: &mut mdd::MultiDimensionalContext,
+    ) -> mdd::Tuple {
+        match self {
+            AstAxis::SetDefinition { ast_set, pos: _ } => {
+                ast_set.generate_fiducial_tuple(slice_tuple, context).await
+            }
+        }
+    }
+
+    async fn translate_to_axis(
+        &self,
+        slice_tuple: &Tuple,
+        context: &mut mdd::MultiDimensionalContext,
+    ) -> mdd::Axis {
+
+        let axis: mdd::Axis;
+
+        match self {
+            AstAxis::SetDefinition { ast_set, pos } => {
+                let olap_entity = ast_set.materialize(slice_tuple, context).await;
+                match olap_entity {
+                    MultiDimensionalEntity::SetWrap(set) => {
+                        axis = mdd::Axis {
+                            set,
+                            pos_num: *pos as u32,
+                        };
+                    },
+                    _ => {
+                        panic!("The entity is not a SetWrap variant.");
+                    }
                 }
             }
+        }
+        axis
+        // todo!("Not implemented yet.")
     }
 }
 
@@ -276,7 +340,6 @@ impl AstSelectionStatement {
     }
 
     pub async fn build_axes(&self, context: &mut mdd::MultiDimensionalContext) -> Vec<mdd::Axis> {
-
         // 在解析AST时向函数调用栈深处传递的用于限定Cube切片范围的Tuple
         let mut slice_tuple = context.cube_def_tuple.clone();
 
@@ -299,17 +362,24 @@ impl AstSelectionStatement {
 
         for _ in 0..axes_count {
             for ast_axis in self.axes.iter() {
-                let fiducial_tuple =   ast_axis.generate_fiducial_tuple(&slice_tuple, context).await;
+                let fiducial_tuple = ast_axis
+                    .generate_fiducial_tuple(&slice_tuple, context)
+                    .await;
                 slice_tuple = slice_tuple.merge(&fiducial_tuple);
             }
         }
 
         let mut axes: Vec<mdd::Axis> = Vec::with_capacity(axes_count);
 
-        for i in 0..axes_count {
-            let axis = mdd::Axis { pos_num: i as u32 };
+        for ast_axis in self.axes.iter() {
+            let axis: mdd::Axis = ast_axis.translate_to_axis(&slice_tuple, context).await;
             axes.push(axis);
         }
+
+        // for i in 0..axes_count {
+        //     let axis = mdd::Axis { pos_num: i as u32 };
+        //     axes.push(axis);
+        // }
 
         axes
     }
