@@ -146,7 +146,6 @@ impl Materializable for AstSet {
         slice_tuple: &Tuple,
         context: &mut mdd::MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-
         let mut tuple_vec: Vec<Tuple> = Vec::new();
 
         match self {
@@ -165,9 +164,7 @@ impl Materializable for AstSet {
             }
         }
 
-        MultiDimensionalEntity::SetWrap(mdd::Set {
-            tuples: tuple_vec,
-        })
+        MultiDimensionalEntity::SetWrap(mdd::Set { tuples: tuple_vec })
 
         // todo!("Not implemented yet.")
     }
@@ -196,7 +193,6 @@ impl AstAxis {
         slice_tuple: &Tuple,
         context: &mut mdd::MultiDimensionalContext,
     ) -> mdd::Axis {
-
         let axis: mdd::Axis;
 
         match self {
@@ -208,7 +204,7 @@ impl AstAxis {
                             set,
                             pos_num: *pos as u32,
                         };
-                    },
+                    }
                     _ => {
                         panic!("The entity is not a SetWrap variant.");
                     }
@@ -376,43 +372,6 @@ impl AstSelectionStatement {
             axes.push(axis);
         }
 
-        // for i in 0..axes_count {
-        //     let axis = mdd::Axis { pos_num: i as u32 };
-        //     axes.push(axis);
-        // }
-
         axes
     }
 }
-
-// #[derive(Clone, Debug, PartialEq)]
-// pub enum Statement {
-//     Variable {
-//         name: String,
-//         value: Box<Expression>,
-//     },
-//     Print {
-//         value: Box<Expression>,
-//     },
-// }
-
-// #[derive(Clone, Debug, PartialEq)]
-// pub enum Expression {
-//     Integer(i64),
-//     Variable(String),
-//     BinaryOperation {
-//         lhs: Box<Expression>,
-//         operator: Operator,
-//         rhs: Box<Expression>,
-//     },
-// }
-
-// #[derive(Clone, Debug, PartialEq)]
-// pub enum Operator {
-//     Add,
-//     Sub,
-//     Mul,
-//     Div,
-//     #[cfg(feature = "bit")]
-//     Shl,
-// }
