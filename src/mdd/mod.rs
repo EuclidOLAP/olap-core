@@ -54,6 +54,7 @@ impl MultiDimensionalEntity {
             "Member" => MultiDimensionalEntity::MemberWrap(Member {
                 gid: entity.gid,
                 name: entity.name.clone(),
+                measure_index: entity.measure_index,
             }),
             _ => {
                 panic!("Unsupported entity class: {}", entity.olap_entity_class);
@@ -192,6 +193,7 @@ pub struct DimensionRole {
     // pub name: String,
     // pub cube_gid: u64,
     pub dimension_gid: u64,
+    pub measure_flag: bool,
 }
 
 impl MultiDimensionalEntityLocator for DimensionRole {
@@ -274,6 +276,7 @@ pub struct Member {
     // pub level_gid: u64,
     // pub level: u64,
     // pub parent_gid: u64,
+    pub measure_index: u32,
 }
 
 #[derive(Debug)]

@@ -54,6 +54,7 @@ impl GrpcClient {
                 // name: grpc_dr.name,
                 // cube_gid: grpc_dr.cube_gid,
                 dimension_gid: grpc_dr.dimension_gid,
+                measure_flag: grpc_dr.measure_flag == 1,
             })
             .collect();
 
@@ -78,6 +79,7 @@ impl GrpcClient {
             // level_gid: grpc_member.level_gid,
             // level: grpc_member.level,
             // parent_gid: grpc_member.parent_gid,
+            measure_index: grpc_member.measure_index,
         })
     }
 
@@ -95,6 +97,7 @@ impl GrpcClient {
             let dim_role = mdd::DimensionRole {
                 gid: grpc_dim_role.gid,
                 dimension_gid: grpc_dim_role.dimension_gid,
+                measure_flag: grpc_dim_role.measure_flag == 1,
             };
 
             Ok(dim_role)
@@ -121,7 +124,7 @@ impl GrpcClient {
         let dim_role = mdd::DimensionRole {
             gid: grpc_dim_role.gid,
             dimension_gid: grpc_dim_role.dimension_gid,
-            // 这里可以根据需要添加其他字段
+            measure_flag: grpc_dim_role.measure_flag == 1,
         };
     
         Ok(dim_role)
