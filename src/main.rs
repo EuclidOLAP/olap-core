@@ -6,6 +6,9 @@ mod olapmeta_grpc_client;
 mod mdd;
 mod mdx_statements;
 
+mod agg_service_client;
+use agg_service_client::basic_aggregates;
+
 mod euclidolap {
     include!("grpc/euclidolap.rs");
 }
@@ -132,7 +135,10 @@ async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> () {
      * 构建真实的多维查询坐标轴
      */
     let axes = ast_selstat.build_axes(&mut context).await;
-    let _coordinates : Vec<OlapVectorCoordinate> = mdd::Axis::axis_vec_cartesian_product(&axes);
+    let coordinates : Vec<OlapVectorCoordinate> = mdd::Axis::axis_vec_cartesian_product(&axes);
+    let result = basic_aggregates(coordinates, &context).await;
+
+    println!("{:?}", result);
 }
 
 #[cfg(test)]
