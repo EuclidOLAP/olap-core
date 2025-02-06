@@ -62,7 +62,7 @@ fn transform_coordinates(coordinates: Vec<OlapVectorCoordinate>) -> Vec<GrpcVect
         let mut measure_index: u32 = 0;
         member_roles.retain(|mr| {
             measure_index = mr.member.measure_index;
-            mr.dim_role.measure_flag
+            !mr.dim_role.measure_flag
         });
         member_roles.sort_by_key(|mr| mr.dim_role.gid);
 

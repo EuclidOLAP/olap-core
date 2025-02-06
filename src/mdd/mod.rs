@@ -292,7 +292,7 @@ pub struct Axis {
 }
 
 impl Axis {
-    pub fn axis_vec_cartesian_product(axes: &Vec<Axis>) -> Vec<OlapVectorCoordinate> {
+    pub fn axis_vec_cartesian_product(axes: &Vec<Axis>, context: &MultiDimensionalContext) -> Vec<OlapVectorCoordinate> {
 
         let count = axes.len();
 
@@ -342,7 +342,7 @@ impl Axis {
         for tuple in finished_tuples {
             ov_coordinates.push(
                 OlapVectorCoordinate {
-                    member_roles: tuple.member_roles.clone(),
+                    member_roles: context.cube_def_tuple.merge(&tuple).member_roles,
                 }
             );
         }
