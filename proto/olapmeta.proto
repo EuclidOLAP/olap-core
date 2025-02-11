@@ -7,6 +7,7 @@ message UniversalOlapEntity {
     string olapEntityClass = 1;
     uint64 gid = 2;
     string name = 3;
+    uint32 measureIndex = 4;
 }
 
 message LocateOlapEntityRequest {
@@ -43,6 +44,7 @@ message GrpcMember {
     uint64 levelGid = 5;
     uint64 level = 6;
     uint64 parentGid = 7;
+    uint32 measureIndex = 8;
 }
 
 // 根据维度 GID 查询默认维度成员的请求消息
@@ -88,6 +90,7 @@ message GrpcDimensionRole {
     string name         = 2;
     uint64 cubeGid      = 3; // unsinged 64-bit integer
     uint64 dimensionGid = 4; // unsinged 64-bit integer
+    uint64 measureFlag  = 5; // 1 - it is a meaure dimension role; 0 - it is not.
 }
 
 // 定义根据 Cube GID 查询 GrpcDimensionRole 列表的请求消息

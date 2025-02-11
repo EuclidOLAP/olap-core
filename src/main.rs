@@ -6,6 +6,9 @@ mod olapmeta_grpc_client;
 mod mdd;
 mod mdx_statements;
 
+mod agg_service_client;
+use agg_service_client::basic_aggregates;
+
 mod euclidolap {
     include!("grpc/euclidolap.rs");
 }
@@ -21,6 +24,8 @@ lalrpop_mod!(pub mdx_grammar);
 use crate::mdx_grammar::SelectionMDXParser;
 
 use crate::mdx_lexer::Lexer as MdxLexer;
+
+use mdd::OlapVectorCoordinate;
 
 #[derive(Debug, Default)]
 pub struct EuclidOLAPService {}
@@ -129,7 +134,11 @@ async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> () {
     /*
      * 构建真实的多维查询坐标轴
      */
-    let _axes = ast_selstat.build_axes(&mut context).await;
+    let axes = ast_selstat.build_axes(&mut context).await;
+    let coordinates : Vec<OlapVectorCoordinate> = mdd::Axis::axis_vec_cartesian_product(&axes, &context);
+    let result = basic_aggregates(coordinates, &context).await;
+
+    println!("{:?}", result);
 }
 
 #[cfg(test)]
