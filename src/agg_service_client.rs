@@ -61,7 +61,9 @@ fn transform_coordinates(coordinates: Vec<OlapVectorCoordinate>) -> Vec<GrpcVect
         let mut member_roles = ocv.member_roles;
         let mut measure_index: u32 = 0;
         member_roles.retain(|mr| {
-            measure_index = mr.member.measure_index;
+            if mr.dim_role.measure_flag {
+                measure_index = mr.member.measure_index;
+            }
             !mr.dim_role.measure_flag
         });
         member_roles.sort_by_key(|mr| mr.dim_role.gid);
@@ -72,7 +74,7 @@ fn transform_coordinates(coordinates: Vec<OlapVectorCoordinate>) -> Vec<GrpcVect
         };
 
         for mr in member_roles {
-            gvc.member_gid_arr.push(mr.member.gid);
+            gvc.member_gid_arr.push(if mr.member.level == 0 { 0 } else { mr.member.gid });
         }
 
         grpc_coordinates.push(gvc);
