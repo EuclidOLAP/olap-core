@@ -8,6 +8,7 @@ message UniversalOlapEntity {
     uint64 gid = 2;
     string name = 3;
     uint32 measureIndex = 4;
+    uint32 level = 5;
 }
 
 message LocateOlapEntityRequest {
@@ -42,7 +43,7 @@ message GrpcMember {
     uint64 dimensionGid = 3;
     uint64 hierarchyGid = 4;
     uint64 levelGid = 5;
-    uint64 level = 6;
+    uint32 level = 6;
     uint64 parentGid = 7;
     uint32 measureIndex = 8;
 }
