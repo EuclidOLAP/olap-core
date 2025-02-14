@@ -54,6 +54,7 @@ impl MultiDimensionalEntity {
             "Member" => MultiDimensionalEntity::MemberWrap(Member {
                 gid: entity.gid,
                 name: entity.name.clone(),
+                level: entity.level,
                 measure_index: entity.measure_index,
             }),
             _ => {
@@ -274,7 +275,7 @@ pub struct Member {
     // pub dimension_gid: u64,
     // pub hierarchy_gid: u64,
     // pub level_gid: u64,
-    // pub level: u64,
+    pub level: u32,
     // pub parent_gid: u64,
     pub measure_index: u32,
 }

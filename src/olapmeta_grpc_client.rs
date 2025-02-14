@@ -77,7 +77,7 @@ impl GrpcClient {
             // dimension_gid: grpc_member.dimension_gid,
             // hierarchy_gid: grpc_member.hierarchy_gid,
             // level_gid: grpc_member.level_gid,
-            // level: grpc_member.level,
+            level: grpc_member.level,
             // parent_gid: grpc_member.parent_gid,
             measure_index: grpc_member.measure_index,
         })
