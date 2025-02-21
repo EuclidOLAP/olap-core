@@ -1,5 +1,5 @@
 use euclidolap::olap_api_server::{OlapApi, OlapApiServer};
-use euclidolap::{OlapRequest, OlapResponse, Row};
+use euclidolap::{OlapRequest, OlapResponse, GrpcOlapVector};
 use tonic::{transport::Server, Request, Response, Status};
 
 mod olapmeta_grpc_client;
@@ -48,36 +48,21 @@ impl OlapApi for EuclidOLAPService {
         //     operation_type, statement
         // );
 
-        handle_stat(operation_type, statement).await;
-
-        // 伪造一个响应，返回结果
-        let response = OlapResponse {
-            rows: vec![
-                Row {
-                    columns: vec![
-                        "[ cell: R 0 C 0 ]".to_string(),
-                        "[ cell: R 0 C 1 ]".to_string(),
-                        "[ cell: R 0 C 2 ]".to_string(),
-                    ],
-                },
-                Row {
-                    columns: vec![
-                        "[ cell: R 1 C 0 ]".to_string(),
-                        "[ cell: R 1 C 1 ]".to_string(),
-                        "[ cell: R 1 C 2 ]".to_string(),
-                    ],
-                },
-                Row {
-                    columns: vec![
-                        "AAAsssDDD".to_string(),
-                        "111222333".to_string(),
-                        "@@@###$$$".to_string(),
-                    ],
-                },
-            ],
+        let mut olap_resp = OlapResponse {
+            vectors: vec![],
         };
 
-        Ok(Response::new(response))
+        let (_cube_gid, measures_values, null_flags) = handle_stat(operation_type, statement).await;
+
+        for (val, null_flag) in measures_values.into_iter().zip(null_flags.into_iter()) {
+            let vector = GrpcOlapVector {
+                null_flag,
+                val,
+            };
+            olap_resp.vectors.push(vector);
+        }
+
+        Ok(Response::new(olap_resp))
     }
 }
 
@@ -102,7 +87,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn handle_stat(optype: String, statement: String) -> () {
+async fn handle_stat(optype: String, statement: String) -> (u64, Vec<f64>, Vec<bool>) {
     match optype.as_str() {
         "MDX" => {
             // println!("\n\n\n>>> @@@ Operation Type: {}", optype);
@@ -111,7 +96,7 @@ async fn handle_stat(optype: String, statement: String) -> () {
                 .parse(MdxLexer::new(statement.as_str()))
                 .unwrap();
 
-            exe_md_query(ast_selstat).await;
+            exe_md_query(ast_selstat).await
         }
         _ => {
             panic!(
@@ -120,10 +105,9 @@ async fn handle_stat(optype: String, statement: String) -> () {
             );
         }
     }
-    ()
 }
 
-async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> () {
+async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> (u64, Vec<f64>, Vec<bool>) {
     // println!("---+++ exe_md_query +++--- {:#?}", ast_selstat);
 
     // 生成多维查询上下文
@@ -136,9 +120,7 @@ async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> () {
      */
     let axes = ast_selstat.build_axes(&mut context).await;
     let coordinates : Vec<OlapVectorCoordinate> = mdd::Axis::axis_vec_cartesian_product(&axes, &context);
-    let result = basic_aggregates(coordinates, &context).await;
-
-    println!("{:?}", result);
+    basic_aggregates(coordinates, &context).await
 }
 
 #[cfg(test)]

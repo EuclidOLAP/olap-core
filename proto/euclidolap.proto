@@ -24,18 +24,11 @@ message OLAPRequest {
   string statement = 2;
 }
 
-// OLAP响应消息
-// OLAP response message
 message OLAPResponse {
-  // 返回的行数据，是一个包含多个Row的列表
-  // The rows of data returned, a list containing multiple Row entries
-  repeated Row rows = 1;
+  repeated GrpcOlapVector vectors = 1;
 }
 
-// 行数据定义
-// Definition of a row of data
-message Row {
-  // 每一行的列数据，是一个字符串的列表
-  // The columns of a row, a list of strings
-  repeated string columns = 1;
+message GrpcOlapVector {
+  bool null_flag = 1;
+  double val = 2;
 }
