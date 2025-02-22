@@ -165,8 +165,6 @@ impl Materializable for AstSet {
         }
 
         MultiDimensionalEntity::SetWrap(mdd::Set { tuples: tuple_vec })
-
-        // todo!("Not implemented yet.")
     }
 }
 
@@ -212,7 +210,6 @@ impl AstAxis {
             }
         }
         axis
-        // todo!("Not implemented yet.")
     }
 }
 
