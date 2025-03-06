@@ -152,5 +152,5 @@ pub SelectionMDX: mdx_ast::AstSelectionStatement = {
       cube,
       basic_slice: Some(tuple),
     }
-  }
+  },
 }
