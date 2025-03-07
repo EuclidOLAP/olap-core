@@ -19,6 +19,15 @@ impl From<ParseIntError> for LexicalError {
 #[logos(skip r"[ \t\n\f]+", skip r"#.*\n?", skip r"--.*\n?", error = LexicalError)]
 pub enum Token {
 
+    #[regex("(?i)With")]
+    With,
+    #[regex("(?i)Member")]
+    Member,
+    #[regex("(?i)Set")]
+    Set,
+    #[regex("(?i)As")]
+    As,
+
     #[regex("(?i)select")]
     Select,
     #[regex("(?i)on")]
