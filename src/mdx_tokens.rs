@@ -42,6 +42,15 @@ pub enum Token {
     })]
     BracketedString(String),
 
+    #[token("+")]
+    Plus,
+    #[token("-")]
+    Minus,
+    #[token("*")]
+    Multiplied,
+    #[token("/")]
+    Divided,
+
     #[token("{")]
     CurlyBraceLeft,
     #[token("}")]
