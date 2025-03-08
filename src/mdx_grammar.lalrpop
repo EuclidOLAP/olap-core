@@ -27,10 +27,16 @@ extern {
     "Chapters" => Token::Chapters,
     "Sections" => Token::Sections,
 
+    "+" => Token::Plus,
+    "-" => Token::Minus,
+    "*" => Token::Multiplied,
+    "/" => Token::Divided,
+
     "," => Token::Comma,
     "&" => Token::Ampersand,
     "." => Token::Dot,
     "int" => Token::Integer(<u64>),
+    "double" => Token::Double(<f64>),
 
     "(" => Token::RoundBracketLeft,
     ")" => Token::RoundBracketRight,
@@ -88,6 +94,14 @@ Tuple: Vec<mdx_ast::AstSegments> = {
 pub TupleWrap: mdx_ast::AstTuple = {
   "(" <tuple:Tuple> ")" => {
     mdx_ast::AstTuple::SegsList(tuple)
+  }
+}
+
+pub TupleWrap_2: mdx_ast::AstTuple = {
+  "(" <sw:SegmentsWrap> "," <tuple:Tuple> ")" => {
+    let mut list = tuple; // Vec<mdx_ast::AstSegments>
+    list.insert(0, sw); // mdx_ast::AstSegments
+    mdx_ast::AstTuple::SegsList(list)
   }
 }
 
@@ -196,7 +210,7 @@ CustomFormulaObjects: Vec<AstFormulaObject> = {
 }
 
 FormulaMember: AstFormulaObject = {
-  "member" <_segs:Segments> "as" => {
+  "member" <_segs:Segments> "as" <_exp:Expression> => {
     CustomFormulaMember
   }
 }
@@ -206,4 +220,35 @@ FormulaSet: AstFormulaObject = {
     // CustomFormulaSet
     todo!("<<< MDX Grammar Exception >>> CustomFormulaSet not implemented yet.")
   }
+}
+
+Expression: () = {
+  <_term:Term> => {
+
+  },
+  <_exp:Expression> "+" <_term:Term> => {
+
+  },
+  <_exp:Expression> "-" <_term:Term> => {
+
+  }
+}
+
+Term: () = {
+  <_factory:Factory> => {
+
+  },
+  <_term:Term> "*" <_factory:Factory> => {
+
+  },
+  <_term:Term> "/" <_factory:Factory> => {
+
+  }
+}
+
+Factory: () = {
+  <_value:"double"> => {},
+  <_segs_wrap:SegmentsWrap> => {},
+  <_tuple_wrap:TupleWrap_2> => {},
+  "(" <_exp:Expression> ")" => {},
 }
