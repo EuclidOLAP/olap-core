@@ -366,3 +366,9 @@ impl AstSelectionStatement {
         axes
     }
 }
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstFormulaObject {
+    CustomFormulaMember,
+    // CustomFormulaSet,
+}

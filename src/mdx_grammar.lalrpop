@@ -1,5 +1,7 @@
 use crate::mdx_tokens::{Token, LexicalError};
 use crate::mdx_ast;
+use crate::mdx_ast::AstFormulaObject;
+use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember/*,CustomFormulaSet*/};
 
 grammar;
 
@@ -8,6 +10,11 @@ extern {
   type Error = LexicalError;
 
   enum Token {
+    "with" => Token::With,
+    "member" => Token::Member,
+    "set" => Token::Set,
+    "as" => Token::As,
+
     "select" => Token::Select,
     "on" => Token::On,
     "from" => Token::From,
@@ -153,4 +160,50 @@ pub SelectionMDX: mdx_ast::AstSelectionStatement = {
       basic_slice: Some(tuple),
     }
   },
+  "with" <_cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> (";")? => {
+    mdx_ast::AstSelectionStatement {
+      axes,
+      cube,
+      basic_slice: None,
+    }
+  },
+  "with" <_cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
+    mdx_ast::AstSelectionStatement {
+      axes,
+      cube,
+      basic_slice: Some(tuple),
+    }
+  },
+}
+
+CustomFormulaObjects: Vec<AstFormulaObject> = {
+  <fm:FormulaMember> => {
+    vec![fm]
+  },
+  <fs:FormulaSet> => {
+    vec![fs]
+  },
+  <cfos:CustomFormulaObjects> (",")? <fm:FormulaMember> => {
+    let mut list = cfos;
+    list.push(fm);
+    list
+  },
+  <cfos:CustomFormulaObjects> (",")? <fs:FormulaSet> => {
+    let mut list = cfos;
+    list.push(fs);
+    list
+  }
+}
+
+FormulaMember: AstFormulaObject = {
+  "member" <_segs:Segments> "as" => {
+    CustomFormulaMember
+  }
+}
+
+FormulaSet: AstFormulaObject = {
+  "set" <_segs:Segments> "as" => {
+    // CustomFormulaSet
+    todo!("<<< MDX Grammar Exception >>> CustomFormulaSet not implemented yet.")
+  }
 }
