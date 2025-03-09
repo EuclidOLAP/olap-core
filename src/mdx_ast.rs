@@ -215,6 +215,7 @@ impl AstAxis {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct AstSelectionStatement {
+    pub formula_objs: Vec<AstFormulaObject>,
     pub axes: Vec<AstAxis>,
     pub cube: Vec<AstSeg>,
     pub basic_slice: Option<AstTuple>,
@@ -369,6 +370,24 @@ impl AstSelectionStatement {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstFormulaObject {
-    CustomFormulaMember,
+    CustomFormulaMember(AstSegments, AstExpression),
     // CustomFormulaSet,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstExpression {
+    pub terms: Vec<(char, AstTerm)>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstFactory {
+    FactoryNum(f64),
+    FactorySegs(AstSegments),
+    FactoryTuple(AstTuple),
+    FactoryExp(AstExpression),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstTerm {
+    pub factories: Vec<(char, AstFactory)>,
 }

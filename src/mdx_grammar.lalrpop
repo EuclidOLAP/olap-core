@@ -3,6 +3,9 @@ use crate::mdx_ast;
 use crate::mdx_ast::AstFormulaObject;
 use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember/*,CustomFormulaSet*/};
 
+use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
+use crate::mdx_ast::AstFactory::{FactoryNum,FactorySegs,FactoryTuple,FactoryExp};
+
 grammar;
 
 extern {
@@ -162,6 +165,7 @@ pub MdxStatement: mdx_ast::ExtMDXStatement = {
 pub SelectionMDX: mdx_ast::AstSelectionStatement = {
   "select" <axes:Axes> "from" <cube:Segments> (";")? => {
     mdx_ast::AstSelectionStatement {
+      formula_objs: vec![],
       axes,
       cube,
       basic_slice: None,
@@ -169,20 +173,23 @@ pub SelectionMDX: mdx_ast::AstSelectionStatement = {
   },
   "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
     mdx_ast::AstSelectionStatement {
+      formula_objs: vec![],
       axes,
       cube,
       basic_slice: Some(tuple),
     }
   },
-  "with" <_cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> (";")? => {
+  "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> (";")? => {
     mdx_ast::AstSelectionStatement {
+      formula_objs: cfos,
       axes,
       cube,
       basic_slice: None,
     }
   },
-  "with" <_cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
+  "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
     mdx_ast::AstSelectionStatement {
+      formula_objs: cfos,
       axes,
       cube,
       basic_slice: Some(tuple),
@@ -210,45 +217,69 @@ CustomFormulaObjects: Vec<AstFormulaObject> = {
 }
 
 FormulaMember: AstFormulaObject = {
-  "member" <_segs:Segments> "as" <_exp:Expression> => {
-    CustomFormulaMember
+  "member" <sw:SegmentsWrap> "as" <exp:Expression> => {
+    CustomFormulaMember(sw, exp)
   }
 }
 
 FormulaSet: AstFormulaObject = {
-  "set" <_segs:Segments> "as" => {
+  "set" <_sw:SegmentsWrap> "as" => {
     // CustomFormulaSet
     todo!("<<< MDX Grammar Exception >>> CustomFormulaSet not implemented yet.")
   }
 }
 
-Expression: () = {
-  <_term:Term> => {
-
+Expression: AstExpression = {
+  <term:Term> => {
+    AstExpression {
+      terms: vec![(' ', term)],
+    }
   },
-  <_exp:Expression> "+" <_term:Term> => {
-
+  <exp:Expression> "+" <term:Term> => {
+    let mut e = exp;
+    e.terms.push(('+', term));
+    e
   },
-  <_exp:Expression> "-" <_term:Term> => {
-
+  <exp:Expression> "-" <term:Term> => {
+    let mut e = exp;
+    e.terms.push(('-', term));
+    e
   }
 }
 
-Term: () = {
-  <_factory:Factory> => {
-
+Term: AstTerm = {
+  <factory:Factory> => {
+    AstTerm {
+      factories: vec![(' ', factory)],
+    }
   },
-  <_term:Term> "*" <_factory:Factory> => {
-
+  <term:Term> "*" <factory:Factory> => {
+    let mut t = term;
+    t.factories.push(('*', factory));
+    t
   },
-  <_term:Term> "/" <_factory:Factory> => {
-
+  <term:Term> "/" <factory:Factory> => {
+    let mut t = term;
+    t.factories.push(('/', factory));
+    t
   }
 }
 
-Factory: () = {
-  <_value:"double"> => {},
-  <_segs_wrap:SegmentsWrap> => {},
-  <_tuple_wrap:TupleWrap_2> => {},
-  "(" <_exp:Expression> ")" => {},
+Factory: AstFactory = {
+  <value:"double"> => {
+    FactoryNum(value)
+  },
+  <int_val:"int"> => {
+    let double_val: f64 = int_val as f64;
+    FactoryNum(double_val)
+  },
+  <segs_wrap:SegmentsWrap> => {
+    FactorySegs(segs_wrap)
+  },
+  <tuple_wrap:TupleWrap_2> => {
+    FactoryTuple(tuple_wrap)
+  },
+  "(" <exp:Expression> ")" => {
+    FactoryExp(exp)
+  },
 }
