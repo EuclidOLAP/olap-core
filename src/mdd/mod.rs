@@ -4,17 +4,18 @@ use crate::mdx_ast::{AstSeg, AstSegments};
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
 
-enum GidType {
+pub enum GidType {
     Dimension,     // 100000000000001
     Hierarchy,     // 200000000000001
     Member,        // 300000000000001
     Level,         // 400000000000001
     Cube,          // 500000000000001
     DimensionRole, // 600000000000001
+    FormulaMember, // 700000000000001
 }
 
 impl GidType {
-    fn entity_type(gid: u64) -> GidType {
+    pub fn entity_type(gid: u64) -> GidType {
         match gid / 1_000_000_000_000_00 { // 100000000000000
             1 => GidType::Dimension,
             2 => GidType::Hierarchy,
@@ -22,6 +23,7 @@ impl GidType {
             4 => GidType::Level,
             5 => GidType::Cube,
             6 => GidType::DimensionRole,
+            7 => GidType::FormulaMember,
             _ => panic!(
                 "Invalid gid type: {}. Expected a gid starting with 1 (Dim), 2 (Hier), 3 (Mem), 4 (Level), 5 (Cube), or 6 (DimRole)."
                 , gid),
@@ -38,11 +40,11 @@ pub enum MultiDimensionalEntity {
     SetWrap(Set),
     MemberWrap(Member),
     MemberRoleWrap(MemberRole),
+    FormulaMemberWrap,
     // Cube(Cube),           // 立方体实体
     // Dimension(Dimension), // 维度实体
     // Hierarchy(Hierarchy), // 层次实体
     // Level(Level),         // 层级实体
-    // Member(Member),       // 成员实体
     Nothing,
 }
 
