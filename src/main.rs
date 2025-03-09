@@ -103,19 +103,28 @@ async fn handle_stat(optype: String, statement: String) -> (u64, Vec<f64>, Vec<b
 }
 
 async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> (u64, Vec<f64>, Vec<bool>) {
-    // println!("---+++ exe_md_query +++--- {:#?}", ast_selstat);
-
-    // 生成多维查询上下文
-    // let context = tokio::runtime::Runtime::new().unwrap().block_on(ast_selstat.gen_md_context());
     let mut context = ast_selstat.gen_md_context().await;
-    // println!("Multi-Dimensonal Query Context:\n{:#?}", context);
 
-    /*
-     * 构建真实的多维查询坐标轴
-     */
+    println!("AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA");
+    println!("AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA");
+    println!("AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA");
+    println!("AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA AAAAAAAAAAAAA");
+
     let axes = ast_selstat.build_axes(&mut context).await;
+
+    println!("BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB");
+    println!("BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB");
+    println!("BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB");
+    println!("BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB BBBBBBBBBBBBB");
+
     let coordinates: Vec<OlapVectorCoordinate> =
         mdd::Axis::axis_vec_cartesian_product(&axes, &context);
+
+    println!("CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC");
+    println!("CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC");
+    println!("CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC");
+    println!("CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC CCCCCCCCCCCCC");
+
     basic_aggregates(coordinates, &context).await
 }
 
