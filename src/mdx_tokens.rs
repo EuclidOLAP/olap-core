@@ -1,10 +1,11 @@
 use logos::Logos;
 use std::fmt; // to implement the Display trait
-use std::num::ParseIntError;
+use std::num::{ParseFloatError, ParseIntError};
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub enum LexicalError {
     InvalidInteger(ParseIntError),
+    InvalidDouble(ParseFloatError),
     #[default]
     InvalidToken,
 }
@@ -15,9 +16,23 @@ impl From<ParseIntError> for LexicalError {
     }
 }
 
+impl From<ParseFloatError> for LexicalError {
+    fn from(err: ParseFloatError) -> Self {
+        LexicalError::InvalidDouble(err)
+    }
+}
+
 #[derive(Logos, Clone, Debug, PartialEq)]
 #[logos(skip r"[ \t\n\f]+", skip r"#.*\n?", skip r"--.*\n?", error = LexicalError)]
 pub enum Token {
+    #[regex("(?i)With")]
+    With,
+    #[regex("(?i)Member")]
+    Member,
+    #[regex("(?i)Set")]
+    Set,
+    #[regex("(?i)As")]
+    As,
 
     #[regex("(?i)select")]
     Select,
@@ -32,6 +47,15 @@ pub enum Token {
         raw[1..raw.len()-1].replace("]]", "]")
     })]
     BracketedString(String),
+
+    #[token("+")]
+    Plus,
+    #[token("-")]
+    Minus,
+    #[token("*")]
+    Multiplied,
+    #[token("/")]
+    Divided,
 
     #[token("{")]
     CurlyBraceLeft,
@@ -54,6 +78,8 @@ pub enum Token {
 
     #[regex("[0-9]+", |lex| lex.slice().parse())]
     Integer(u64),
+    #[regex(r"[0-9]+\.[0-9]+", |lex| lex.slice().parse())]
+    Double(f64),
 
     #[regex("(?i)COLUMNS")]
     Columns,
@@ -65,7 +91,6 @@ pub enum Token {
     Chapters,
     #[regex("(?i)SECTIONS")]
     Sections,
-
 }
 
 impl fmt::Display for Token {

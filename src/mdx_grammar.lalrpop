@@ -1,5 +1,10 @@
 use crate::mdx_tokens::{Token, LexicalError};
 use crate::mdx_ast;
+use crate::mdx_ast::AstFormulaObject;
+use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember/*,CustomFormulaSet*/};
+
+use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
+use crate::mdx_ast::AstFactory::{FactoryNum,FactorySegs,FactoryTuple,FactoryExp};
 
 grammar;
 
@@ -8,6 +13,11 @@ extern {
   type Error = LexicalError;
 
   enum Token {
+    "with" => Token::With,
+    "member" => Token::Member,
+    "set" => Token::Set,
+    "as" => Token::As,
+
     "select" => Token::Select,
     "on" => Token::On,
     "from" => Token::From,
@@ -20,10 +30,16 @@ extern {
     "Chapters" => Token::Chapters,
     "Sections" => Token::Sections,
 
+    "+" => Token::Plus,
+    "-" => Token::Minus,
+    "*" => Token::Multiplied,
+    "/" => Token::Divided,
+
     "," => Token::Comma,
     "&" => Token::Ampersand,
     "." => Token::Dot,
     "int" => Token::Integer(<u64>),
+    "double" => Token::Double(<f64>),
 
     "(" => Token::RoundBracketLeft,
     ")" => Token::RoundBracketRight,
@@ -84,6 +100,14 @@ pub TupleWrap: mdx_ast::AstTuple = {
   }
 }
 
+pub TupleWrap_2: mdx_ast::AstTuple = {
+  "(" <sw:SegmentsWrap> "," <tuple:Tuple> ")" => {
+    let mut list = tuple; // Vec<mdx_ast::AstSegments>
+    list.insert(0, sw); // mdx_ast::AstSegments
+    mdx_ast::AstTuple::SegsList(list)
+  }
+}
+
 Set: Vec<mdx_ast::AstTuple> = {
   <ast_tp:TupleWrap> => {
     vec![ast_tp]
@@ -141,6 +165,7 @@ pub MdxStatement: mdx_ast::ExtMDXStatement = {
 pub SelectionMDX: mdx_ast::AstSelectionStatement = {
   "select" <axes:Axes> "from" <cube:Segments> (";")? => {
     mdx_ast::AstSelectionStatement {
+      formula_objs: vec![],
       axes,
       cube,
       basic_slice: None,
@@ -148,9 +173,113 @@ pub SelectionMDX: mdx_ast::AstSelectionStatement = {
   },
   "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
     mdx_ast::AstSelectionStatement {
+      formula_objs: vec![],
       axes,
       cube,
       basic_slice: Some(tuple),
     }
+  },
+  "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> (";")? => {
+    mdx_ast::AstSelectionStatement {
+      formula_objs: cfos,
+      axes,
+      cube,
+      basic_slice: None,
+    }
+  },
+  "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
+    mdx_ast::AstSelectionStatement {
+      formula_objs: cfos,
+      axes,
+      cube,
+      basic_slice: Some(tuple),
+    }
+  },
+}
+
+CustomFormulaObjects: Vec<AstFormulaObject> = {
+  <fm:FormulaMember> => {
+    vec![fm]
+  },
+  <fs:FormulaSet> => {
+    vec![fs]
+  },
+  <cfos:CustomFormulaObjects> (",")? <fm:FormulaMember> => {
+    let mut list = cfos;
+    list.push(fm);
+    list
+  },
+  <cfos:CustomFormulaObjects> (",")? <fs:FormulaSet> => {
+    let mut list = cfos;
+    list.push(fs);
+    list
   }
+}
+
+FormulaMember: AstFormulaObject = {
+  "member" <sw:SegmentsWrap> "as" <exp:Expression> => {
+    CustomFormulaMember(sw, exp)
+  }
+}
+
+FormulaSet: AstFormulaObject = {
+  "set" <_sw:SegmentsWrap> "as" => {
+    // CustomFormulaSet
+    todo!("<<< MDX Grammar Exception >>> CustomFormulaSet not implemented yet.")
+  }
+}
+
+Expression: AstExpression = {
+  <term:Term> => {
+    AstExpression {
+      terms: vec![(' ', term)],
+    }
+  },
+  <exp:Expression> "+" <term:Term> => {
+    let mut e = exp;
+    e.terms.push(('+', term));
+    e
+  },
+  <exp:Expression> "-" <term:Term> => {
+    let mut e = exp;
+    e.terms.push(('-', term));
+    e
+  }
+}
+
+Term: AstTerm = {
+  <factory:Factory> => {
+    AstTerm {
+      factories: vec![(' ', factory)],
+    }
+  },
+  <term:Term> "*" <factory:Factory> => {
+    let mut t = term;
+    t.factories.push(('*', factory));
+    t
+  },
+  <term:Term> "/" <factory:Factory> => {
+    let mut t = term;
+    t.factories.push(('/', factory));
+    t
+  }
+}
+
+Factory: AstFactory = {
+  <value:"double"> => {
+    FactoryNum(value)
+  },
+  <int_val:"int"> => {
+    let double_val: f64 = int_val as f64;
+    FactoryNum(double_val)
+  },
+  <segs_wrap:SegmentsWrap> => {
+    FactorySegs(segs_wrap)
+  },
+  <tuple_wrap:TupleWrap_2> => {
+    FactoryTuple(tuple_wrap)
+  },
+  "(" <exp:Expression> ")" => {
+    FactoryExp(exp)
+  },
 }

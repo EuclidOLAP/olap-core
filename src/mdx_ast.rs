@@ -1,6 +1,6 @@
 use crate::mdd;
 use crate::mdd::MultiDimensionalEntityLocator;
-use crate::mdd::{MultiDimensionalEntity, Tuple};
+use crate::mdd::{MultiDimensionalEntity, Tuple, GidType};
 use crate::olapmeta_grpc_client::GrpcClient;
 
 trait Materializable {
@@ -55,25 +55,45 @@ impl Materializable for AstSegments {
     ) -> MultiDimensionalEntity {
         match self {
             AstSegments::Segs(segs) => {
-                let result: MultiDimensionalEntity;
 
-                let mut segs_iter = segs.iter();
-                let ast_seg = segs_iter.next().unwrap();
-                let head_entity: MultiDimensionalEntity =
-                    ast_seg.materialize(slice_tuple, context).await;
+                let last_gid;
 
-                match head_entity {
-                    MultiDimensionalEntity::DimensionRoleWrap(dim_role) => {
-                        let tail_segs = AstSegments::Segs((&segs[1..]).to_vec());
-                        result = dim_role
-                            .locate_entity(&tail_segs, slice_tuple, context)
-                            .await;
+                if let Some(last_seg) = segs.last() {
+                    last_gid = match last_seg {
+                        AstSeg::Gid(gid) => { gid }
+                        AstSeg::GidStr(gid, _) => { gid }
+                        _ => { todo!("Not supported yet! Please use Gid or GidStr for last segment.") }
+                    };
+                } else {
+                    todo!("Not supported yet! Please use Gid or GidStr for last segment.")
+                }
+
+                match GidType::entity_type(*last_gid) {
+                    GidType::FormulaMember => {
+                        MultiDimensionalEntity::FormulaMemberWrap
                     }
                     _ => {
-                        panic!("In method AstSegments::materialize(): head_entity is not a DimensionRoleWrap!");
+                        let result: MultiDimensionalEntity;
+
+                        let mut segs_iter = segs.iter();
+                        let ast_seg = segs_iter.next().unwrap();
+                        let head_entity: MultiDimensionalEntity =
+                            ast_seg.materialize(slice_tuple, context).await;
+
+                        match head_entity {
+                            MultiDimensionalEntity::DimensionRoleWrap(dim_role) => {
+                                let tail_segs = AstSegments::Segs((&segs[1..]).to_vec());
+                                result = dim_role
+                                    .locate_entity(&tail_segs, slice_tuple, context)
+                                    .await;
+                            }
+                            _ => {
+                                panic!("In method AstSegments::materialize(): head_entity is not a DimensionRoleWrap!");
+                            }
+                        }
+                        result
                     }
                 }
-                result
             }
         }
     }
@@ -98,6 +118,9 @@ impl Materializable for AstTuple {
                     match member_role_entity {
                         MultiDimensionalEntity::MemberRoleWrap(member_role) => {
                             member_roles.push(member_role);
+                        }
+                        MultiDimensionalEntity::FormulaMemberWrap => {
+                            todo!("Not supported yet! Please use Gid or GidStr for last segment. 3...........")
                         }
                         _ => {
                             panic!("The entity is not a MemberRoleWrap variant.");
@@ -215,6 +238,7 @@ impl AstAxis {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct AstSelectionStatement {
+    pub formula_objs: Vec<AstFormulaObject>,
     pub axes: Vec<AstAxis>,
     pub cube: Vec<AstSeg>,
     pub basic_slice: Option<AstTuple>,
@@ -365,4 +389,28 @@ impl AstSelectionStatement {
 
         axes
     }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstFormulaObject {
+    CustomFormulaMember(AstSegments, AstExpression),
+    // CustomFormulaSet,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstExpression {
+    pub terms: Vec<(char, AstTerm)>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstFactory {
+    FactoryNum(f64),
+    FactorySegs(AstSegments),
+    FactoryTuple(AstTuple),
+    FactoryExp(AstExpression),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstTerm {
+    pub factories: Vec<(char, AstFactory)>,
 }
