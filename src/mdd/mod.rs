@@ -97,10 +97,10 @@ pub struct MultiDimensionalContext {
 
 impl MultiDimensionalContext {
     pub async fn find_entity_by_gid(&mut self, gid: u64) -> MultiDimensionalEntity {
-        println!(
-            "MultiDimensionalContext >>>>>>>>>>>>>>>>>>>>>>>> find_entity_by_gid({})",
-            gid
-        );
+        // println!(
+        //     "MultiDimensionalContext >>>>>>>>>>>>>>>>>>>>>>>> find_entity_by_gid({})",
+        //     gid
+        // );
         match GidType::entity_type(gid) {
             GidType::DimensionRole => {
                 let dim_role = self
@@ -108,10 +108,10 @@ impl MultiDimensionalContext {
                     .get_dimension_role_by_gid(gid)
                     .await
                     .unwrap();
-                println!(
-                    "!!!@@@###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~dim_role: {:?}",
-                    dim_role
-                );
+                // println!(
+                //     "!!!@@@###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~dim_role: {:?}",
+                //     dim_role
+                // );
                 MultiDimensionalEntity::DimensionRoleWrap(dim_role)
             }
             _ => {
