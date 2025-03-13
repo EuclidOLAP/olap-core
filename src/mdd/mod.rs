@@ -155,39 +155,29 @@ impl Tuple {
      * result: [starting date], [**MeasureDimRole**], [Transport], [completion date], [Goods], [starting region], [ending region]
      */
     pub fn merge(&self, other: &Tuple) -> Self {
-        let mut result_member_roles = Vec::new();
-
-        // 遍历 self 的 member_roles
-        for ctx_mr in &self.member_roles {
-            let mut found = false;
-            // 检查 other 中是否有相同的 DimensionRole
-            for f_mr in &other.member_roles {
-                if ctx_mr.dim_role == f_mr.dim_role {
-                    found = true;
-                    break;
-                }
-            }
-            // 如果没有找到相同 gid 的 DimensionRole，则添加到结果中
-            if !found {
-                result_member_roles.push(ctx_mr.clone());
-            }
-        }
-
-        // 添加 other 的所有 member_roles 到结果中
-        for f_mr in &other.member_roles {
-            result_member_roles.push(f_mr.clone());
-        }
+        let mut mrs = self.member_roles.clone();
+        mrs.retain(|mr| !other.member_roles.iter().any(|or| or.get_dim_role_gid() == mr.get_dim_role_gid()));
+        mrs.extend(other.member_roles.clone());
 
         Tuple {
-            member_roles: result_member_roles,
+            member_roles: mrs,
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct MemberRole {
-    pub dim_role: DimensionRole,
-    pub member: Member,
+pub enum MemberRole {
+    BaseMember{dim_role: DimensionRole,member: Member},
+    FormulaMember{dim_role_gid: u64},
+}
+
+impl MemberRole {
+    pub fn get_dim_role_gid(&self) -> u64 {
+        match self {
+            MemberRole::BaseMember{dim_role, ..} => dim_role.gid,
+            MemberRole::FormulaMember{dim_role_gid} => *dim_role_gid,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -244,7 +234,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
 
         match olap_entity {
             MultiDimensionalEntity::MemberWrap(member) => {
-                let member_role = MemberRole {
+                let member_role = MemberRole::BaseMember {
                     dim_role: self.clone(),
                     member,
                 };

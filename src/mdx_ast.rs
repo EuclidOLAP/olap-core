@@ -1,6 +1,6 @@
 use crate::mdd;
 use crate::mdd::MultiDimensionalEntityLocator;
-use crate::mdd::{MultiDimensionalEntity, Tuple, GidType};
+use crate::mdd::{MultiDimensionalEntity, Tuple, GidType, MemberRole};
 use crate::olapmeta_grpc_client::GrpcClient;
 
 trait Materializable {
@@ -290,7 +290,7 @@ impl AstSelectionStatement {
                 .await
                 .unwrap();
 
-            cube_def_tuple.member_roles.push(mdd::MemberRole {
+            cube_def_tuple.member_roles.push(MemberRole::BaseMember {
                 dim_role,
                 member: dim_def_member,
             });
