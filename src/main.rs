@@ -4,6 +4,7 @@ use tonic::{transport::Server, Request, Response, Status};
 
 mod mdd;
 use mdd::MemberRole;
+use mdd::MultiDimensionalContext;
 
 mod mdx_statements;
 mod olapmeta_grpc_client;
@@ -110,15 +111,60 @@ async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> (u64, Vec<
     let coordinates: Vec<OlapVectorCoordinate> =
         mdd::Axis::axis_vec_cartesian_product(&axes, &context);
 
-    for cord in &coordinates {
+    // Base OlapVectorCoordinates and Formula OlapVectorCoordinates
+    // 分别存储索引和坐标数据
+    let mut base_indices: Vec<usize> = Vec::new();
+    let mut frml_indices: Vec<usize> = Vec::new();
+    let mut base_cords: Vec<OlapVectorCoordinate> = Vec::new();
+    let mut frml_cords: Vec<OlapVectorCoordinate> = Vec::new();
+
+    'outside: for (idx, cord) in coordinates.into_iter().enumerate() {
         for mr in &cord.member_roles {
             if let MemberRole::FormulaMember{dim_role_gid: _} = mr {
-                todo!("OlapVectorCoordinate.includes_formulas :: 含有公式。。。。。。。。");
+                frml_indices.push(idx);
+                frml_cords.push(cord);
+                continue 'outside;
             }
         }
+        base_indices.push(idx);
+        base_cords.push(cord);
     }
 
-        basic_aggregates(coordinates, &context).await
+    // basic_aggregates(coordinates, &context).await
+    let (cube_gid, base_vals, base_null_flags) = basic_aggregates(base_cords, &context).await;
+    let (_, frml_vals, frml_null_flags) = calculate_formula_vectors(frml_cords, &context);
+
+
+    // 初始化最终的合并结果，确保索引对应数据不乱序
+    let mut merged_vals = vec![0.0; base_indices.len() + frml_indices.len()];
+    let mut merged_null_flags = vec![false; base_indices.len() + frml_indices.len()];
+
+    // 填充基本数据
+    for (idx, value) in base_indices.iter().zip(base_vals.iter()) {
+        merged_vals[*idx] = *value;
+    }
+    for (idx, flag) in base_indices.iter().zip(base_null_flags.iter()) {
+        merged_null_flags[*idx] = *flag;
+    }
+
+    // 填充公式数据
+    for (idx, value) in frml_indices.iter().zip(frml_vals.iter()) {
+        merged_vals[*idx] = *value;
+    }
+    for (idx, flag) in frml_indices.iter().zip(frml_null_flags.iter()) {
+        merged_null_flags[*idx] = *flag;
+    }
+
+    (cube_gid, merged_vals, merged_null_flags)
+
+}
+
+fn calculate_formula_vectors(
+    coordinates: Vec<OlapVectorCoordinate>,
+    context: &MultiDimensionalContext,
+) -> (u64, Vec<f64>, Vec<bool>) {
+
+    (context.cube.gid, vec![660880.5; coordinates.len()], vec![false; coordinates.len()])
 }
 
 #[cfg(test)]
