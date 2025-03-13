@@ -70,7 +70,20 @@ impl Materializable for AstSegments {
 
                 match GidType::entity_type(*last_gid) {
                     GidType::FormulaMember => {
-                        MultiDimensionalEntity::FormulaMemberWrap
+
+                        let dr_gid;
+
+                        if let Some(first_seg) = segs.first() {
+                            dr_gid = match first_seg {
+                                AstSeg::Gid(gid) => { gid }
+                                AstSeg::GidStr(gid, _) => { gid }
+                                _ => { todo!("Not supported yet! Please use Gid or GidStr for last segment. V.") }
+                            };
+                        } else {
+                            todo!("Not supported yet! Please use Gid or GidStr for last segment. V.")
+                        }
+
+                        MultiDimensionalEntity::FormulaMemberWrap{ dim_role_gid: *dr_gid }
                     }
                     _ => {
                         let result: MultiDimensionalEntity;
@@ -119,8 +132,8 @@ impl Materializable for AstTuple {
                         MultiDimensionalEntity::MemberRoleWrap(member_role) => {
                             member_roles.push(member_role);
                         }
-                        MultiDimensionalEntity::FormulaMemberWrap => {
-                            todo!("Not supported yet! Please use Gid or GidStr for last segment. 3...........")
+                        MultiDimensionalEntity::FormulaMemberWrap{dim_role_gid} => {
+                            member_roles.push(MemberRole::FormulaMember { dim_role_gid });
                         }
                         _ => {
                             panic!("The entity is not a MemberRoleWrap variant.");

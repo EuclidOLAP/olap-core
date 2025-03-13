@@ -3,6 +3,8 @@ use euclidolap::{GrpcOlapVector, OlapRequest, OlapResponse};
 use tonic::{transport::Server, Request, Response, Status};
 
 mod mdd;
+use mdd::MemberRole;
+
 mod mdx_statements;
 mod olapmeta_grpc_client;
 
@@ -107,6 +109,14 @@ async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> (u64, Vec<
     let axes = ast_selstat.build_axes(&mut context).await;
     let coordinates: Vec<OlapVectorCoordinate> =
         mdd::Axis::axis_vec_cartesian_product(&axes, &context);
+
+    for cord in &coordinates {
+        for mr in &cord.member_roles {
+            if let MemberRole::FormulaMember{dim_role_gid: _} = mr {
+                todo!("OlapVectorCoordinate.includes_formulas :: 含有公式。。。。。。。。");
+            }
+        }
+    }
 
         basic_aggregates(coordinates, &context).await
 }
