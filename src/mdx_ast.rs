@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::mdd;
 use crate::mdd::MultiDimensionalEntityLocator;
 use crate::mdd::{MultiDimensionalEntity, Tuple, GidType, MemberRole};
@@ -333,10 +335,21 @@ impl AstSelectionStatement {
             });
         }
 
+        let mut formulas_map: HashMap<u64, AstFormulaObject> = HashMap::new();
+        for frml_obj in &self.formula_objs {
+            match frml_obj {
+                AstFormulaObject::CustomFormulaMember(segments, _) => {
+                    let frml_member_gid = segments.get_last_gid().unwrap();
+                    formulas_map.insert(frml_member_gid, frml_obj.clone());
+                }
+            }
+        }
+
         mdd::MultiDimensionalContext {
             cube,
             cube_def_tuple,
             grpc_client: grpc_cli,
+            formulas_map,
         }
     }
 

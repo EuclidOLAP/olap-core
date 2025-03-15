@@ -1,6 +1,8 @@
 use core::panic;
 
-use crate::mdx_ast::{AstSeg, AstSegments};
+use std::collections::HashMap;
+
+use crate::mdx_ast::{AstSeg, AstSegments, AstFormulaObject};
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
 
@@ -95,6 +97,7 @@ pub struct MultiDimensionalContext {
     pub cube: Cube,
     pub cube_def_tuple: Tuple, // defautl slice tuple, MDX `where statement`
     pub grpc_client: GrpcClient,
+    pub formulas_map: HashMap<u64, AstFormulaObject>,
 }
 
 impl MultiDimensionalContext {
