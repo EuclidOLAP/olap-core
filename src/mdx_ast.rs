@@ -26,6 +26,16 @@ pub enum AstSeg {
     GidStr(u64, String),
 }
 
+impl AstSeg {
+    pub fn get_gid(&self) -> Option<u64> {
+        match self {
+            AstSeg::Gid(gid) => Some(*gid),
+            AstSeg::GidStr(gid, _) => Some(*gid),
+            _ => None,
+        }
+    }
+}
+
 impl Materializable for AstSeg {
     async fn materialize(
         &self,
@@ -45,6 +55,20 @@ impl Materializable for AstSeg {
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstSegments {
     Segs(Vec<AstSeg>),
+}
+
+impl AstSegments {
+    pub fn get_last_gid(&self) -> Option<u64> {
+        match self {
+            AstSegments::Segs(segs) => {
+                if let Some(last_seg) = segs.last() {
+                    last_seg.get_gid()
+                } else {
+                    None
+                }
+            }
+        }
+    }
 }
 
 impl Materializable for AstSegments {
