@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::mdd;
 use crate::mdd::MultiDimensionalEntityLocator;
+use crate::mdd::MultiDimensionalContext;
 use crate::mdd::{MultiDimensionalEntity, Tuple, GidType, MemberRole};
 use crate::olapmeta_grpc_client::GrpcClient;
 
@@ -444,6 +445,16 @@ pub struct AstExpression {
     pub terms: Vec<(char, AstTerm)>,
 }
 
+impl Materializable for AstExpression {
+    async fn materialize(
+        &self,
+        _slice_tuple: &Tuple,
+        _context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        todo!()
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstFactory {
     FactoryNum(f64),
@@ -452,7 +463,27 @@ pub enum AstFactory {
     FactoryExp(AstExpression),
 }
 
+impl Materializable for AstFactory {
+    async fn materialize(
+        &self,
+        _slice_tuple: &Tuple,
+        _context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        todo!()
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct AstTerm {
     pub factories: Vec<(char, AstFactory)>,
+}
+
+impl Materializable for AstTerm {
+    async fn materialize(
+        &self,
+        _slice_tuple: &Tuple,
+        _context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        todo!()
+    }
 }
