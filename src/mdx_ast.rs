@@ -98,7 +98,10 @@ impl Materializable for AstSegments {
 
                     GidType::FormulaMember => {
                         let first_gid = self.get_first_gid().unwrap();
-                        MultiDimensionalEntity::FormulaMemberWrap{ dim_role_gid: first_gid }
+
+                        let afo = context.formulas_map.get(&first_gid).unwrap().clone();
+                        let AstFormulaObject::CustomFormulaMember(_, exp) = afo;
+                        MultiDimensionalEntity::FormulaMemberWrap{ dim_role_gid: first_gid, exp }
                     }
                     _ => {
                         let result: MultiDimensionalEntity;
@@ -147,8 +150,8 @@ impl Materializable for AstTuple {
                         MultiDimensionalEntity::MemberRoleWrap(member_role) => {
                             member_roles.push(member_role);
                         }
-                        MultiDimensionalEntity::FormulaMemberWrap{dim_role_gid} => {
-                            member_roles.push(MemberRole::FormulaMember { dim_role_gid });
+                        MultiDimensionalEntity::FormulaMemberWrap{dim_role_gid, exp} => {
+                            member_roles.push(MemberRole::FormulaMember { dim_role_gid, exp });
                         }
                         _ => {
                             panic!("The entity is not a MemberRoleWrap variant.");

@@ -2,7 +2,7 @@ use core::panic;
 
 use std::collections::HashMap;
 
-use crate::mdx_ast::{AstSeg, AstSegments, AstFormulaObject};
+use crate::mdx_ast::{AstSeg, AstSegments, AstFormulaObject, AstExpression};
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
 
@@ -42,11 +42,12 @@ pub enum MultiDimensionalEntity {
     SetWrap(Set),
     MemberWrap(Member),
     MemberRoleWrap(MemberRole),
-    FormulaMemberWrap{ dim_role_gid: u64 },
+    FormulaMemberWrap{ dim_role_gid: u64, exp: AstExpression },
     // Cube(Cube),           // 立方体实体
     // Dimension(Dimension), // 维度实体
     // Hierarchy(Hierarchy), // 层次实体
     // Level(Level),         // 层级实体
+    CellValue(f64),
     Nothing,
 }
 
@@ -171,14 +172,14 @@ impl Tuple {
 #[derive(Debug, Clone)]
 pub enum MemberRole {
     BaseMember{dim_role: DimensionRole,member: Member},
-    FormulaMember{dim_role_gid: u64},
+    FormulaMember{dim_role_gid: u64, exp: AstExpression},
 }
 
 impl MemberRole {
     pub fn get_dim_role_gid(&self) -> u64 {
         match self {
             MemberRole::BaseMember{dim_role, ..} => dim_role.gid,
-            MemberRole::FormulaMember{dim_role_gid} => *dim_role_gid,
+            MemberRole::FormulaMember{dim_role_gid, exp: _} => *dim_role_gid,
         }
     }
 }

@@ -120,7 +120,7 @@ async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> (u64, Vec<
 
     'outside: for (idx, cord) in coordinates.into_iter().enumerate() {
         for mr in &cord.member_roles {
-            if let MemberRole::FormulaMember{dim_role_gid: _} = mr {
+            if let MemberRole::FormulaMember{dim_role_gid: _, exp: _} = mr {
                 frml_indices.push(idx);
                 frml_cords.push(cord);
                 continue 'outside;
