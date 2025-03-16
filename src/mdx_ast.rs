@@ -6,7 +6,7 @@ use crate::mdd::MultiDimensionalContext;
 use crate::mdd::{MultiDimensionalEntity, Tuple, GidType, MemberRole};
 use crate::olapmeta_grpc_client::GrpcClient;
 
-trait Materializable {
+pub trait Materializable {
     async fn materialize(
         &self,
         slice_tuple: &Tuple,
@@ -98,11 +98,11 @@ impl Materializable for AstSegments {
                 match GidType::entity_type(last_gid) {
 
                     GidType::FormulaMember => {
-                        let first_gid = self.get_first_gid().unwrap();
+                        let last_gid = self.get_last_gid().unwrap();
 
-                        let afo = context.formulas_map.get(&first_gid).unwrap().clone();
+                        let afo = context.formulas_map.get(&last_gid).unwrap().clone();
                         let AstFormulaObject::CustomFormulaMember(_, exp) = afo;
-                        MultiDimensionalEntity::FormulaMemberWrap{ dim_role_gid: first_gid, exp }
+                        MultiDimensionalEntity::FormulaMemberWrap{ dim_role_gid: last_gid, exp }
                     }
                     _ => {
                         let result: MultiDimensionalEntity;
@@ -448,10 +448,26 @@ pub struct AstExpression {
 impl Materializable for AstExpression {
     async fn materialize(
         &self,
-        _slice_tuple: &Tuple,
-        _context: &mut MultiDimensionalContext,
+        slice_tuple: &Tuple,
+        context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-        todo!()
+
+        let mut result = 0.0;
+        let mut iter = self.terms.iter();
+        if let Some((_, first_term)) = iter.next() {
+            result += first_term.materialize(slice_tuple, context).await.cell_val();
+        }
+
+        for (op, term) in iter {
+            let term_value = term.materialize(slice_tuple, context).await.cell_val();
+            match *op {
+                '+' => result += term_value,
+                '-' => result -= term_value,
+                _ => panic!("Invalid operator in AstExpression: {}", op),
+            }
+        }
+
+        MultiDimensionalEntity::CellValue(result)
     }
 }
 
@@ -466,10 +482,22 @@ pub enum AstFactory {
 impl Materializable for AstFactory {
     async fn materialize(
         &self,
-        _slice_tuple: &Tuple,
-        _context: &mut MultiDimensionalContext,
+        slice_tuple: &Tuple,
+        context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-        todo!()
+
+        match self {
+            AstFactory::FactoryNum(num) => MultiDimensionalEntity::CellValue(*num),
+            AstFactory::FactorySegs(segs) => {
+                MultiDimensionalEntity::CellValue(1_f64)
+            },
+            AstFactory::FactoryTuple(tuple) => {
+                MultiDimensionalEntity::CellValue(2_f64)
+            },
+            AstFactory::FactoryExp(exp) => {
+                MultiDimensionalEntity::CellValue(3_f64)
+            },
+        }
     }
 }
 
@@ -484,6 +512,27 @@ impl Materializable for AstTerm {
         _slice_tuple: &Tuple,
         _context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-        todo!()
+
+        let mut result = 0.0;
+        let mut iter = self.factories.iter();
+        if let Some((_, first_factory)) = iter.next() {
+            result += first_factory.materialize(_slice_tuple, _context).await.cell_val();
+        }
+
+        for (op, factory) in iter {
+            let factory_value = factory.materialize(_slice_tuple, _context).await.cell_val();
+            match *op {
+                '*' => result *= factory_value,
+                '/' => {
+                    if factory_value == 0.0 {
+                        panic!("Divisor cannot be zero in AstTerm.");
+                    }
+                    result /= factory_value
+                },
+                _ => panic!("Invalid operator in AstTerm: {}", op),
+            }
+        }
+
+        MultiDimensionalEntity::CellValue(result)
     }
 }

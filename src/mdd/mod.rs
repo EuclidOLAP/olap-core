@@ -52,6 +52,15 @@ pub enum MultiDimensionalEntity {
 }
 
 impl MultiDimensionalEntity {
+
+    pub fn cell_val(&self) -> f64 {
+        if let MultiDimensionalEntity::CellValue(val) = self {
+            *val
+        } else {
+            panic!("[CellValue] cell_Val() Unsupported entity class.");
+        }
+    }
+
     pub fn from_universal_olap_entity(entity: &UniversalOlapEntity) -> Self {
         let entity_type = entity.olap_entity_class.as_str();
 

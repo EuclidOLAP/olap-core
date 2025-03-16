@@ -3,8 +3,10 @@ use euclidolap::{GrpcOlapVector, OlapRequest, OlapResponse};
 use tonic::{transport::Server, Request, Response, Status};
 
 mod mdd;
-use mdd::MemberRole;
+use mdd::{MemberRole, Tuple};
 use mdd::MultiDimensionalContext;
+
+use mdx_ast::{Materializable, AstExpression, AstTerm, AstFactory};
 
 mod mdx_statements;
 mod olapmeta_grpc_client;
@@ -132,7 +134,7 @@ async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> (u64, Vec<
 
     // basic_aggregates(coordinates, &context).await
     let (cube_gid, base_vals, base_null_flags) = basic_aggregates(base_cords, &context).await;
-    let (_, frml_vals, frml_null_flags) = calculate_formula_vectors(frml_cords, &context);
+    let (_, frml_vals, frml_null_flags) = calculate_formula_vectors(frml_cords, &mut context).await;
 
 
     // 初始化最终的合并结果，确保索引对应数据不乱序
@@ -159,12 +161,44 @@ async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> (u64, Vec<
 
 }
 
-fn calculate_formula_vectors(
+async fn calculate_formula_vectors(
     coordinates: Vec<OlapVectorCoordinate>,
-    context: &MultiDimensionalContext,
+    context: &mut MultiDimensionalContext,
 ) -> (u64, Vec<f64>, Vec<bool>) {
 
-    (context.cube.gid, vec![660880.5; coordinates.len()], vec![false; coordinates.len()])
+    let mut doubles: Vec<f64> = Vec::new();
+    let mut bools: Vec<bool> = Vec::new();
+
+     'outer_loop: for cord in coordinates {
+        for mr in cord.member_roles.iter().rev() {
+            if let MemberRole::FormulaMember { dim_role_gid: _, exp } = mr {
+
+                // VCE C langueage
+                // Expression *exp = mr->member_formula->exp;
+                // Expression_evaluate(md_ctx, exp, cube, cal_tp, gd);
+
+                let exp = exp.clone();
+                let mde = exp.materialize(&Tuple {
+                    member_roles: cord.member_roles,
+                } ,context).await;
+
+                if let mdd::MultiDimensionalEntity::CellValue(val) = mde {
+                    doubles.push(val);
+                    bools.push(false);
+                } else {
+                    panic!("[calculate_formula_vectors()] - It's not a cell value: {:#?}", mde);
+                }
+
+                continue 'outer_loop;
+
+            } else {
+                panic!("[calculate_formula_vectors()] - It's not a formula member role: {:#?}", mr);
+            }
+        }
+    }
+
+    (context.cube.gid, doubles, bools)
+
 }
 
 #[cfg(test)]
