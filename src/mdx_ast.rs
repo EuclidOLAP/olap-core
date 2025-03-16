@@ -60,16 +60,26 @@ pub enum AstSegments {
 }
 
 impl AstSegments {
+
+    fn get_pos_gid(&self, pos: usize) -> Option<u64> {
+        match self {
+            AstSegments::Segs(segs) => {
+                let pos_seg = segs.get(pos)?;
+                pos_seg.get_gid()
+            }
+        }
+    }
+
     pub fn get_last_gid(&self) -> Option<u64> {
         match self {
             AstSegments::Segs(segs) => {
-                if let Some(last_seg) = segs.last() {
-                    last_seg.get_gid()
-                } else {
-                    None
-                }
+                self.get_pos_gid(segs.len() - 1)
             }
         }
+    }
+    
+    pub fn get_first_gid(&self) -> Option<u64> {
+        self.get_pos_gid(0)
     }
 }
 
@@ -82,34 +92,13 @@ impl Materializable for AstSegments {
         match self {
             AstSegments::Segs(segs) => {
 
-                let last_gid;
+                let last_gid = self.get_last_gid().unwrap();
 
-                if let Some(last_seg) = segs.last() {
-                    last_gid = match last_seg {
-                        AstSeg::Gid(gid) => { gid }
-                        AstSeg::GidStr(gid, _) => { gid }
-                        _ => { todo!("Not supported yet! Please use Gid or GidStr for last segment.") }
-                    };
-                } else {
-                    todo!("Not supported yet! Please use Gid or GidStr for last segment.")
-                }
+                match GidType::entity_type(last_gid) {
 
-                match GidType::entity_type(*last_gid) {
                     GidType::FormulaMember => {
-
-                        let dr_gid;
-
-                        if let Some(first_seg) = segs.first() {
-                            dr_gid = match first_seg {
-                                AstSeg::Gid(gid) => { gid }
-                                AstSeg::GidStr(gid, _) => { gid }
-                                _ => { todo!("Not supported yet! Please use Gid or GidStr for last segment. V.") }
-                            };
-                        } else {
-                            todo!("Not supported yet! Please use Gid or GidStr for last segment. V.")
-                        }
-
-                        MultiDimensionalEntity::FormulaMemberWrap{ dim_role_gid: *dr_gid }
+                        let first_gid = self.get_first_gid().unwrap();
+                        MultiDimensionalEntity::FormulaMemberWrap{ dim_role_gid: first_gid }
                     }
                     _ => {
                         let result: MultiDimensionalEntity;
