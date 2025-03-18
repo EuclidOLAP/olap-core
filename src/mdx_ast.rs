@@ -7,11 +7,12 @@ use crate::mdd::{MultiDimensionalEntity, Tuple, GidType, MemberRole};
 use crate::olapmeta_grpc_client::GrpcClient;
 
 pub trait Materializable {
-    async fn materialize(
+    // https://www.cnblogs.com/Tifahfyf/p/18778897
+    fn materialize(
         &self,
         slice_tuple: &Tuple,
         context: &mut mdd::MultiDimensionalContext,
-    ) -> MultiDimensionalEntity;
+    ) -> impl std::future::Future<Output = MultiDimensionalEntity> + Send;
 }
 
 #[derive(Clone, Debug, PartialEq)]
