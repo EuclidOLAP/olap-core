@@ -190,11 +190,9 @@ async fn calculate_formula_vectors(
                 }
 
                 continue 'outer_loop;
-
-            } else {
-                panic!("[calculate_formula_vectors()] - It's not a formula member role: {:#?}", mr);
             }
         }
+        panic!("[calculate_formula_vectors()] - It's not a formula member role: ______");
     }
 
     (context.cube.gid, doubles, bools)
