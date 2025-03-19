@@ -1,6 +1,8 @@
 use core::panic;
 
-use crate::mdx_ast::{AstSeg, AstSegments};
+use std::collections::HashMap;
+
+use crate::mdx_ast::{AstSeg, AstSegments, AstFormulaObject, AstExpression};
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
 
@@ -40,15 +42,25 @@ pub enum MultiDimensionalEntity {
     SetWrap(Set),
     MemberWrap(Member),
     MemberRoleWrap(MemberRole),
-    FormulaMemberWrap,
+    FormulaMemberWrap{ dim_role_gid: u64, exp: AstExpression },
     // Cube(Cube),           // 立方体实体
     // Dimension(Dimension), // 维度实体
     // Hierarchy(Hierarchy), // 层次实体
     // Level(Level),         // 层级实体
+    CellValue(f64), // todo 这个CellValue要挪到别的枚举类型中去，不能放在这里！！！
     Nothing,
 }
 
 impl MultiDimensionalEntity {
+
+    pub fn cell_val(&self) -> f64 {
+        if let MultiDimensionalEntity::CellValue(val) = self {
+            *val
+        } else {
+            panic!("[CellValue] cell_Val() Unsupported entity class.");
+        }
+    }
+
     pub fn from_universal_olap_entity(entity: &UniversalOlapEntity) -> Self {
         let entity_type = entity.olap_entity_class.as_str();
 
@@ -95,6 +107,7 @@ pub struct MultiDimensionalContext {
     pub cube: Cube,
     pub cube_def_tuple: Tuple, // defautl slice tuple, MDX `where statement`
     pub grpc_client: GrpcClient,
+    pub formulas_map: HashMap<u64, AstFormulaObject>,
 }
 
 impl MultiDimensionalContext {
@@ -155,39 +168,29 @@ impl Tuple {
      * result: [starting date], [**MeasureDimRole**], [Transport], [completion date], [Goods], [starting region], [ending region]
      */
     pub fn merge(&self, other: &Tuple) -> Self {
-        let mut result_member_roles = Vec::new();
-
-        // 遍历 self 的 member_roles
-        for ctx_mr in &self.member_roles {
-            let mut found = false;
-            // 检查 other 中是否有相同的 DimensionRole
-            for f_mr in &other.member_roles {
-                if ctx_mr.dim_role == f_mr.dim_role {
-                    found = true;
-                    break;
-                }
-            }
-            // 如果没有找到相同 gid 的 DimensionRole，则添加到结果中
-            if !found {
-                result_member_roles.push(ctx_mr.clone());
-            }
-        }
-
-        // 添加 other 的所有 member_roles 到结果中
-        for f_mr in &other.member_roles {
-            result_member_roles.push(f_mr.clone());
-        }
+        let mut mrs = self.member_roles.clone();
+        mrs.retain(|mr| !other.member_roles.iter().any(|or| or.get_dim_role_gid() == mr.get_dim_role_gid()));
+        mrs.extend(other.member_roles.clone());
 
         Tuple {
-            member_roles: result_member_roles,
+            member_roles: mrs,
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct MemberRole {
-    pub dim_role: DimensionRole,
-    pub member: Member,
+pub enum MemberRole {
+    BaseMember{dim_role: DimensionRole,member: Member},
+    FormulaMember{dim_role_gid: u64, exp: AstExpression},
+}
+
+impl MemberRole {
+    pub fn get_dim_role_gid(&self) -> u64 {
+        match self {
+            MemberRole::BaseMember{dim_role, ..} => dim_role.gid,
+            MemberRole::FormulaMember{dim_role_gid, exp: _} => *dim_role_gid,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -244,7 +247,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
 
         match olap_entity {
             MultiDimensionalEntity::MemberWrap(member) => {
-                let member_role = MemberRole {
+                let member_role = MemberRole::BaseMember {
                     dim_role: self.clone(),
                     member,
                 };

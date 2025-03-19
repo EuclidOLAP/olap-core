@@ -1,14 +1,24 @@
+use std::collections::HashMap;
+use std::vec;
+
 use crate::mdd;
 use crate::mdd::MultiDimensionalEntityLocator;
-use crate::mdd::{MultiDimensionalEntity, Tuple, GidType};
+use crate::mdd::MultiDimensionalContext;
+use crate::mdd::OlapVectorCoordinate;
+use crate::mdd::{MultiDimensionalEntity, Tuple, GidType, MemberRole};
 use crate::olapmeta_grpc_client::GrpcClient;
 
-trait Materializable {
+use crate::calcul::calculate;
+
+pub trait Materializable {
+    // https://www.cnblogs.com/Tifahfyf/p/18778897
+    // fn materialize(
     async fn materialize(
         &self,
         slice_tuple: &Tuple,
         context: &mut mdd::MultiDimensionalContext,
     ) -> MultiDimensionalEntity;
+    // ) -> impl std::future::Future<Output = MultiDimensionalEntity> + Send;
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -24,6 +34,16 @@ pub enum AstSeg {
     Gid(u64),
     Str(String),
     GidStr(u64, String),
+}
+
+impl AstSeg {
+    pub fn get_gid(&self) -> Option<u64> {
+        match self {
+            AstSeg::Gid(gid) => Some(*gid),
+            AstSeg::GidStr(gid, _) => Some(*gid),
+            _ => None,
+        }
+    }
 }
 
 impl Materializable for AstSeg {
@@ -47,6 +67,30 @@ pub enum AstSegments {
     Segs(Vec<AstSeg>),
 }
 
+impl AstSegments {
+
+    fn get_pos_gid(&self, pos: usize) -> Option<u64> {
+        match self {
+            AstSegments::Segs(segs) => {
+                let pos_seg = segs.get(pos)?;
+                pos_seg.get_gid()
+            }
+        }
+    }
+
+    pub fn get_last_gid(&self) -> Option<u64> {
+        match self {
+            AstSegments::Segs(segs) => {
+                self.get_pos_gid(segs.len() - 1)
+            }
+        }
+    }
+    
+    pub fn get_first_gid(&self) -> Option<u64> {
+        self.get_pos_gid(0)
+    }
+}
+
 impl Materializable for AstSegments {
     async fn materialize(
         &self,
@@ -56,21 +100,16 @@ impl Materializable for AstSegments {
         match self {
             AstSegments::Segs(segs) => {
 
-                let last_gid;
+                let last_gid = self.get_last_gid().unwrap();
 
-                if let Some(last_seg) = segs.last() {
-                    last_gid = match last_seg {
-                        AstSeg::Gid(gid) => { gid }
-                        AstSeg::GidStr(gid, _) => { gid }
-                        _ => { todo!("Not supported yet! Please use Gid or GidStr for last segment.") }
-                    };
-                } else {
-                    todo!("Not supported yet! Please use Gid or GidStr for last segment.")
-                }
+                match GidType::entity_type(last_gid) {
 
-                match GidType::entity_type(*last_gid) {
                     GidType::FormulaMember => {
-                        MultiDimensionalEntity::FormulaMemberWrap
+                        let first_gid = self.get_first_gid().unwrap();
+
+                        let afo = context.formulas_map.get(&last_gid).unwrap().clone();
+                        let AstFormulaObject::CustomFormulaMember(_, exp) = afo;
+                        MultiDimensionalEntity::FormulaMemberWrap{ dim_role_gid: first_gid, exp }
                     }
                     _ => {
                         let result: MultiDimensionalEntity;
@@ -119,8 +158,8 @@ impl Materializable for AstTuple {
                         MultiDimensionalEntity::MemberRoleWrap(member_role) => {
                             member_roles.push(member_role);
                         }
-                        MultiDimensionalEntity::FormulaMemberWrap => {
-                            todo!("Not supported yet! Please use Gid or GidStr for last segment. 3...........")
+                        MultiDimensionalEntity::FormulaMemberWrap{dim_role_gid, exp} => {
+                            member_roles.push(MemberRole::FormulaMember { dim_role_gid, exp });
                         }
                         _ => {
                             panic!("The entity is not a MemberRoleWrap variant.");
@@ -290,16 +329,27 @@ impl AstSelectionStatement {
                 .await
                 .unwrap();
 
-            cube_def_tuple.member_roles.push(mdd::MemberRole {
+            cube_def_tuple.member_roles.push(MemberRole::BaseMember {
                 dim_role,
                 member: dim_def_member,
             });
+        }
+
+        let mut formulas_map: HashMap<u64, AstFormulaObject> = HashMap::new();
+        for frml_obj in &self.formula_objs {
+            match frml_obj {
+                AstFormulaObject::CustomFormulaMember(segments, _) => {
+                    let frml_member_gid = segments.get_last_gid().unwrap();
+                    formulas_map.insert(frml_member_gid, frml_obj.clone());
+                }
+            }
         }
 
         mdd::MultiDimensionalContext {
             cube,
             cube_def_tuple,
             grpc_client: grpc_cli,
+            formulas_map,
         }
     }
 
@@ -402,6 +452,32 @@ pub struct AstExpression {
     pub terms: Vec<(char, AstTerm)>,
 }
 
+impl Materializable for AstExpression {
+    async fn materialize(
+        &self,
+        slice_tuple: &Tuple,
+        context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+
+        let mut result = 0.0;
+        let mut iter = self.terms.iter();
+        if let Some((_, first_term)) = iter.next() {
+            result += Box::pin(first_term.materialize(slice_tuple, context)) .await.cell_val();
+        }
+
+        for (op, term) in iter {
+            let term_value = Box::pin(term.materialize(slice_tuple, context)) .await.cell_val();
+            match *op {
+                '+' => result += term_value,
+                '-' => result -= term_value,
+                _ => panic!("Invalid operator in AstExpression: {}", op),
+            }
+        }
+
+        MultiDimensionalEntity::CellValue(result)
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstFactory {
     FactoryNum(f64),
@@ -410,7 +486,97 @@ pub enum AstFactory {
     FactoryExp(AstExpression),
 }
 
+impl Materializable for AstFactory {
+    async fn materialize(
+        &self,
+        slice_tuple: &Tuple,
+        context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+
+        match self {
+            AstFactory::FactoryNum(num) => MultiDimensionalEntity::CellValue(*num),
+            AstFactory::FactorySegs(segs) => {
+
+                match segs.materialize(slice_tuple, context).await {
+                    MultiDimensionalEntity::MemberRoleWrap(mr) => {
+
+                        let ovc_tp = slice_tuple.merge(&Tuple {
+                            member_roles: vec![mr]
+                        });
+
+                        let ovc = OlapVectorCoordinate {
+                            member_roles: ovc_tp.member_roles,
+                        };
+
+                        let (_, values, _null_flags) = calculate(vec![ovc], context).await;
+
+                        let measure_val = values.first().unwrap();
+
+                        MultiDimensionalEntity::CellValue(*measure_val)
+                    },
+                    MultiDimensionalEntity::FormulaMemberWrap{dim_role_gid: _, exp} => {
+                        exp.materialize(slice_tuple, context).await
+                    },
+                    _ => panic!("The entity is not a CellValue variant.")
+                }
+            },
+            AstFactory::FactoryTuple(tuple) => {
+                match tuple.materialize(slice_tuple, context).await {
+                    MultiDimensionalEntity::TupleWrap(olap_tuple) => {
+                        let ovc = OlapVectorCoordinate {
+                            member_roles: slice_tuple.merge(&olap_tuple).member_roles,
+                        };
+                        let (_, values, _null_flags) = calculate(vec![ovc], context).await;
+                        let measure_val = values.first().unwrap();
+                        MultiDimensionalEntity::CellValue(*measure_val)
+                    },
+                    _ => panic!("The entity is not a TupleWrap variant.")
+                }
+            },
+            AstFactory::FactoryExp(exp) => {
+                let mde = exp.materialize(slice_tuple, context).await;
+                if let MultiDimensionalEntity::CellValue(_) = mde {
+                    mde
+                } else {
+                    panic!("The entity is not a CellValue variant.")
+                }
+            },
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct AstTerm {
     pub factories: Vec<(char, AstFactory)>,
+}
+
+impl Materializable for AstTerm {
+    async fn materialize(
+        &self,
+        _slice_tuple: &Tuple,
+        _context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+
+        let mut result = 0.0;
+        let mut iter = self.factories.iter();
+        if let Some((_, first_factory)) = iter.next() {
+            result += first_factory.materialize(_slice_tuple, _context).await.cell_val();
+        }
+
+        for (op, factory) in iter {
+            let factory_value = factory.materialize(_slice_tuple, _context).await.cell_val();
+            match *op {
+                '*' => result *= factory_value,
+                '/' => {
+                    if factory_value == 0.0 {
+                        panic!("Divisor cannot be zero in AstTerm.");
+                    }
+                    result /= factory_value
+                },
+                _ => panic!("Invalid operator in AstTerm: {}", op),
+            }
+        }
+
+        MultiDimensionalEntity::CellValue(result)
+    }
 }

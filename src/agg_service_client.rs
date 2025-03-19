@@ -1,9 +1,12 @@
+use core::panic;
+
 use agg_service::agg_service_client::AggServiceClient;
 use agg_service::{GrpcAggregationRequest, GrpcVectorCoordinate};
 use tonic::transport::Channel;
 
 use crate::mdd::MultiDimensionalContext;
 use crate::mdd::OlapVectorCoordinate;
+use crate::mdd::MemberRole;
 
 pub mod agg_service {
     include!("grpc/agg_service.rs"); // 通过 tonic-build 生成的模块
@@ -61,12 +64,19 @@ fn transform_coordinates(coordinates: Vec<OlapVectorCoordinate>) -> Vec<GrpcVect
         let mut member_roles = ocv.member_roles;
         let mut measure_index: u32 = 0;
         member_roles.retain(|mr| {
-            if mr.dim_role.measure_flag {
-                measure_index = mr.member.measure_index;
+            match mr {
+                MemberRole::BaseMember{dim_role,member} => {
+                    if dim_role.measure_flag {
+                        measure_index = member.measure_index;
+                    }
+                    !dim_role.measure_flag
+                },
+                MemberRole::FormulaMember{..} => {
+                    panic!("FormulaMember is not supported in grpc_client.");
+                }
             }
-            !mr.dim_role.measure_flag
         });
-        member_roles.sort_by_key(|mr| mr.dim_role.gid);
+        member_roles.sort_by_key(|mr| mr.get_dim_role_gid () ) ;
 
         let mut gvc = GrpcVectorCoordinate {
             member_gid_arr: vec![],
@@ -74,7 +84,11 @@ fn transform_coordinates(coordinates: Vec<OlapVectorCoordinate>) -> Vec<GrpcVect
         };
 
         for mr in member_roles {
-            gvc.member_gid_arr.push(if mr.member.level == 0 { 0 } else { mr.member.gid });
+            if let MemberRole::BaseMember{dim_role: _, member} = mr {
+                gvc.member_gid_arr.push(if member.level == 0 { 0 } else { member.gid });
+            } else {
+                panic!("FormulaMember is not supported in grpc_client.");
+            }
         }
 
         grpc_coordinates.push(gvc);
