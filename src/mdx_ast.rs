@@ -1,10 +1,14 @@
 use std::collections::HashMap;
+use std::vec;
 
 use crate::mdd;
 use crate::mdd::MultiDimensionalEntityLocator;
 use crate::mdd::MultiDimensionalContext;
+use crate::mdd::OlapVectorCoordinate;
 use crate::mdd::{MultiDimensionalEntity, Tuple, GidType, MemberRole};
 use crate::olapmeta_grpc_client::GrpcClient;
+
+use crate::calcul::calculate;
 
 pub trait Materializable {
     // https://www.cnblogs.com/Tifahfyf/p/18778897
@@ -101,11 +105,11 @@ impl Materializable for AstSegments {
                 match GidType::entity_type(last_gid) {
 
                     GidType::FormulaMember => {
-                        let last_gid = self.get_last_gid().unwrap();
+                        let first_gid = self.get_first_gid().unwrap();
 
                         let afo = context.formulas_map.get(&last_gid).unwrap().clone();
                         let AstFormulaObject::CustomFormulaMember(_, exp) = afo;
-                        MultiDimensionalEntity::FormulaMemberWrap{ dim_role_gid: last_gid, exp }
+                        MultiDimensionalEntity::FormulaMemberWrap{ dim_role_gid: first_gid, exp }
                     }
                     _ => {
                         let result: MultiDimensionalEntity;
@@ -458,11 +462,11 @@ impl Materializable for AstExpression {
         let mut result = 0.0;
         let mut iter = self.terms.iter();
         if let Some((_, first_term)) = iter.next() {
-            result += first_term.materialize(slice_tuple, context).await.cell_val();
+            result += Box::pin(first_term.materialize(slice_tuple, context)) .await.cell_val();
         }
 
         for (op, term) in iter {
-            let term_value = term.materialize(slice_tuple, context).await.cell_val();
+            let term_value = Box::pin(term.materialize(slice_tuple, context)) .await.cell_val();
             match *op {
                 '+' => result += term_value,
                 '-' => result -= term_value,
@@ -492,13 +496,50 @@ impl Materializable for AstFactory {
         match self {
             AstFactory::FactoryNum(num) => MultiDimensionalEntity::CellValue(*num),
             AstFactory::FactorySegs(segs) => {
-                MultiDimensionalEntity::CellValue(1_f64)
+
+                match segs.materialize(slice_tuple, context).await {
+                    MultiDimensionalEntity::MemberRoleWrap(mr) => {
+
+                        let ovc_tp = slice_tuple.merge(&Tuple {
+                            member_roles: vec![mr]
+                        });
+
+                        let ovc = OlapVectorCoordinate {
+                            member_roles: ovc_tp.member_roles,
+                        };
+
+                        let (_, values, _null_flags) = calculate(vec![ovc], context).await;
+
+                        let measure_val = values.first().unwrap();
+
+                        MultiDimensionalEntity::CellValue(*measure_val)
+                    },
+                    MultiDimensionalEntity::FormulaMemberWrap{dim_role_gid: _, exp} => {
+                        exp.materialize(slice_tuple, context).await
+                    },
+                    _ => panic!("The entity is not a CellValue variant.")
+                }
             },
             AstFactory::FactoryTuple(tuple) => {
-                MultiDimensionalEntity::CellValue(2_f64)
+                match tuple.materialize(slice_tuple, context).await {
+                    MultiDimensionalEntity::TupleWrap(olap_tuple) => {
+                        let ovc = OlapVectorCoordinate {
+                            member_roles: slice_tuple.merge(&olap_tuple).member_roles,
+                        };
+                        let (_, values, _null_flags) = calculate(vec![ovc], context).await;
+                        let measure_val = values.first().unwrap();
+                        MultiDimensionalEntity::CellValue(*measure_val)
+                    },
+                    _ => panic!("The entity is not a TupleWrap variant.")
+                }
             },
             AstFactory::FactoryExp(exp) => {
-                MultiDimensionalEntity::CellValue(3_f64)
+                let mde = exp.materialize(slice_tuple, context).await;
+                if let MultiDimensionalEntity::CellValue(_) = mde {
+                    mde
+                } else {
+                    panic!("The entity is not a CellValue variant.")
+                }
             },
         }
     }

@@ -47,7 +47,7 @@ pub enum MultiDimensionalEntity {
     // Dimension(Dimension), // 维度实体
     // Hierarchy(Hierarchy), // 层次实体
     // Level(Level),         // 层级实体
-    CellValue(f64),
+    CellValue(f64), // todo 这个CellValue要挪到别的枚举类型中去，不能放在这里！！！
     Nothing,
 }
 
