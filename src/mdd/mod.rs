@@ -219,6 +219,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
                         self.locate_entity_by_gid(*gid, slice_tuple, context).await
                     }
                     AstSeg::Str(seg) => self.locate_entity_by_seg(seg, slice_tuple, context).await,
+                    _ => panic!("The entity is not a Gid or a Str variant. 3"),
                 };
             }
         }

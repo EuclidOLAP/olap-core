@@ -32,6 +32,7 @@ pub enum AstSeg {
     Gid(u64),
     Str(String),
     GidStr(u64, String),
+    MemberFunction(AstMemberFunction),
 }
 
 impl AstSeg {
@@ -56,6 +57,7 @@ impl Materializable for AstSeg {
             AstSeg::Gid(gid) => context.find_entity_by_gid(*gid).await,
             AstSeg::Str(seg_str) => context.find_entity_by_str(seg_str).await,
             AstSeg::GidStr(gid, _) => context.find_entity_by_gid(*gid).await,
+            _ => panic!("The entity is not a Gid or a Str variant. 1"),
         }
     }
 }
@@ -311,6 +313,7 @@ impl AstSelectionStatement {
             AstSeg::GidStr(gid, _) => {
                 cube = self.fetch_cube_by_gid(&mut grpc_cli, *gid).await;
             }
+            _ => panic!("The entity is not a Gid or a Str variant. 2")
         }
 
         let mut cube_def_tuple = mdd::Tuple {
@@ -577,4 +580,15 @@ impl Materializable for AstTerm {
 
         MultiDimensionalEntity::CellValue(result)
     }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstMemberFnParent {
+    NoParam,
+    HasParam(AstSegments),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstMemberFunction {
+    Parent(AstMemberFnParent),
 }

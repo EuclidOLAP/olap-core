@@ -91,6 +91,9 @@ pub enum Token {
     Chapters,
     #[regex("(?i)SECTIONS")]
     Sections,
+
+    #[regex("(?i)Parent")]
+    Parent,
 }
 
 impl fmt::Display for Token {

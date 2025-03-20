@@ -6,6 +6,8 @@ use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember/*,CustomFormulaSet*/}
 use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
 use crate::mdx_ast::AstFactory::{FactoryNum,FactorySegs,FactoryTuple,FactoryExp};
 
+use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent};
+
 grammar;
 
 extern {
@@ -47,6 +49,8 @@ extern {
     "}" => Token::CurlyBraceRight,
 
     ";" => Token::Semicolon,
+
+    "Parent" => Token::Parent,
   }
 }
 
@@ -61,6 +65,9 @@ pub Seg: mdx_ast::AstSeg = {
   },
   <bra_str:"BracketedString"> => {
     mdx_ast::AstSeg::Str(bra_str)
+  },
+  <mfn: MemberFunction> => {
+    mdx_ast::AstSeg::MemberFunction(mfn)
   },
 }
 
@@ -281,5 +288,23 @@ Factory: AstFactory = {
   },
   "(" <exp:Expression> ")" => {
     FactoryExp(exp)
+  },
+}
+
+MemberFunction: AstMemberFunction = {
+  <parent: MemberFnParent> => {
+    AstMemberFunction::Parent(parent)
+  },
+}
+
+MemberFnParent: AstMemberFnParent = {
+  "Parent" => {
+    AstMemberFnParent::NoParam
+  },
+  "Parent" "(" ")" => {
+    AstMemberFnParent::NoParam
+  },
+  "Parent" "(" <segments: SegmentsWrap> ")" => {
+    AstMemberFnParent::HasParam(segments)
   },
 }
