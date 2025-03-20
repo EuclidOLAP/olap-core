@@ -10,7 +10,11 @@ use crate::olapmeta_grpc_client::GrpcClient;
 
 use crate::calcul::calculate;
 
-// #[allow(async_fn_in_trait)]
+// Temporarily allow async fn in trait to suppress the compiler warning.
+// This trait is currently used only within this project, so auto trait bounds (e.g., Send) are not a concern.
+// TODO: If this trait is made public or used in a multi-threaded context, 
+// consider refactoring async fn into a regular fn returning `impl Future + Send` to ensure thread safety.
+#[allow(async_fn_in_trait)]
 pub trait Materializable {
     async fn materialize(
         &self,
