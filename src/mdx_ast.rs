@@ -10,15 +10,13 @@ use crate::olapmeta_grpc_client::GrpcClient;
 
 use crate::calcul::calculate;
 
+// #[allow(async_fn_in_trait)]
 pub trait Materializable {
-    // https://www.cnblogs.com/Tifahfyf/p/18778897
-    // fn materialize(
     async fn materialize(
         &self,
         slice_tuple: &Tuple,
         context: &mut mdd::MultiDimensionalContext,
     ) -> MultiDimensionalEntity;
-    // ) -> impl std::future::Future<Output = MultiDimensionalEntity> + Send;
 }
 
 #[derive(Clone, Debug, PartialEq)]
