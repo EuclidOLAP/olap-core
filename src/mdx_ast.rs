@@ -10,15 +10,17 @@ use crate::olapmeta_grpc_client::GrpcClient;
 
 use crate::calcul::calculate;
 
+// Temporarily allow async fn in trait to suppress the compiler warning.
+// This trait is currently used only within this project, so auto trait bounds (e.g., Send) are not a concern.
+// TODO: If this trait is made public or used in a multi-threaded context, 
+// consider refactoring async fn into a regular fn returning `impl Future + Send` to ensure thread safety.
+#[allow(async_fn_in_trait)]
 pub trait Materializable {
-    // https://www.cnblogs.com/Tifahfyf/p/18778897
-    // fn materialize(
     async fn materialize(
         &self,
         slice_tuple: &Tuple,
         context: &mut mdd::MultiDimensionalContext,
     ) -> MultiDimensionalEntity;
-    // ) -> impl std::future::Future<Output = MultiDimensionalEntity> + Send;
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -34,6 +36,7 @@ pub enum AstSeg {
     Gid(u64),
     Str(String),
     GidStr(u64, String),
+    MemberFunction(AstMemberFunction),
 }
 
 impl AstSeg {
@@ -58,6 +61,7 @@ impl Materializable for AstSeg {
             AstSeg::Gid(gid) => context.find_entity_by_gid(*gid).await,
             AstSeg::Str(seg_str) => context.find_entity_by_str(seg_str).await,
             AstSeg::GidStr(gid, _) => context.find_entity_by_gid(*gid).await,
+            _ => panic!("The entity is not a Gid or a Str variant. 1"),
         }
     }
 }
@@ -100,37 +104,33 @@ impl Materializable for AstSegments {
         match self {
             AstSegments::Segs(segs) => {
 
-                let last_gid = self.get_last_gid().unwrap();
+                let mut is_formula_member = false;
 
-                match GidType::entity_type(last_gid) {
+                let last_opt = self.get_last_gid();
+                if let Some(last_gid) = last_opt {
+                    if GidType::entity_type(last_gid) == GidType::FormulaMember {
+                        is_formula_member = true;
+                    }
+                }
 
-                    GidType::FormulaMember => {
-                        let first_gid = self.get_first_gid().unwrap();
+                if is_formula_member {
+                    let dim_role_gid = self.get_first_gid().unwrap();
+                    let AstFormulaObject::CustomFormulaMember(_, exp) = context.formulas_map.get(&last_opt.unwrap()).unwrap().clone();
+                    return MultiDimensionalEntity::FormulaMemberWrap{ dim_role_gid, exp };
+                }
 
-                        let afo = context.formulas_map.get(&last_gid).unwrap().clone();
-                        let AstFormulaObject::CustomFormulaMember(_, exp) = afo;
-                        MultiDimensionalEntity::FormulaMemberWrap{ dim_role_gid: first_gid, exp }
+                let mut segs_iter = segs.iter();
+                let ast_seg = segs_iter.next().unwrap();
+                let head_entity: MultiDimensionalEntity =
+                    ast_seg.materialize(slice_tuple, context).await;
+
+                match head_entity {
+                    MultiDimensionalEntity::DimensionRoleWrap(dim_role) => {
+                        let tail_segs = AstSegments::Segs((&segs[1..]).to_vec());
+                        dim_role .locate_entity(&tail_segs, slice_tuple, context) .await
                     }
                     _ => {
-                        let result: MultiDimensionalEntity;
-
-                        let mut segs_iter = segs.iter();
-                        let ast_seg = segs_iter.next().unwrap();
-                        let head_entity: MultiDimensionalEntity =
-                            ast_seg.materialize(slice_tuple, context).await;
-
-                        match head_entity {
-                            MultiDimensionalEntity::DimensionRoleWrap(dim_role) => {
-                                let tail_segs = AstSegments::Segs((&segs[1..]).to_vec());
-                                result = dim_role
-                                    .locate_entity(&tail_segs, slice_tuple, context)
-                                    .await;
-                            }
-                            _ => {
-                                panic!("In method AstSegments::materialize(): head_entity is not a DimensionRoleWrap!");
-                            }
-                        }
-                        result
+                        panic!("In method AstSegments::materialize(): head_entity is not a DimensionRoleWrap!");
                     }
                 }
             }
@@ -313,6 +313,7 @@ impl AstSelectionStatement {
             AstSeg::GidStr(gid, _) => {
                 cube = self.fetch_cube_by_gid(&mut grpc_cli, *gid).await;
             }
+            _ => panic!("The entity is not a Gid or a Str variant. 2")
         }
 
         let mut cube_def_tuple = mdd::Tuple {
@@ -578,5 +579,61 @@ impl Materializable for AstTerm {
         }
 
         MultiDimensionalEntity::CellValue(result)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstMemberFnParent {
+    NoParam,
+    HasParam(AstSegments),
+}
+
+impl AstMemberFnParent {
+    async fn do_get_member(
+        left_unique_param: Option<MultiDimensionalEntity>,
+        context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+
+        if let MultiDimensionalEntity::MemberRoleWrap(mr) = left_unique_param.unwrap() {
+            if let MemberRole::BaseMember {dim_role, member} = mr {
+                if member.level < 1 {
+                    return MultiDimensionalEntity::MemberRoleWrap(MemberRole::BaseMember {dim_role, member});
+                } else {
+                    let obj = context.grpc_client.get_universal_olap_entity_by_gid(member.parent_gid).await.unwrap();
+                    if let MultiDimensionalEntity::MemberWrap(member) = obj {
+                        return MultiDimensionalEntity::MemberRoleWrap(MemberRole::BaseMember { 
+                            dim_role,
+                            member,
+                        });
+                    } else {
+                        todo!()
+                    }
+                }
+            }
+        }
+        todo!()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstMemberFunction {
+    Parent(AstMemberFnParent),
+}
+
+impl AstMemberFunction {
+    pub async fn get_member(
+        &self, 
+        left_unique_param: Option<MultiDimensionalEntity>,
+        context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+
+        match self {
+            AstMemberFunction::Parent(AstMemberFnParent::NoParam) => {
+                AstMemberFnParent::do_get_member(left_unique_param, context).await
+            }
+            AstMemberFunction::Parent(AstMemberFnParent::HasParam(_segs)) => {
+                todo!("AstMemberFunction::get_member()")
+            }
+        }
     }
 }

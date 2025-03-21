@@ -9,6 +9,7 @@ message UniversalOlapEntity {
     string name = 3;
     uint32 measureIndex = 4;
     uint32 level = 5;
+    uint64 parentGid = 6;
 }
 
 message LocateOlapEntityRequest {
@@ -73,6 +74,12 @@ service OlapMetaService {
     rpc LocateUniversalOlapEntityByGid  (LocateOlapEntityRequest) returns (UniversalOlapEntity);
 
     rpc LocateUniversalOlapEntityByName (LocateOlapEntityRequest) returns (UniversalOlapEntity);
+
+    rpc GetUniversalOlapEntityByGid (GetUniversalOlapEntityByGidRequest) returns (UniversalOlapEntity);
+}
+
+message GetUniversalOlapEntityByGidRequest {
+    uint64 universalOlapEntityGid = 1;
 }
 
 // 定义 DimensionRole 查询请求消息

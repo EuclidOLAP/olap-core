@@ -7,6 +7,7 @@ use olapmeta::GetDimensionRolesByCubeGidRequest;
 use olapmeta::GetDefaultDimensionMemberRequest;
 use olapmeta::GetDimensionRoleByGidRequest;
 use olapmeta::LocateOlapEntityRequest;
+use olapmeta::GetUniversalOlapEntityByGidRequest;
 
 use crate::mdd;
 use crate::mdd::MultiDimensionalEntity;
@@ -78,7 +79,7 @@ impl GrpcClient {
             // hierarchy_gid: grpc_member.hierarchy_gid,
             // level_gid: grpc_member.level_gid,
             level: grpc_member.level,
-            // parent_gid: grpc_member.parent_gid,
+            parent_gid: grpc_member.parent_gid,
             measure_index: grpc_member.measure_index,
         })
     }
@@ -154,6 +155,21 @@ impl GrpcClient {
         _target_entity_name: &String,
     ) -> Result<MultiDimensionalEntity, Box<dyn std::error::Error>> {
         todo!("locate_universal_olap_entity_by_name not implemented yet.");
+    }
+
+    pub async fn get_universal_olap_entity_by_gid(
+        &mut self,
+        gid: u64,
+    ) -> Result<MultiDimensionalEntity, Box<dyn std::error::Error>> {
+
+        let request = Request::new(GetUniversalOlapEntityByGidRequest {
+            universal_olap_entity_gid: gid,
+        });
+
+        let universal_olap_entity
+            = self.client.get_universal_olap_entity_by_gid(request).await?.into_inner();
+
+        Ok(MultiDimensionalEntity::from_universal_olap_entity(&universal_olap_entity))
     }
 
 }

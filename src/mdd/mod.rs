@@ -6,6 +6,7 @@ use crate::mdx_ast::{AstSeg, AstSegments, AstFormulaObject, AstExpression};
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
 
+#[derive(PartialEq)]
 pub enum GidType {
     Dimension,     // 100000000000001
     Hierarchy,     // 200000000000001
@@ -70,6 +71,7 @@ impl MultiDimensionalEntity {
                 name: entity.name.clone(),
                 level: entity.level,
                 measure_index: entity.measure_index,
+                parent_gid: entity.parent_gid,
             }),
             _ => {
                 panic!("Unsupported entity class: {}", entity.olap_entity_class);
@@ -193,6 +195,47 @@ impl MemberRole {
     }
 }
 
+impl MultiDimensionalEntityLocator for MemberRole {
+    async fn locate_entity(
+        &self,
+        segs: &AstSegments,
+        _: &Tuple,
+        context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+
+        match segs {
+            AstSegments::Segs(seg_list) => {
+                let seg = seg_list.first().unwrap();
+                match seg {
+                    AstSeg::MemberFunction(member_fn) => {
+                        member_fn.get_member(Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())), context).await
+                    }
+                    _ => panic!("Panic in MemberRole::locate_entity() .. 67HUSran .."),
+                }
+            }
+        }
+    }
+
+    async fn locate_entity_by_gid(
+        &self,
+        _gid: u64,
+        _slice_tuple: &Tuple,
+        _context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        todo!("MemberRole::locate_entity_by_gid() not implemented yet.")
+    }
+
+    async fn locate_entity_by_seg(
+        &self,
+        _seg: &String,
+        _slice_tuple: &Tuple,
+        _context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        todo!("MemberRole::locate_entity_by_seg() not implemented yet.")
+    }
+
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct DimensionRole {
     pub gid: u64,
@@ -209,25 +252,32 @@ impl MultiDimensionalEntityLocator for DimensionRole {
         slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-        let entity;
+
         match segs {
             AstSegments::Segs(seg_list) => {
+
                 let seg = seg_list.iter().next().unwrap();
-                entity = match seg {
-                    AstSeg::Gid(gid) => self.locate_entity_by_gid(*gid, slice_tuple, context).await,
-                    AstSeg::GidStr(gid, _) => {
-                        self.locate_entity_by_gid(*gid, slice_tuple, context).await
-                    }
+                let entity = match seg {
+                    AstSeg::Gid(gid) | AstSeg::GidStr(gid, _)
+                        => self.locate_entity_by_gid(*gid, slice_tuple, context).await,
                     AstSeg::Str(seg) => self.locate_entity_by_seg(seg, slice_tuple, context).await,
+                    _ => panic!("The entity is not a Gid or a Str variant. 3"),
                 };
-            }
-        }
-        match entity {
-            MultiDimensionalEntity::MemberRoleWrap(member_role) => {
-                MultiDimensionalEntity::MemberRoleWrap(member_role)
-            }
-            _ => {
-                panic!("[DimRole] locate_entity() Unsupported entity class.");
+
+                match entity {
+                    MultiDimensionalEntity::MemberRoleWrap(member_role) => {
+
+                        if seg_list.len() == 1 {
+                            return MultiDimensionalEntity::MemberRoleWrap(member_role);
+                        }
+
+                        let tail_segs = AstSegments::Segs(seg_list[1..].to_vec());
+                        member_role.locate_entity(&tail_segs, slice_tuple, context).await
+                    }
+                    _ => {
+                        panic!("[DimRole] locate_entity() Unsupported entity class.");
+                    }
+                }
             }
         }
     }
@@ -281,7 +331,7 @@ pub struct Member {
     // pub hierarchy_gid: u64,
     // pub level_gid: u64,
     pub level: u32,
-    // pub parent_gid: u64,
+    pub parent_gid: u64,
     pub measure_index: u32,
 }
 
