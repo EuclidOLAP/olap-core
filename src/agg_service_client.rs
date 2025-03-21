@@ -44,6 +44,11 @@ pub async fn basic_aggregates(
     coordinates: Vec<OlapVectorCoordinate>,
     context: &MultiDimensionalContext,
 ) -> (u64, Vec<f64>, Vec<bool>) {
+
+    if coordinates.is_empty() {
+        return (context.cube.gid, vec![], vec![]);
+    }
+
     let mut grpc_cli = AggServiceGrpcClient::new("http://127.0.0.1:16060")
         .await
         .expect("Failed to create client");
