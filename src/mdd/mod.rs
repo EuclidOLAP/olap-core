@@ -59,6 +59,7 @@ pub enum MultiDimensionalEntity {
 pub enum CellValue {
     Double(f64),
     Str(String),
+    Null,
     Invalid,
 }
 
