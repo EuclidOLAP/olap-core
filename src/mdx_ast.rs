@@ -488,6 +488,7 @@ impl ToCellValue for AstExpression {
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstFactory {
     FactoryNum(f64),
+    FactoryStr(String),
     FactorySegs(AstSegments),
     FactoryTuple(AstTuple),
     FactoryExp(AstExpression),
@@ -497,6 +498,7 @@ impl ToCellValue for AstFactory {
     async fn val(&self, slice_tuple: &Tuple, context: &mut MultiDimensionalContext) -> CellValue {
         match self {
             AstFactory::FactoryNum(num) => CellValue::Double(*num),
+            AstFactory::FactoryStr(str) => CellValue::Str(String::from(str)),
             AstFactory::FactorySegs(segs) => match segs.materialize(slice_tuple, context).await {
                 MultiDimensionalEntity::MemberRoleWrap(mr) => {
                     let ovc_tp = slice_tuple.merge(&Tuple {

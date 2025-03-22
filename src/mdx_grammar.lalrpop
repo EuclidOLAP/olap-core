@@ -4,7 +4,7 @@ use crate::mdx_ast::AstFormulaObject;
 use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember/*,CustomFormulaSet*/};
 
 use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
-use crate::mdx_ast::AstFactory::{FactoryNum,FactorySegs,FactoryTuple,FactoryExp};
+use crate::mdx_ast::AstFactory::{FactoryNum, FactoryStr, FactorySegs,FactoryTuple,FactoryExp};
 
 use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent};
 
@@ -25,6 +25,7 @@ extern {
     "from" => Token::From,
     "where" => Token::Where,
     "BracketedString" => Token::BracketedString(<String>),
+    "QuotedString" => Token::QuotedString(<String>),
 
     "Columns" => Token::Columns,
     "Rows" => Token::Rows,
@@ -279,6 +280,9 @@ Factory: AstFactory = {
   <int_val:"int"> => {
     let double_val: f64 = int_val as f64;
     FactoryNum(double_val)
+  },
+  <str:"QuotedString"> => {
+    FactoryStr(str)
   },
   <segs_wrap:SegmentsWrap> => {
     FactorySegs(segs_wrap)
