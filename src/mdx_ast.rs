@@ -509,11 +509,8 @@ impl ToCellValue for AstFactory {
                         member_roles: ovc_tp.member_roles,
                     };
 
-                    let (_, values, _null_flags) = calculate(vec![ovc], context).await;
-
-                    let measure_val = values.first().unwrap();
-
-                    CellValue::Double(*measure_val)
+                    let cell_values = calculate(vec![ovc], context).await;
+                    cell_values.first().unwrap().clone()
                 }
                 MultiDimensionalEntity::FormulaMemberWrap {
                     dim_role_gid: _,
@@ -527,16 +524,13 @@ impl ToCellValue for AstFactory {
                         let ovc = OlapVectorCoordinate {
                             member_roles: slice_tuple.merge(&olap_tuple).member_roles,
                         };
-                        let (_, values, _null_flags) = calculate(vec![ovc], context).await;
-                        let measure_val = values.first().unwrap();
-                        CellValue::Double(*measure_val)
+                        let cell_values = calculate(vec![ovc], context).await;
+                        cell_values.first().unwrap().clone()
                     }
                     _ => panic!("The entity is not a TupleWrap variant."),
                 }
             }
-            AstFactory::FactoryExp(exp) => {
-                exp.val(slice_tuple, context).await
-            }
+            AstFactory::FactoryExp(exp) => exp.val(slice_tuple, context).await,
         }
     }
 }

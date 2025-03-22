@@ -1,11 +1,10 @@
 use core::panic;
 
-use std::collections::HashMap;
-use std::ops;
-
 use crate::mdx_ast::{AstExpression, AstFormulaObject, AstSeg, AstSegments};
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
+use std::collections::HashMap;
+use std::ops;
 
 #[derive(PartialEq)]
 pub enum GidType {
@@ -55,7 +54,7 @@ pub enum MultiDimensionalEntity {
     Nothing,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum CellValue {
     Double(f64),
     Str(String),
@@ -133,7 +132,6 @@ impl ops::Div for CellValue {
 }
 
 impl MultiDimensionalEntity {
-
     pub fn from_universal_olap_entity(entity: &UniversalOlapEntity) -> Self {
         let entity_type = entity.olap_entity_class.as_str();
 
