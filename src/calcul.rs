@@ -1,10 +1,10 @@
 // calculation module
 
-use crate::mdx_ast::Materializable;
+use crate::mdx_ast::ToCellValue;
 
 use crate::mdd::OlapVectorCoordinate;
+use crate::mdd::{CellValue, MultiDimensionalContext};
 use crate::mdd::{MemberRole, Tuple};
-use crate::mdd::{MultiDimensionalContext, MultiDimensionalEntity};
 
 use crate::agg_service_client::basic_aggregates;
 
@@ -80,8 +80,8 @@ async fn calculate_formula_vectors(
                 // Expression_evaluate(md_ctx, exp, cube, cal_tp, gd);
 
                 let exp = exp.clone();
-                let mde = exp
-                    .materialize(
+                let cell_val = exp
+                    .val(
                         &Tuple {
                             member_roles: cord.member_roles,
                         },
@@ -89,14 +89,12 @@ async fn calculate_formula_vectors(
                     )
                     .await;
 
-                if let MultiDimensionalEntity::CellValue(val) = mde {
+                if let CellValue::Double(val) = cell_val {
                     doubles.push(val);
                     bools.push(false);
                 } else {
-                    panic!(
-                        "[calculate_formula_vectors()] - It's not a cell value: {:#?}",
-                        mde
-                    );
+                    doubles.push(-0.999999999);
+                    bools.push(false);
                 }
 
                 continue 'outer_loop;
