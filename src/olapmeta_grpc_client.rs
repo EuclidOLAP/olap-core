@@ -8,6 +8,8 @@ use olapmeta::GetDefaultDimensionMemberRequest;
 use olapmeta::GetDimensionRoleByGidRequest;
 use olapmeta::LocateOlapEntityRequest;
 use olapmeta::GetUniversalOlapEntityByGidRequest;
+use olapmeta::GetChildMembersByGidRequest;
+use olapmeta::GrpcMember;
 
 use crate::mdd;
 use crate::mdd::MultiDimensionalEntity;
@@ -19,6 +21,19 @@ pub mod olapmeta {
 
 pub struct GrpcClient {
     client: OlapMetaServiceClient<Channel>,
+}
+
+fn grpc_to_olap_member(grpc_member: GrpcMember) -> mdd::Member {
+    mdd::Member {
+        gid: grpc_member.gid,
+        name: grpc_member.name,
+        // dimension_gid: grpc_member.dimension_gid,
+        // hierarchy_gid: grpc_member.hierarchy_gid,
+        // level_gid: grpc_member.level_gid,
+        level: grpc_member.level,
+        parent_gid: grpc_member.parent_gid,
+        measure_index: grpc_member.measure_index,
+    }
 }
 
 impl GrpcClient {
@@ -72,17 +87,26 @@ impl GrpcClient {
 
         let grpc_member = response.into_inner();
 
-        Ok(mdd::Member {
-            gid: grpc_member.gid,
-            name: grpc_member.name,
-            // dimension_gid: grpc_member.dimension_gid,
-            // hierarchy_gid: grpc_member.hierarchy_gid,
-            // level_gid: grpc_member.level_gid,
-            level: grpc_member.level,
-            parent_gid: grpc_member.parent_gid,
-            measure_index: grpc_member.measure_index,
-        })
+        Ok(grpc_to_olap_member(grpc_member))
+
     }
+
+
+    pub async fn get_child_members_by_gid(&mut self, parent_member_gid: u64)
+        -> Result<Vec<mdd::Member>, Box<dyn std::error::Error>> {
+
+            let req = GetChildMembersByGidRequest {
+                parent_member_gid
+            };
+
+            let response = self.client.get_child_members_by_gid(req).await?;
+            let response = response.into_inner();
+            let children = response.child_members.into_iter()
+                .map(|grpc_member| grpc_to_olap_member(grpc_member) ).collect();
+
+            Ok(children)
+    }
+
 
     pub async fn get_dimension_role_by_gid(&mut self, dim_role_gid: u64)
         -> Result<mdd::DimensionRole, Box<dyn std::error::Error>> {

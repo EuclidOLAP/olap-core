@@ -100,6 +100,14 @@ pub enum Token {
 
     #[regex("(?i)Parent")]
     Parent,
+
+    #[regex("(?i)Children")]
+    Children,
+
+    #[regex("(?i)Avg")]
+    Avg,
+    #[regex("(?i)Count")]
+    Count,
 }
 
 impl fmt::Display for Token {

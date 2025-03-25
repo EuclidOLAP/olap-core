@@ -6,7 +6,7 @@ use crate::mdd::CellValue;
 use crate::mdd::MultiDimensionalContext;
 use crate::mdd::MultiDimensionalEntityLocator;
 use crate::mdd::OlapVectorCoordinate;
-use crate::mdd::{GidType, MemberRole, MultiDimensionalEntity, Tuple};
+use crate::mdd::{GidType, MemberRole, MultiDimensionalEntity, Tuple, Set};
 use crate::olapmeta_grpc_client::GrpcClient;
 
 use crate::calcul::calculate;
@@ -47,6 +47,8 @@ pub enum AstSeg {
     Str(String),
     GidStr(u64, String),
     MemberFunction(AstMemberFunction),
+    SetFunction(AstSetFunction),
+    ExpFn(AstExpFunction)
 }
 
 impl AstSeg {
@@ -516,6 +518,9 @@ impl ToCellValue for AstFactory {
                     dim_role_gid: _,
                     exp,
                 } => exp.val(slice_tuple, context).await,
+                MultiDimensionalEntity::ExpFn(exp_fn) => {
+                    exp_fn.val(slice_tuple, context).await
+                },
                 _ => panic!("The entity is not a CellValue variant."),
             },
             AstFactory::FactoryTuple(tuple) => {
@@ -618,5 +623,120 @@ impl AstMemberFunction {
                 todo!("AstMemberFunction::get_member()")
             }
         }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstSetFnChildren {
+    NoParam,
+    InnerParam(AstSegments),
+}
+
+impl AstSetFnChildren {
+    async fn do_get_set(
+        left_unique_param: Option<MultiDimensionalEntity>,
+        context: &mut MultiDimensionalContext,
+    ) -> Set {
+        if let MultiDimensionalEntity::MemberRoleWrap(mr) = left_unique_param.unwrap() {
+            if let MemberRole::BaseMember { dim_role, member } = mr {
+
+                let children = context
+                        .grpc_client
+                        .get_child_members_by_gid(member.gid)
+                        .await
+                        .unwrap();
+
+                let tuples: Vec<Tuple> = children.into_iter().map(|child| {
+                    Tuple {
+                        member_roles: vec![MemberRole::BaseMember {
+                            dim_role: dim_role.clone(),
+                            member: child,
+                        }],
+                    }
+                }).collect();
+
+                return Set { tuples };
+            }
+        }
+
+        todo!()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstSetFunction {
+    Children(AstSetFnChildren),
+}
+
+impl AstSetFunction {
+    pub async fn get_set(
+        &self,
+        left_unique_param: Option<MultiDimensionalEntity>,
+        context: &mut MultiDimensionalContext,
+    ) -> Set {
+        match self {
+            AstSetFunction::Children(AstSetFnChildren::NoParam) => {
+                AstSetFnChildren::do_get_set(left_unique_param, context).await
+            }
+            AstSetFunction::Children(AstSetFnChildren::InnerParam(_segs)) => {
+                todo!("AstSetFunction::get_set()")
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstExpFunction{
+    Avg(AstExpFnAvg),
+    Count(AstExpFnCount),
+}
+
+impl ToCellValue for AstExpFunction {
+    async fn val(&self, slice_tuple: &Tuple, context: &mut MultiDimensionalContext) -> CellValue {
+        match self {
+            AstExpFunction::Avg(avg_fn) => {
+                avg_fn.val(slice_tuple, context).await
+            }
+            AstExpFunction::Count(count_fn) => {
+                count_fn.val(slice_tuple, context).await
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstExpFnAvg {
+    NoParam,
+    InnerParam(AstSet),
+    OuterParam(Set),
+}
+
+impl ToCellValue for AstExpFnAvg {
+    async fn val(&self, _slice_tuple: &Tuple, _context: &mut MultiDimensionalContext) -> CellValue {
+        CellValue::Str("avg函数有待实现".to_string())
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstExpFnCount {
+    NoParam,
+    InnerParam(AstSet),
+    OuterParam(Set),
+}
+
+impl ToCellValue for AstExpFnCount {
+    async fn val(&self, _slice_tuple: &Tuple, _context: &mut MultiDimensionalContext) -> CellValue {
+
+        let set = match self {
+            AstExpFnCount::InnerParam(_set) => {
+                todo!("AstExpFnCount::val()")
+            }
+            AstExpFnCount::OuterParam(set) => {
+                set
+            }
+            _ => panic!("AstExpFnCount::val()")
+        };
+
+        CellValue::Double(set.tuples.len() as f64)
     }
 }

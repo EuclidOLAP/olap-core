@@ -1,6 +1,10 @@
 use core::panic;
 
 use crate::mdx_ast::{AstExpression, AstFormulaObject, AstSeg, AstSegments};
+use crate::mdx_ast::AstExpFunction;
+use crate::mdx_ast::AstExpFnAvg;
+use crate::mdx_ast::AstExpFnCount;
+
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
 use std::collections::HashMap;
@@ -47,6 +51,7 @@ pub enum MultiDimensionalEntity {
         dim_role_gid: u64,
         exp: AstExpression,
     },
+    ExpFn(AstExpFunction),
     // Cube(Cube),           // 立方体实体
     // Dimension(Dimension), // 维度实体
     // Hierarchy(Hierarchy), // 层次实体
@@ -215,14 +220,74 @@ impl MultiDimensionalContext {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Tuple {
     pub member_roles: Vec<MemberRole>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Set {
     pub tuples: Vec<Tuple>,
+}
+
+impl MultiDimensionalEntityLocator for Set {
+
+    async fn locate_entity(
+        &self,
+        segs: &AstSegments,
+        _slice_tuple: &Tuple,
+        _context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+
+        match segs {
+            AstSegments::Segs(seg_list) => {
+                let seg = seg_list.iter().next().unwrap();
+
+                match seg {
+                    AstSeg::ExpFn(exp_fn) => {
+                        match exp_fn {
+                            AstExpFunction::Avg(_) => {
+                                if seg_list.len() > 1 {
+                                    panic!("Avg function can only have one segment. hsbt2839");
+                                }
+                                let set_copy = self.clone();
+                                let avg_fn = AstExpFnAvg::OuterParam(set_copy);
+                                return MultiDimensionalEntity::ExpFn(AstExpFunction::Avg(avg_fn));
+                            },
+                            AstExpFunction::Count(_) => {
+                                if seg_list.len() > 1 {
+                                    panic!("Count function can only have one segment. hs8533BJ");
+                                }
+                                let set_copy = self.clone();
+                                let count_fn = AstExpFnCount::OuterParam(set_copy);
+                                return MultiDimensionalEntity::ExpFn(AstExpFunction::Count(count_fn));
+                            },
+                        }
+                    },
+                    _ => panic!("The entity is not a Gid or a Str variant. 3"),
+                }
+            }
+        }
+    }
+
+    async fn locate_entity_by_gid(
+        &self,
+        _gid: u64,
+        _slice_tuple: &Tuple,
+        _context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        todo!()
+    }
+
+    async fn locate_entity_by_seg(
+        &self,
+        _seg: &String,
+        _slice_tuple: &Tuple,
+        _context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        todo!()
+    }
+
 }
 
 impl Tuple {
@@ -245,7 +310,7 @@ impl Tuple {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum MemberRole {
     BaseMember {
         dim_role: DimensionRole,
@@ -273,7 +338,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
     async fn locate_entity(
         &self,
         segs: &AstSegments,
-        _: &Tuple,
+        slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         match segs {
@@ -287,7 +352,22 @@ impl MultiDimensionalEntityLocator for MemberRole {
                                 context,
                             )
                             .await
-                    }
+                    },
+                    AstSeg::SetFunction(set_fn) => {
+                        let set = set_fn
+                            .get_set(
+                                Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
+                                context,
+                            )
+                            .await;
+
+                        if seg_list.len() == 1 {
+                            MultiDimensionalEntity::SetWrap(set)
+                        } else {
+                            let tail_segs = AstSegments::Segs(seg_list[1..].to_vec());
+                            set.locate_entity(&tail_segs, slice_tuple, context).await
+                        }
+                    },
                     _ => panic!("Panic in MemberRole::locate_entity() .. 67HUSran .."),
                 }
             }
@@ -400,7 +480,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
 // #[derive(Debug)]
 // pub struct Dimension {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Member {
     pub gid: u64,
     pub name: String,

@@ -7,6 +7,8 @@ use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
 use crate::mdx_ast::AstFactory::{FactoryNum, FactoryStr, FactorySegs,FactoryTuple,FactoryExp};
 
 use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent};
+use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
+use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
 
 grammar;
 
@@ -52,6 +54,11 @@ extern {
     ";" => Token::Semicolon,
 
     "Parent" => Token::Parent,
+
+    "Children" => Token::Children,
+
+    "Avg" => Token::Avg,
+    "Count" => Token::Count,
   }
 }
 
@@ -69,6 +76,12 @@ pub Seg: mdx_ast::AstSeg = {
   },
   <mfn: MemberFunction> => {
     mdx_ast::AstSeg::MemberFunction(mfn)
+  },
+  <setfn: SetFnSpec> => {
+    mdx_ast::AstSeg::SetFunction(setfn)
+  },
+  <exp_fn: ExpFnSpec> => {
+    mdx_ast::AstSeg::ExpFn(exp_fn)
   },
 }
 
@@ -310,5 +323,56 @@ MemberFnParent: AstMemberFnParent = {
   },
   "Parent" "(" <segments: SegmentsWrap> ")" => {
     AstMemberFnParent::HasParam(segments)
+  },
+}
+
+SetFnSpec: AstSetFunction = {
+  <chir: SetFnChildrenSpec> => {
+    AstSetFunction::Children(chir)
+  }
+}
+
+SetFnChildrenSpec: AstSetFnChildren = {
+  "Children" => {
+    AstSetFnChildren::NoParam
+  },
+  "Children" "(" ")" => {
+    AstSetFnChildren::NoParam
+  },
+  "Children" "(" <segments: SegmentsWrap> ")" => {
+    AstSetFnChildren::InnerParam(segments)
+  },
+}
+
+ExpFnSpec: AstExpFunction = {
+  <avg: ExpFnAvgSpec> => {
+    AstExpFunction::Avg(avg)
+  },
+  <count: ExpFnCountSpec> => {
+    AstExpFunction::Count(count)
+  },
+}
+
+ExpFnCountSpec: AstExpFnCount = {
+  "Count" => {
+    AstExpFnCount::NoParam
+  },
+  "Count" "(" ")" => {
+    AstExpFnCount::NoParam
+  },
+  "Count" "(" <set: SetWrap> ")" => {
+    AstExpFnCount::InnerParam(set)
+  },
+}
+
+ExpFnAvgSpec: AstExpFnAvg = {
+  "Avg" => {
+    AstExpFnAvg::NoParam
+  },
+  "Avg" "(" ")" => {
+    AstExpFnAvg::NoParam
+  },
+  "Avg" "(" <set: SetWrap> ")" => {
+    AstExpFnAvg::InnerParam(set)
   },
 }
