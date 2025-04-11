@@ -178,7 +178,8 @@ pub Axes: Vec<mdx_ast::AstAxis> = {
 
 pub MdxStatement: mdx_ast::ExtMDXStatement = {
   "select" "on" "from" "where" => {
-    mdx_ast::ExtMDXStatement::Querying { basic_cube: mdx_ast::AstCube{} }
+    panic!("<<< MDX Grammar Exception >>> This could be a test, suggestive, useless, outdated code snippet.");
+    // mdx_ast::ExtMDXStatement::Querying { basic_cube: mdx_ast::AstCube{} }
   }
 }
 
