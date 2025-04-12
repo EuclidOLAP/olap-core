@@ -360,12 +360,38 @@ impl AstSelectionStatement {
             }
         }
 
-        mdd::MultiDimensionalContext {
+        let mut context = mdd::MultiDimensionalContext {
             cube,
             cube_def_tuple,
+            where_tuple: None,
+            query_slice_tuple: Tuple {
+                member_roles: vec![],
+            },
             grpc_client: grpc_cli,
             formulas_map,
+        };
+
+        let mut where_tuple: Option<Tuple> = None;
+        if let Some(mdx_where) = &self.basic_slice {
+            where_tuple = match mdx_where.materialize(&context.cube_def_tuple.clone(), &mut context).await {
+                MultiDimensionalEntity::TupleWrap(tuple) => Some(tuple),
+                _ => panic!("The entity is not a TupleWrap variant."),
+            }
+        };
+
+        context.where_tuple = where_tuple;
+
+
+
+        let mut query_slice_tuple = context.cube_def_tuple.clone();
+        if let Some(where_tuple) = &context.where_tuple {
+            query_slice_tuple = query_slice_tuple.merge(where_tuple);
         }
+        context.query_slice_tuple = query_slice_tuple;
+
+
+
+        context
     }
 
     async fn fetch_cube_by_gid(&self, grpc_cli: &mut GrpcClient, gid: u64) -> mdd::Cube {
@@ -422,17 +448,8 @@ impl AstSelectionStatement {
     }
 
     pub async fn build_axes(&self, context: &mut mdd::MultiDimensionalContext) -> Vec<mdd::Axis> {
-        // 在解析AST时向函数调用栈深处传递的用于限定Cube切片范围的Tuple
-        let mut slice_tuple = context.cube_def_tuple.clone();
 
-        if let Some(slice) = &self.basic_slice {
-            // mdx with `where statement`
-            let where_tuple = match slice.materialize(&slice_tuple, context).await {
-                MultiDimensionalEntity::TupleWrap(tuple) => tuple,
-                _ => panic!("The entity is not a TupleWrap variant."),
-            };
-            slice_tuple = slice_tuple.merge(&where_tuple);
-        }
+        let mut slice_tuple = context.query_slice_tuple.clone();
 
         let axes_count = self.axes.len();
 

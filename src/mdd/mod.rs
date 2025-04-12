@@ -182,7 +182,9 @@ pub trait MultiDimensionalEntityLocator {
 #[derive(Debug)]
 pub struct MultiDimensionalContext {
     pub cube: Cube,
-    pub cube_def_tuple: Tuple, // defautl slice tuple, MDX `where statement`
+    pub cube_def_tuple: Tuple,
+    pub where_tuple: Option<Tuple>,
+    pub query_slice_tuple: Tuple,
     pub grpc_client: GrpcClient,
     pub formulas_map: HashMap<u64, AstFormulaObject>,
 }
@@ -551,7 +553,7 @@ impl Axis {
         let mut ov_coordinates: Vec<OlapVectorCoordinate> = Vec::new();
         for tuple in finished_tuples {
             ov_coordinates.push(OlapVectorCoordinate {
-                member_roles: context.cube_def_tuple.merge(&tuple).member_roles,
+                member_roles: context.query_slice_tuple.merge(&tuple).member_roles,
             });
         }
 
