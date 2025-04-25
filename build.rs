@@ -1,47 +1,26 @@
 fn main() {
-    // Paths to .proto files used for gRPC service definitions
-    let euclidolap_file = "proto/euclidolap.proto";
-    let olapmeta_file = "proto/olapmeta.proto";
-    let agg_service_proto = "proto/agg-service.proto";
+    let proto_files = [
+        "proto/euclidolap.proto",
+        "proto/olapmeta.proto",
+        "proto/agg-service.proto",
+    ];
 
-    // Output directory for generated Rust code
-    let out_dir = "src/grpc";
+    let proto_includes = ["proto"];
 
-    // Compile euclidolap.proto to Rust using tonic
-    if let Err(e) = tonic_build::configure()
-        .out_dir(out_dir)
-        .compile(&[euclidolap_file], &["proto"])
-    {
-        eprintln!("Failed to compile {}, the error is: {}", euclidolap_file, e);
-        std::process::exit(1);
+    // OUT_DIR is a special env var provided by Cargo (like target/debug/build/.../out)
+    let out_dir = std::env::var("OUT_DIR").unwrap();
+
+    tonic_build::configure()
+        .build_client(true)
+        .build_server(true)
+        .out_dir(&out_dir) // Output to OUT_DIR instead of src/
+        .compile(&proto_files, &proto_includes)
+        .expect("Failed to compile proto files");
+
+    // Rerun build script if proto files change
+    for proto in proto_files.iter() {
+        println!("cargo:rerun-if-changed={}", proto);
     }
 
-    // Compile olapmeta.proto to Rust using tonic
-    if let Err(e) = tonic_build::configure()
-        .out_dir(out_dir)
-        .compile(&[olapmeta_file], &["proto"])
-    {
-        eprintln!("Failed to compile {}, the error is: {}", olapmeta_file, e);
-        std::process::exit(1);
-    }
-
-    // Compile agg-service.proto to Rust using tonic
-    if let Err(e) = tonic_build::configure()
-        .out_dir(out_dir)
-        .compile(&[agg_service_proto], &["proto"])
-    {
-        eprintln!(
-            "Failed to compile {}, the error is: {}",
-            agg_service_proto, e
-        );
-        std::process::exit(1);
-    }
-
-    // Instruct Cargo to rerun the build script if any of the .proto files change
-    println!("cargo:rerun-if-changed={}", euclidolap_file);
-    println!("cargo:rerun-if-changed={}", olapmeta_file);
-    println!("cargo:rerun-if-changed={}", agg_service_proto);
-
-    // Run LALRPOP to process grammar files into Rust code
     lalrpop::process_src().unwrap();
 }

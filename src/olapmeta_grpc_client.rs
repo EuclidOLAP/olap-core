@@ -15,8 +15,7 @@ use crate::mdd;
 use crate::mdd::MultiDimensionalEntity;
 
 pub mod olapmeta {
-    // include!("generated/olapmeta.rs"); // 通过 tonic-build 生成的模块
-    include!("grpc/olapmeta.rs"); // 通过 tonic-build 生成的模块
+    tonic::include_proto!("olapmeta");
 }
 
 pub struct GrpcClient {

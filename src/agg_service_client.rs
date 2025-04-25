@@ -9,7 +9,7 @@ use crate::mdd::OlapVectorCoordinate;
 use crate::mdd::MemberRole;
 
 pub mod agg_service {
-    include!("grpc/agg_service.rs"); // 通过 tonic-build 生成的模块
+    tonic::include_proto!("agg_service");
 }
 
 pub struct AggServiceGrpcClient {

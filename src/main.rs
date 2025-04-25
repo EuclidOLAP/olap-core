@@ -12,7 +12,7 @@ mod olapmeta_grpc_client;
 mod agg_service_client;
 
 mod euclidolap {
-    include!("grpc/euclidolap.rs");
+    tonic::include_proto!("euclidolap");
 }
 
 pub mod mdx_ast;
