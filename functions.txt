@@ -51,7 +51,7 @@ LastSibling                 ____	SSAS	Esbs	intc
 Lead                        ____	SSAS	Esbs	intc
 OpeningPeriod               ____	SSAS	Esbs	intc
 ParallelPeriod              ____	SSAS	Esbs	intc
-Parent                      ____	SSAS	Esbs	intc
+Parent                      Eucl	SSAS	Esbs	intc
 PrevMember                  ____	SSAS	Esbs	intc
 NextMember                  ____	SSAS	Esbs	intc
 Ancestor                    ____	SSAS	Esbs	____
@@ -71,11 +71,11 @@ ValidMeasure                ____	SSAS	____	____
 
 << Numeric Functions >>                           				
 CoalesceEmpty               ____	SSAS	Esbs	intc
-Count (Set)                 ____	SSAS	____	____
+Count (Set)                 Eucl	SSAS	____	____
 IIf                         ____	SSAS	Esbs	____
 LookupCube                  ____	SSAS	____	____
 Sum                         ____	SSAS	Esbs	intc
-Avg                         ____	SSAS	Esbs	intc
+Avg                         Eucl	SSAS	Esbs	intc
 Max                         ____	SSAS	Esbs	intc
 Min                         ____	SSAS	Esbs	intc
 Aggregate                   ____	SSAS	Esbs	intc
@@ -134,7 +134,7 @@ VarP                        ____	SSAS	____	____
 
 << Set Functions >>                               				
 BottomPercent               ____	SSAS	____	intc
-Children                    ____	SSAS	____	intc
+Children                    Eucl	SSAS	____	intc
 CrossJoin                   ____	SSAS	Esbs	intc
 Descendants                 ____	SSAS	____	intc
 Except                      ____	SSAS	Esbs	intc
