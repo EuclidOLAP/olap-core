@@ -6,7 +6,7 @@ use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember/*,CustomFormulaSet*/}
 use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
 use crate::mdx_ast::AstFactory::{FactoryNum, FactoryStr, FactorySegs,FactoryTuple,FactoryExp};
 
-use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent};
+use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent, AstMemberFnClosingPeriod};
 use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
 use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
 
@@ -59,6 +59,8 @@ extern {
 
     "Avg" => Token::Avg,
     "Count" => Token::Count,
+
+    "ClosingPeriod" => Token::ClosingPeriod,
   }
 }
 
@@ -313,6 +315,9 @@ MemberFunction: AstMemberFunction = {
   <parent: MemberFnParent> => {
     AstMemberFunction::Parent(parent)
   },
+  <cp: MemberFnClosingPeriod> => {
+    AstMemberFunction::ClosingPeriod(cp)
+  },
 }
 
 MemberFnParent: AstMemberFnParent = {
@@ -324,6 +329,21 @@ MemberFnParent: AstMemberFnParent = {
   },
   "Parent" "(" <segments: SegmentsWrap> ")" => {
     AstMemberFnParent::HasParam(segments)
+  },
+}
+
+MemberFnClosingPeriod: AstMemberFnClosingPeriod = {
+  "ClosingPeriod" => {
+    AstMemberFnClosingPeriod::NoParam
+  },
+  "ClosingPeriod" "(" ")" => {
+    AstMemberFnClosingPeriod::NoParam
+  },
+  "ClosingPeriod" "(" <level_segs: SegmentsWrap> ")" => {
+    AstMemberFnClosingPeriod::OneParam(level_segs)
+  },
+  "ClosingPeriod" "(" <level_segs: SegmentsWrap> "," <member_segs: SegmentsWrap> ")" => {
+    AstMemberFnClosingPeriod::TwoParams(level_segs, member_segs)
   },
 }
 

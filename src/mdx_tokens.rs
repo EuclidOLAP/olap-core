@@ -108,6 +108,9 @@ pub enum Token {
     Avg,
     #[regex("(?i)Count")]
     Count,
+
+    #[regex("(?i)ClosingPeriod")]
+    ClosingPeriod,
 }
 
 impl fmt::Display for Token {

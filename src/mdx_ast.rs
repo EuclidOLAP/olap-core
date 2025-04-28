@@ -583,6 +583,25 @@ impl ToCellValue for AstTerm {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum AstMemberFnClosingPeriod {
+    NoParam,
+    OneParam(AstSegments),
+    TwoParams(AstSegments, AstSegments),
+}
+
+impl AstMemberFnClosingPeriod {
+    async fn do_get_member(
+        left_outer_param: Option<MultiDimensionalEntity>,
+        level_param: Option<&AstSegments>,
+        member_param: Option<&AstSegments>,
+        context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        println!("AstMemberFnClosingPeriod::do_get_member() ... {:?} {:?} {:?} {:?}", left_outer_param, level_param, member_param, context);
+        todo!("AstMemberFnClosingPeriod::do_get_member()")
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum AstMemberFnParent {
     NoParam,
     HasParam(AstSegments),
@@ -624,6 +643,7 @@ impl AstMemberFnParent {
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstMemberFunction {
     Parent(AstMemberFnParent),
+    ClosingPeriod(AstMemberFnClosingPeriod),
 }
 
 impl AstMemberFunction {
@@ -633,11 +653,22 @@ impl AstMemberFunction {
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         match self {
+            // parent()
             AstMemberFunction::Parent(AstMemberFnParent::NoParam) => {
                 AstMemberFnParent::do_get_member(left_unique_param, context).await
             }
             AstMemberFunction::Parent(AstMemberFnParent::HasParam(_segs)) => {
                 todo!("AstMemberFunction::get_member()")
+            }
+            // ClosingPeriod()
+            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::NoParam) => {
+                AstMemberFnClosingPeriod::do_get_member(left_unique_param, None, None, context).await
+            }
+            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::OneParam(level_segs)) => {
+                AstMemberFnClosingPeriod::do_get_member(left_unique_param, Some(level_segs), None, context).await
+            }
+            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::TwoParams(level_segs, member_segs)) => {
+                AstMemberFnClosingPeriod::do_get_member(left_unique_param, Some(level_segs), Some(member_segs), context).await
             }
         }
     }
