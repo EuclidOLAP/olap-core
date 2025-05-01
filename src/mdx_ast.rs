@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 use std::vec;
 
+use futures::future::BoxFuture;
+use std::pin::Pin;
+
 use crate::mdd;
 use crate::mdd::CellValue;
 use crate::mdd::MultiDimensionalContext;
@@ -11,26 +14,16 @@ use crate::olapmeta_grpc_client::GrpcClient;
 
 use crate::calcul::calculate;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-//   Temporarily allow async fn in trait to suppress the compiler warning.                                         //
-//   This trait is currently used only within this project, so auto trait bounds (e.g., Send) are not a concern.   //
-//   TODO: If this trait is made public or used in a multi-threaded context,                                       //
-//   consider refactoring async fn into a regular fn returning `impl Future + Send` to ensure thread safety.       //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#[allow(async_fn_in_trait)]
 pub trait Materializable {
-    async fn materialize(
-        &self,
-        slice_tuple: &Tuple,
-        context: &mut mdd::MultiDimensionalContext,
-    ) -> MultiDimensionalEntity;
+    fn materialize<'a>(
+        &'a self,
+        slice_tuple: &'a Tuple,
+        context: &'a mut mdd::MultiDimensionalContext,
+    ) -> BoxFuture<'a, MultiDimensionalEntity>;
 }
 
-#[allow(async_fn_in_trait)]
 pub trait ToCellValue {
-    async fn val(&self, slice_tuple: &Tuple, context: &mut MultiDimensionalContext) -> CellValue;
+    fn val<'a>(&'a self, slice_tuple: &'a Tuple, context: &'a mut MultiDimensionalContext) -> BoxFuture<'a, CellValue>;
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -62,19 +55,46 @@ impl AstSeg {
 }
 
 impl Materializable for AstSeg {
-    async fn materialize(
-        &self,
-        _slice_tuple: &Tuple,
-        context: &mut mdd::MultiDimensionalContext,
-    ) -> MultiDimensionalEntity {
-        // 由于是在多维查询上下文中，所以一般应该返回带有角色信息的实体
-        // 首先判断是否有 gid，如果有，则通过 gid 查询，如果没有，则通过 seg_str 查询
-        match self {
-            AstSeg::Gid(gid) => context.find_entity_by_gid(*gid).await,
-            AstSeg::Str(seg_str) => context.find_entity_by_str(seg_str).await,
-            AstSeg::GidStr(gid, _) => context.find_entity_by_gid(*gid).await,
-            _ => panic!("The entity is not a Gid or a Str variant. 1"),
-        }
+    fn materialize<'a>(
+        &'a self,
+        slice_tuple: &'a Tuple,
+        context: &'a mut mdd::MultiDimensionalContext,
+    ) -> BoxFuture<'a, MultiDimensionalEntity> {
+
+        Box::pin(async move {
+
+            // 由于是在多维查询上下文中，所以一般应该返回带有角色信息的实体
+            // 首先判断是否有 gid，如果有，则通过 gid 查询，如果没有，则通过 seg_str 查询
+            match self {
+                AstSeg::Gid(gid) => context.find_entity_by_gid(*gid).await,
+                AstSeg::Str(seg_str) => context.find_entity_by_str(seg_str).await,
+                AstSeg::GidStr(gid, _) => context.find_entity_by_gid(*gid).await,
+                // MemberFunction(AstMemberFunction),
+                AstSeg::MemberFunction(member_fn) => {
+                    // panic!("The entity is not a Gid or a Str variant. 1")
+                    member_fn.get_member(None, slice_tuple, context).await
+
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    /*
+                    impl AstMemberFunction {
+                        pub async fn get_member(
+                            &self,
+                            left_unique_param: Option<MultiDimensionalEntity>,
+                            context: &mut MultiDimensionalContext,
+                        ) -> MultiDimensionalEntity {
+                    */
+                    // ????????????????????????????????????????
+                    // todo!("it's not implemented yet OOOOOOOkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkoooooooooooooooooooooo")
+                },
+                _ => panic!("The entity is not a Gid or a Str variant. 1"),
+            }
+
+        })
+
+
+
+
+        
     }
 }
 
@@ -105,11 +125,15 @@ impl AstSegments {
 }
 
 impl Materializable for AstSegments {
-    async fn materialize(
-        &self,
-        slice_tuple: &Tuple,
-        context: &mut mdd::MultiDimensionalContext,
-    ) -> MultiDimensionalEntity {
+    fn materialize<'a>(
+        &'a self,
+        slice_tuple: &'a Tuple,
+        context: &'a mut mdd::MultiDimensionalContext,
+    ) -> BoxFuture<'a, MultiDimensionalEntity> {
+
+        Box::pin(async move {
+
+            
         match self {
             AstSegments::Segs(segs) => {
                 let mut is_formula_member = false;
@@ -149,6 +173,9 @@ impl Materializable for AstSegments {
                 }
             }
         }
+
+        })
+
     }
 }
 
@@ -158,11 +185,15 @@ pub enum AstTuple {
 }
 
 impl Materializable for AstTuple {
-    async fn materialize(
-        &self,
-        slice_tuple: &Tuple,
-        context: &mut mdd::MultiDimensionalContext,
-    ) -> MultiDimensionalEntity {
+    fn materialize<'a>(
+        &'a self,
+        slice_tuple: &'a Tuple,
+        context: &'a mut mdd::MultiDimensionalContext,
+    ) -> BoxFuture<'a, MultiDimensionalEntity> {
+
+        Box::pin(async move {
+
+            
         match self {
             AstTuple::SegsList(segs_list) => {
                 let mut member_roles: Vec<mdd::MemberRole> = Vec::new();
@@ -183,6 +214,9 @@ impl Materializable for AstTuple {
                 MultiDimensionalEntity::TupleWrap(mdd::Tuple { member_roles })
             }
         }
+
+        })
+
     }
 }
 
@@ -217,11 +251,15 @@ impl AstSet {
 }
 
 impl Materializable for AstSet {
-    async fn materialize(
-        &self,
-        slice_tuple: &Tuple,
-        context: &mut mdd::MultiDimensionalContext,
-    ) -> MultiDimensionalEntity {
+    fn materialize<'a>(
+        &'a self,
+        slice_tuple: &'a Tuple,
+        context: &'a mut mdd::MultiDimensionalContext,
+    ) -> BoxFuture<'a, MultiDimensionalEntity> {
+        
+        Box::pin(async move {
+
+            
         let mut tuple_vec: Vec<Tuple> = Vec::new();
 
         match self {
@@ -241,6 +279,10 @@ impl Materializable for AstSet {
         }
 
         MultiDimensionalEntity::SetWrap(mdd::Set { tuples: tuple_vec })
+
+
+        })
+        
     }
 }
 
@@ -485,7 +527,8 @@ pub struct AstExpression {
 }
 
 impl ToCellValue for AstExpression {
-    async fn val(&self, slice_tuple: &Tuple, context: &mut MultiDimensionalContext) -> CellValue {
+    fn val<'a>(&'a self, slice_tuple: &'a Tuple, context: &'a mut MultiDimensionalContext) -> BoxFuture<'a, CellValue> {
+        Box::pin(async move {
         let mut result = CellValue::Invalid;
         for (index, (op, term)) in self.terms.iter().enumerate() {
             if index == 0 {
@@ -501,6 +544,8 @@ impl ToCellValue for AstExpression {
             }
         }
         result
+        })
+        
     }
 }
 
@@ -514,46 +559,52 @@ pub enum AstFactory {
 }
 
 impl ToCellValue for AstFactory {
-    async fn val(&self, slice_tuple: &Tuple, context: &mut MultiDimensionalContext) -> CellValue {
-        match self {
-            AstFactory::FactoryNum(num) => CellValue::Double(*num),
-            AstFactory::FactoryStr(str) => CellValue::Str(String::from(str)),
-            AstFactory::FactorySegs(segs) => match segs.materialize(slice_tuple, context).await {
-                MultiDimensionalEntity::MemberRoleWrap(mr) => {
-                    let ovc_tp = slice_tuple.merge(&Tuple {
-                        member_roles: vec![mr],
-                    });
+    fn val<'a>(&'a self, slice_tuple: &'a Tuple, context: &'a mut MultiDimensionalContext) -> BoxFuture<'a, CellValue> {
 
-                    let ovc = OlapVectorCoordinate {
-                        member_roles: ovc_tp.member_roles,
-                    };
-
-                    let cell_values = calculate(vec![ovc], context).await;
-                    cell_values.first().unwrap().clone()
-                }
-                MultiDimensionalEntity::FormulaMemberWrap {
-                    dim_role_gid: _,
-                    exp,
-                } => exp.val(slice_tuple, context).await,
-                MultiDimensionalEntity::ExpFn(exp_fn) => {
-                    exp_fn.val(slice_tuple, context).await
-                },
-                _ => panic!("The entity is not a CellValue variant."),
-            },
-            AstFactory::FactoryTuple(tuple) => {
-                match tuple.materialize(slice_tuple, context).await {
-                    MultiDimensionalEntity::TupleWrap(olap_tuple) => {
+        Box::pin(async move {
+            match self {
+                AstFactory::FactoryNum(num) => CellValue::Double(*num),
+                AstFactory::FactoryStr(str) => CellValue::Str(String::from(str)),
+                AstFactory::FactorySegs(segs) => match segs.materialize(slice_tuple, context).await {
+                    MultiDimensionalEntity::MemberRoleWrap(mr) => {
+                        let ovc_tp = slice_tuple.merge(&Tuple {
+                            member_roles: vec![mr],
+                        });
+    
                         let ovc = OlapVectorCoordinate {
-                            member_roles: slice_tuple.merge(&olap_tuple).member_roles,
+                            member_roles: ovc_tp.member_roles,
                         };
+    
                         let cell_values = calculate(vec![ovc], context).await;
                         cell_values.first().unwrap().clone()
                     }
-                    _ => panic!("The entity is not a TupleWrap variant."),
+                    MultiDimensionalEntity::FormulaMemberWrap {
+                        dim_role_gid: _,
+                        exp,
+                    } => exp.val(slice_tuple, context).await,
+                    MultiDimensionalEntity::ExpFn(exp_fn) => {
+                        exp_fn.val(slice_tuple, context).await
+                    },
+                    _ => panic!("The entity is not a CellValue variant."),
+                },
+                AstFactory::FactoryTuple(tuple) => {
+                    match tuple.materialize(slice_tuple, context).await {
+                        MultiDimensionalEntity::TupleWrap(olap_tuple) => {
+                            let ovc = OlapVectorCoordinate {
+                                member_roles: slice_tuple.merge(&olap_tuple).member_roles,
+                            };
+                            let cell_values = calculate(vec![ovc], context).await;
+                            cell_values.first().unwrap().clone()
+                        }
+                        _ => panic!("The entity is not a TupleWrap variant."),
+                    }
                 }
+                AstFactory::FactoryExp(exp) => exp.val(slice_tuple, context).await,
             }
-            AstFactory::FactoryExp(exp) => exp.val(slice_tuple, context).await,
-        }
+        })
+
+
+        
     }
 }
 
@@ -563,22 +614,28 @@ pub struct AstTerm {
 }
 
 impl ToCellValue for AstTerm {
-    async fn val(&self, slice_tuple: &Tuple, context: &mut MultiDimensionalContext) -> CellValue {
-        let mut result = CellValue::Invalid;
-        for (index, (op, factory)) in self.factories.iter().enumerate() {
-            if index == 0 {
-                result = factory.val(slice_tuple, context).await;
-                continue;
-            }
+    fn val<'a>(&'a self, slice_tuple: &'a Tuple, context: &'a mut MultiDimensionalContext) -> BoxFuture<'a, CellValue> {
 
-            let factory_value = factory.val(slice_tuple, context).await;
-            match *op {
-                '*' => result = result * factory_value,
-                '/' => result = result / factory_value,
-                _ => panic!("Invalid operator in AstTerm: {}", op),
+        Box::pin(async move {
+            let mut result = CellValue::Invalid;
+            for (index, (op, factory)) in self.factories.iter().enumerate() {
+                if index == 0 {
+                    result = factory.val(slice_tuple, context).await;
+                    continue;
+                }
+    
+                let factory_value = factory.val(slice_tuple, context).await;
+                match *op {
+                    '*' => result = result * factory_value,
+                    '/' => result = result / factory_value,
+                    _ => panic!("Invalid operator in AstTerm: {}", op),
+                }
             }
-        }
-        result
+            result
+        })
+
+
+       
     }
 }
 
@@ -594,10 +651,28 @@ impl AstMemberFnClosingPeriod {
         left_outer_param: Option<MultiDimensionalEntity>,
         level_param: Option<&AstSegments>,
         member_param: Option<&AstSegments>,
+        slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-        println!("AstMemberFnClosingPeriod::do_get_member() ... {:?} {:?} {:?} {:?}", left_outer_param, level_param, member_param, context);
-        todo!("AstMemberFnClosingPeriod::do_get_member()")
+        // println!("AstMemberFnClosingPeriod::do_get_member() ... {:?} {:?} {:?} {:?}", left_outer_param, level_param, member_param, context);
+        // todo!("AstMemberFnClosingPeriod::do_get_member()")
+        // // 有那么几种情况啊，先实现个最常用的，再说其他的，让我先想想啊
+        match (left_outer_param, level_param, member_param) {
+            (None, Some(lv_segs), None) => {
+                // 这里编写 level_param 不为 None，另外两个为 None 时的逻辑
+                // 暂时返回一个新的 MultiDimensionalEntity 实例，你可以根据实际情况修改
+                // MultiDimensionalEntity
+
+                // TODO 找不到slice_tuple参数啊
+                let level = lv_segs.materialize(slice_tuple, context).await;
+                println!("44444444444444444 AstMemberFnClosingPeriod::do_get_member() level: {:?}", level);
+
+                todo!("AstMemberFnClosingPeriod::do_get_member() kkkkkkkkkkkkkkkkkkkkkk OOOOO<>")
+            }
+            _ => {
+                panic!("Invalid parameter combination. Only level_param should be Some, and left_outer_param and member_param should be None.");
+            }
+        }
     }
 }
 
@@ -649,26 +724,27 @@ pub enum AstMemberFunction {
 impl AstMemberFunction {
     pub async fn get_member(
         &self,
-        left_unique_param: Option<MultiDimensionalEntity>,
+        left_outer_param: Option<MultiDimensionalEntity>,
+        slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         match self {
             // parent()
             AstMemberFunction::Parent(AstMemberFnParent::NoParam) => {
-                AstMemberFnParent::do_get_member(left_unique_param, context).await
+                AstMemberFnParent::do_get_member(left_outer_param, context).await
             }
             AstMemberFunction::Parent(AstMemberFnParent::HasParam(_segs)) => {
                 todo!("AstMemberFunction::get_member()")
             }
             // ClosingPeriod()
             AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::NoParam) => {
-                AstMemberFnClosingPeriod::do_get_member(left_unique_param, None, None, context).await
+                AstMemberFnClosingPeriod::do_get_member(left_outer_param, None, None, slice_tuple, context).await
             }
             AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::OneParam(level_segs)) => {
-                AstMemberFnClosingPeriod::do_get_member(left_unique_param, Some(level_segs), None, context).await
+                AstMemberFnClosingPeriod::do_get_member(left_outer_param, Some(level_segs), None, slice_tuple, context).await
             }
             AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::TwoParams(level_segs, member_segs)) => {
-                AstMemberFnClosingPeriod::do_get_member(left_unique_param, Some(level_segs), Some(member_segs), context).await
+                AstMemberFnClosingPeriod::do_get_member(left_outer_param, Some(level_segs), Some(member_segs), slice_tuple, context).await
             }
         }
     }
@@ -740,15 +816,21 @@ pub enum AstExpFunction{
 }
 
 impl ToCellValue for AstExpFunction {
-    async fn val(&self, slice_tuple: &Tuple, context: &mut MultiDimensionalContext) -> CellValue {
-        match self {
-            AstExpFunction::Avg(avg_fn) => {
-                avg_fn.val(slice_tuple, context).await
+    fn val<'a>(&'a self, slice_tuple: &'a Tuple, context: &'a mut MultiDimensionalContext) -> BoxFuture<'a, CellValue> {
+
+        Box::pin(async move {
+            match self {
+                AstExpFunction::Avg(avg_fn) => {
+                    avg_fn.val(slice_tuple, context).await
+                }
+                AstExpFunction::Count(count_fn) => {
+                    count_fn.val(slice_tuple, context).await
+                }
             }
-            AstExpFunction::Count(count_fn) => {
-                count_fn.val(slice_tuple, context).await
-            }
-        }
+        })
+
+
+        
     }
 }
 
@@ -760,8 +842,14 @@ pub enum AstExpFnAvg {
 }
 
 impl ToCellValue for AstExpFnAvg {
-    async fn val(&self, _slice_tuple: &Tuple, _context: &mut MultiDimensionalContext) -> CellValue {
-        CellValue::Str("avg函数有待实现".to_string())
+    fn val<'a>(&'a self, slice_tuple: &'a Tuple, context: &'a mut MultiDimensionalContext) -> BoxFuture<'a, CellValue> {
+
+        Box::pin(async move {
+            CellValue::Str("avg函数有待实现".to_string())
+        })
+
+
+        
     }
 }
 
@@ -773,18 +861,22 @@ pub enum AstExpFnCount {
 }
 
 impl ToCellValue for AstExpFnCount {
-    async fn val(&self, _slice_tuple: &Tuple, _context: &mut MultiDimensionalContext) -> CellValue {
+    fn val<'a>(&'a self, slice_tuple: &'a Tuple, context: &'a mut MultiDimensionalContext) -> BoxFuture<'a, CellValue> {
 
-        let set = match self {
-            AstExpFnCount::InnerParam(_set) => {
-                todo!("AstExpFnCount::val()")
-            }
-            AstExpFnCount::OuterParam(set) => {
-                set
-            }
-            _ => panic!("AstExpFnCount::val()")
-        };
+        Box::pin(async move {
+            let set = match self {
+                AstExpFnCount::InnerParam(_set) => {
+                    todo!("AstExpFnCount::val()")
+                }
+                AstExpFnCount::OuterParam(set) => {
+                    set
+                }
+                _ => panic!("AstExpFnCount::val()")
+            };
+    
+            CellValue::Double(set.tuples.len() as f64)
+        })
 
-        CellValue::Double(set.tuples.len() as f64)
+        
     }
 }

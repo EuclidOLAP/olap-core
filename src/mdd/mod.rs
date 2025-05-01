@@ -351,6 +351,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
                         member_fn
                             .get_member(
                                 Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
+                                slice_tuple,
                                 context,
                             )
                             .await
