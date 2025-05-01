@@ -1,9 +1,9 @@
 use core::panic;
 
-use crate::mdx_ast::{AstExpression, AstFormulaObject, AstSeg, AstSegments};
-use crate::mdx_ast::AstExpFunction;
 use crate::mdx_ast::AstExpFnAvg;
 use crate::mdx_ast::AstExpFnCount;
+use crate::mdx_ast::AstExpFunction;
+use crate::mdx_ast::{AstExpression, AstFormulaObject, AstSeg, AstSegments};
 
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
@@ -233,37 +233,33 @@ pub struct Set {
 }
 
 impl MultiDimensionalEntityLocator for Set {
-
     async fn locate_entity(
         &self,
         segs: &AstSegments,
         _slice_tuple: &Tuple,
         _context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-
         match segs {
             AstSegments::Segs(seg_list) => {
                 let seg = seg_list.iter().next().unwrap();
 
                 match seg {
-                    AstSeg::ExpFn(exp_fn) => {
-                        match exp_fn {
-                            AstExpFunction::Avg(_) => {
-                                if seg_list.len() > 1 {
-                                    panic!("Avg function can only have one segment. hsbt2839");
-                                }
-                                let set_copy = self.clone();
-                                let avg_fn = AstExpFnAvg::OuterParam(set_copy);
-                                return MultiDimensionalEntity::ExpFn(AstExpFunction::Avg(avg_fn));
-                            },
-                            AstExpFunction::Count(_) => {
-                                if seg_list.len() > 1 {
-                                    panic!("Count function can only have one segment. hs8533BJ");
-                                }
-                                let set_copy = self.clone();
-                                let count_fn = AstExpFnCount::OuterParam(set_copy);
-                                return MultiDimensionalEntity::ExpFn(AstExpFunction::Count(count_fn));
-                            },
+                    AstSeg::ExpFn(exp_fn) => match exp_fn {
+                        AstExpFunction::Avg(_) => {
+                            if seg_list.len() > 1 {
+                                panic!("Avg function can only have one segment. hsbt2839");
+                            }
+                            let set_copy = self.clone();
+                            let avg_fn = AstExpFnAvg::OuterParam(set_copy);
+                            return MultiDimensionalEntity::ExpFn(AstExpFunction::Avg(avg_fn));
+                        }
+                        AstExpFunction::Count(_) => {
+                            if seg_list.len() > 1 {
+                                panic!("Count function can only have one segment. hs8533BJ");
+                            }
+                            let set_copy = self.clone();
+                            let count_fn = AstExpFnCount::OuterParam(set_copy);
+                            return MultiDimensionalEntity::ExpFn(AstExpFunction::Count(count_fn));
                         }
                     },
                     _ => panic!("The entity is not a Gid or a Str variant. 3"),
@@ -289,7 +285,6 @@ impl MultiDimensionalEntityLocator for Set {
     ) -> MultiDimensionalEntity {
         todo!()
     }
-
 }
 
 impl Tuple {
@@ -355,7 +350,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
                                 context,
                             )
                             .await
-                    },
+                    }
                     AstSeg::SetFunction(set_fn) => {
                         let set = set_fn
                             .get_set(
@@ -370,7 +365,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
                             let tail_segs = AstSegments::Segs(seg_list[1..].to_vec());
                             set.locate_entity(&tail_segs, slice_tuple, context).await
                         }
-                    },
+                    }
                     _ => panic!("Panic in MemberRole::locate_entity() .. 67HUSran .."),
                 }
             }
