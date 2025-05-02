@@ -65,28 +65,13 @@ impl Materializable for AstSeg {
         context: &'a mut mdd::MultiDimensionalContext,
     ) -> BoxFuture<'a, MultiDimensionalEntity> {
         Box::pin(async move {
-            // 由于是在多维查询上下文中，所以一般应该返回带有角色信息的实体
-            // 首先判断是否有 gid，如果有，则通过 gid 查询，如果没有，则通过 seg_str 查询
             match self {
                 AstSeg::Gid(gid) => context.find_entity_by_gid(*gid).await,
                 AstSeg::Str(seg_str) => context.find_entity_by_str(seg_str).await,
                 AstSeg::GidStr(gid, _) => context.find_entity_by_gid(*gid).await,
                 // MemberFunction(AstMemberFunction),
                 AstSeg::MemberFunction(member_fn) => {
-                    // panic!("The entity is not a Gid or a Str variant. 1")
                     member_fn.get_member(None, slice_tuple, context).await
-
-                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    /*
-                    impl AstMemberFunction {
-                        pub async fn get_member(
-                            &self,
-                            left_unique_param: Option<MultiDimensionalEntity>,
-                            context: &mut MultiDimensionalContext,
-                        ) -> MultiDimensionalEntity {
-                    */
-                    // ????????????????????????????????????????
-                    // todo!("it's not implemented yet OOOOOOOkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkoooooooooooooooooooooo")
                 }
                 _ => panic!("The entity is not a Gid or a Str variant. 1"),
             }
@@ -120,16 +105,11 @@ impl Materializable for AstSegments {
         context: &'a mut mdd::MultiDimensionalContext,
     ) -> BoxFuture<'a, MultiDimensionalEntity> {
         Box::pin(async move {
-
-            
             let mut is_formula_member = false;
 
             let last_opt = self.get_last_gid();
             if let Some(last_gid) = last_opt {
                 is_formula_member = GidType::entity_type(last_gid) == GidType::FormulaMember;
-                // if GidType::entity_type(last_gid) == GidType::FormulaMember {
-                //     is_formula_member = true;
-                // }
             }
 
             if is_formula_member {
@@ -142,21 +122,16 @@ impl Materializable for AstSegments {
                 return MultiDimensionalEntity::FormulaMemberWrap { dim_role_gid, exp };
             }
 
-            // let mut segs_iter = self.segs.iter();
             let ast_seg = self.segs.iter().next().unwrap();
             let head_entity: MultiDimensionalEntity =
                 ast_seg.materialize(slice_tuple, context).await;
 
             match head_entity {
                 MultiDimensionalEntity::DimensionRoleWrap(dim_role) => {
-
-
-                    // let tail_segs = AstSegments::Segs((&segs[1..]).to_vec());
                     let tail_segs = AstSegments {
                         segs: (self.segs[1..]).to_vec(),
                     };
-                    
-                    
+
                     dim_role
                         .locate_entity(&tail_segs, slice_tuple, context)
                         .await
@@ -633,16 +608,8 @@ impl AstMemberFnClosingPeriod {
         slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-        // println!("AstMemberFnClosingPeriod::do_get_member() ... {:?} {:?} {:?} {:?}", left_outer_param, level_param, member_param, context);
-        // todo!("AstMemberFnClosingPeriod::do_get_member()")
-        // // 有那么几种情况啊，先实现个最常用的，再说其他的，让我先想想啊
         match (left_outer_param, level_param, member_param) {
             (None, Some(lv_segs), None) => {
-                // 这里编写 level_param 不为 None，另外两个为 None 时的逻辑
-                // 暂时返回一个新的 MultiDimensionalEntity 实例，你可以根据实际情况修改
-                // MultiDimensionalEntity
-
-                // TODO 找不到slice_tuple参数啊
                 let level = lv_segs.materialize(slice_tuple, context).await;
                 println!(
                     "44444444444444444 AstMemberFnClosingPeriod::do_get_member() level: {:?}",
