@@ -44,7 +44,7 @@ impl GrpcClient {
 
     // 通过 GID 获取 Cube
     pub async fn get_cube_by_gid(&mut self, gid: u64) -> Result<CubeMetaResponse, Box<dyn std::error::Error>> {
-        println!(">>>>>> Call Meta Server gRPC API >>>>>> get_cube_by_gid({})", gid);
+        // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_cube_by_gid({})", gid);
         let request = Request::new(CubeGidRequest { gid });
         let response = self.client.get_cube_by_gid(request).await?;
         Ok(response.into_inner())
@@ -52,7 +52,7 @@ impl GrpcClient {
 
     // 通过 Name 获取 Cube
     pub async fn get_cube_by_name(&mut self, name: String) -> Result<CubeMetaResponse, Box<dyn std::error::Error>> {
-        println!(">>>>>> Call Meta Server gRPC API >>>>>> get_cube_by_name({})", name);
+        // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_cube_by_name({})", name);
         let request = Request::new(CubeNameRequest { name });
         let response = self.client.get_cube_by_name(request).await?;
         Ok(response.into_inner())
@@ -82,7 +82,7 @@ impl GrpcClient {
     pub async fn get_default_dimension_member_by_dimension_gid(&mut self, dimension_gid: u64)
         -> Result<mdd::Member, Box<dyn std::error::Error>> {
 
-        println!(">>>>>> Call Meta Server gRPC API >>>>>> get_default_dimension_member_by_dimension_gid({})", dimension_gid);
+        // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_default_dimension_member_by_dimension_gid({})", dimension_gid);
         let request = GetDefaultDimensionMemberRequest { dimension_gid };
 
         let response = self.client.get_default_dimension_member_by_dimension_gid(request).await?;
@@ -97,7 +97,7 @@ impl GrpcClient {
     pub async fn get_child_members_by_gid(&mut self, parent_member_gid: u64)
         -> Result<Vec<mdd::Member>, Box<dyn std::error::Error>> {
 
-            println!(">>>>>> Call Meta Server gRPC API >>>>>> get_child_members_by_gid({})", parent_member_gid);
+            // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_child_members_by_gid({})", parent_member_gid);
             let req = GetChildMembersByGidRequest {
                 parent_member_gid
             };
@@ -114,7 +114,7 @@ impl GrpcClient {
     pub async fn get_dimension_role_by_gid(&mut self, dim_role_gid: u64)
         -> Result<mdd::DimensionRole, Box<dyn std::error::Error>> {
 
-            println!(">>>>>> Call Meta Server gRPC API >>>>>> get_dimension_role_by_gid({})", dim_role_gid);
+            // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_dimension_role_by_gid({})", dim_role_gid);
             let req = GetDimensionRoleByGidRequest {
                 dimension_role_gid: dim_role_gid
             };
@@ -137,10 +137,7 @@ impl GrpcClient {
         cube_gid: u64,
         dimension_role_name: &String,
     ) -> Result<mdd::DimensionRole, Box<dyn std::error::Error>> {
-        println!(
-            ">>>>>> Call Meta Server gRPC API >>>>>> get_dimension_role_by_name({}, {})",
-            cube_gid, dimension_role_name
-        );
+        // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_dimension_role_by_name({}, {})",cube_gid, dimension_role_name);
         let request = Request::new(olapmeta::GetDimensionRoleByNameRequest {
             cube_gid,
             dimension_role_name: dimension_role_name.clone(),
@@ -167,10 +164,7 @@ impl GrpcClient {
         origin_gid: u64,
         target_entity_gid: u64,
     ) -> Result<MultiDimensionalEntity, Box<dyn std::error::Error>> {
-        println!(
-            ">>>>>> Call Meta Server gRPC API >>>>>> locate_universal_olap_entity_by_gid({}, {})",
-            origin_gid, target_entity_gid
-        );
+        // println!(">>>>>> Call Meta Server gRPC API >>>>>> locate_universal_olap_entity_by_gid({}, {})", origin_gid, target_entity_gid );
         let request = Request::new(LocateOlapEntityRequest {
             origin_gid,
             target_entity_gid,
@@ -188,10 +182,7 @@ impl GrpcClient {
         _origin_gid: u64,
         _target_entity_name: &String,
     ) -> Result<MultiDimensionalEntity, Box<dyn std::error::Error>> {
-        println!(
-            ">>>>>> Call Meta Server gRPC API >>>>>> locate_universal_olap_entity_by_name({}, {})",
-            _origin_gid, _target_entity_name
-        );
+        // println!(">>>>>> Call Meta Server gRPC API >>>>>> locate_universal_olap_entity_by_name({}, {})", _origin_gid, _target_entity_name );
         todo!("locate_universal_olap_entity_by_name not implemented yet.");
     }
 
@@ -199,10 +190,7 @@ impl GrpcClient {
         &mut self,
         gid: u64,
     ) -> Result<MultiDimensionalEntity, Box<dyn std::error::Error>> {
-        println!(
-            ">>>>>> Call Meta Server gRPC API >>>>>> get_universal_olap_entity_by_gid({})",
-            gid
-        );
+        // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_universal_olap_entity_by_gid({})", gid );
         let request = Request::new(GetUniversalOlapEntityByGidRequest {
             universal_olap_entity_gid: gid,
         });
