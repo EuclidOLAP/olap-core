@@ -103,9 +103,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 async fn handle_stat(optype: String, statement: String) -> (u64, Vec<CellValue>) {
     match optype.as_str() {
         "MDX" => {
-            println!(">>>>>>>> MDX Statement >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-            println!("{}", statement);
-            println!(">>>>>>>> <<<<<<<<<<<<< >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+            // println!(">>>>>>>> MDX Statement >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+            // println!("{}", statement);
+            // println!(">>>>>>>> <<<<<<<<<<<<< >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
             let ast_selstat = SelectionMDXParser::new()
                 .parse(MdxLexer::new(statement.as_str()))
                 .unwrap();
