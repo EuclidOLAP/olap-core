@@ -239,32 +239,31 @@ impl MultiDimensionalEntityLocator for Set {
         _slice_tuple: &Tuple,
         _context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-        match segs {
-            AstSegments::Segs(seg_list) => {
-                let seg = seg_list.iter().next().unwrap();
 
-                match seg {
-                    AstSeg::ExpFn(exp_fn) => match exp_fn {
-                        AstExpFunction::Avg(_) => {
-                            if seg_list.len() > 1 {
-                                panic!("Avg function can only have one segment. hsbt2839");
-                            }
-                            let set_copy = self.clone();
-                            let avg_fn = AstExpFnAvg::OuterParam(set_copy);
-                            return MultiDimensionalEntity::ExpFn(AstExpFunction::Avg(avg_fn));
-                        }
-                        AstExpFunction::Count(_) => {
-                            if seg_list.len() > 1 {
-                                panic!("Count function can only have one segment. hs8533BJ");
-                            }
-                            let set_copy = self.clone();
-                            let count_fn = AstExpFnCount::OuterParam(set_copy);
-                            return MultiDimensionalEntity::ExpFn(AstExpFunction::Count(count_fn));
-                        }
-                    },
-                    _ => panic!("The entity is not a Gid or a Str variant. 3"),
+        let seg_list = &segs.segs;
+        
+        let seg = seg_list.iter().next().unwrap();
+
+        match seg {
+            AstSeg::ExpFn(exp_fn) => match exp_fn {
+                AstExpFunction::Avg(_) => {
+                    if seg_list.len() > 1 {
+                        panic!("Avg function can only have one segment. hsbt2839");
+                    }
+                    let set_copy = self.clone();
+                    let avg_fn = AstExpFnAvg::OuterParam(set_copy);
+                    return MultiDimensionalEntity::ExpFn(AstExpFunction::Avg(avg_fn));
                 }
-            }
+                AstExpFunction::Count(_) => {
+                    if seg_list.len() > 1 {
+                        panic!("Count function can only have one segment. hs8533BJ");
+                    }
+                    let set_copy = self.clone();
+                    let count_fn = AstExpFnCount::OuterParam(set_copy);
+                    return MultiDimensionalEntity::ExpFn(AstExpFunction::Count(count_fn));
+                }
+            },
+            _ => panic!("The entity is not a Gid or a Str variant. 3"),
         }
     }
 
@@ -338,37 +337,39 @@ impl MultiDimensionalEntityLocator for MemberRole {
         slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-        match segs {
-            AstSegments::Segs(seg_list) => {
-                let seg = seg_list.first().unwrap();
-                match seg {
-                    AstSeg::MemberFunction(member_fn) => {
-                        member_fn
-                            .get_member(
-                                Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
-                                slice_tuple,
-                                context,
-                            )
-                            .await
-                    }
-                    AstSeg::SetFunction(set_fn) => {
-                        let set = set_fn
-                            .get_set(
-                                Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
-                                context,
-                            )
-                            .await;
 
-                        if seg_list.len() == 1 {
-                            MultiDimensionalEntity::SetWrap(set)
-                        } else {
-                            let tail_segs = AstSegments::Segs(seg_list[1..].to_vec());
-                            set.locate_entity(&tail_segs, slice_tuple, context).await
-                        }
-                    }
-                    _ => panic!("Panic in MemberRole::locate_entity() .. 67HUSran .."),
+        let seg_list = &segs.segs;
+        
+        let seg = seg_list.first().unwrap();
+        match seg {
+            AstSeg::MemberFunction(member_fn) => {
+                member_fn
+                    .get_member(
+                        Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
+                        slice_tuple,
+                        context,
+                    )
+                    .await
+            }
+            AstSeg::SetFunction(set_fn) => {
+                let set = set_fn
+                    .get_set(
+                        Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
+                        context,
+                    )
+                    .await;
+
+                if seg_list.len() == 1 {
+                    MultiDimensionalEntity::SetWrap(set)
+                } else {
+                    // let tail_segs = AstSegments::Segs(seg_list[1..].to_vec());
+                    let tail_segs = AstSegments{
+                        segs: (seg_list[1..].to_vec())
+                    };
+                    set.locate_entity(&tail_segs, slice_tuple, context).await
                 }
             }
+            _ => panic!("Panic in MemberRole::locate_entity() .. 67HUSran .."),
         }
     }
 
@@ -407,32 +408,33 @@ impl MultiDimensionalEntityLocator for DimensionRole {
         slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-        match segs {
-            AstSegments::Segs(seg_list) => {
-                let seg = seg_list.iter().next().unwrap();
-                let entity = match seg {
-                    AstSeg::Gid(gid) | AstSeg::GidStr(gid, _) => {
-                        self.locate_entity_by_gid(*gid, slice_tuple, context).await
-                    }
-                    AstSeg::Str(seg) => self.locate_entity_by_seg(seg, slice_tuple, context).await,
-                    _ => panic!("The entity is not a Gid or a Str variant. 3"),
-                };
 
-                match entity {
-                    MultiDimensionalEntity::MemberRoleWrap(member_role) => {
-                        if seg_list.len() == 1 {
-                            return MultiDimensionalEntity::MemberRoleWrap(member_role);
-                        }
+        let seg_list = &segs.segs;
+        
+        let seg = seg_list.iter().next().unwrap();
+        let entity = match seg {
+            AstSeg::Gid(gid) | AstSeg::GidStr(gid, _) => {
+                self.locate_entity_by_gid(*gid, slice_tuple, context).await
+            }
+            AstSeg::Str(seg) => self.locate_entity_by_seg(seg, slice_tuple, context).await,
+            _ => panic!("The entity is not a Gid or a Str variant. 3"),
+        };
 
-                        let tail_segs = AstSegments::Segs(seg_list[1..].to_vec());
-                        member_role
-                            .locate_entity(&tail_segs, slice_tuple, context)
-                            .await
-                    }
-                    _ => {
-                        panic!("[DimRole] locate_entity() Unsupported entity class.");
-                    }
+        match entity {
+            MultiDimensionalEntity::MemberRoleWrap(member_role) => {
+                if seg_list.len() == 1 {
+                    return MultiDimensionalEntity::MemberRoleWrap(member_role);
                 }
+
+                let tail_segs = AstSegments{
+                    segs: (seg_list[1..].to_vec())
+                };
+                member_role
+                    .locate_entity(&tail_segs, slice_tuple, context)
+                    .await
+            }
+            _ => {
+                panic!("[DimRole] locate_entity() Unsupported entity class.");
             }
         }
     }

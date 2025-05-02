@@ -95,24 +95,17 @@ impl Materializable for AstSeg {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstSegments {
-    Segs(Vec<AstSeg>),
+pub struct AstSegments {
+    pub segs: Vec<AstSeg>,
 }
 
 impl AstSegments {
     fn get_pos_gid(&self, pos: usize) -> Option<u64> {
-        match self {
-            AstSegments::Segs(segs) => {
-                let pos_seg = segs.get(pos)?;
-                pos_seg.get_gid()
-            }
-        }
+        self.segs.get(pos)?.get_gid()
     }
 
     pub fn get_last_gid(&self) -> Option<u64> {
-        match self {
-            AstSegments::Segs(segs) => self.get_pos_gid(segs.len() - 1),
-        }
+        self.get_pos_gid(self.segs.len() - 1)
     }
 
     pub fn get_first_gid(&self) -> Option<u64> {
@@ -127,43 +120,49 @@ impl Materializable for AstSegments {
         context: &'a mut mdd::MultiDimensionalContext,
     ) -> BoxFuture<'a, MultiDimensionalEntity> {
         Box::pin(async move {
-            match self {
-                AstSegments::Segs(segs) => {
-                    let mut is_formula_member = false;
 
-                    let last_opt = self.get_last_gid();
-                    if let Some(last_gid) = last_opt {
-                        if GidType::entity_type(last_gid) == GidType::FormulaMember {
-                            is_formula_member = true;
-                        }
-                    }
+            
+            let mut is_formula_member = false;
 
-                    if is_formula_member {
-                        let dim_role_gid = self.get_first_gid().unwrap();
-                        let AstFormulaObject::CustomFormulaMember(_, exp) = context
-                            .formulas_map
-                            .get(&last_opt.unwrap())
-                            .unwrap()
-                            .clone();
-                        return MultiDimensionalEntity::FormulaMemberWrap { dim_role_gid, exp };
-                    }
+            let last_opt = self.get_last_gid();
+            if let Some(last_gid) = last_opt {
+                is_formula_member = GidType::entity_type(last_gid) == GidType::FormulaMember;
+                // if GidType::entity_type(last_gid) == GidType::FormulaMember {
+                //     is_formula_member = true;
+                // }
+            }
 
-                    let mut segs_iter = segs.iter();
-                    let ast_seg = segs_iter.next().unwrap();
-                    let head_entity: MultiDimensionalEntity =
-                        ast_seg.materialize(slice_tuple, context).await;
+            if is_formula_member {
+                let dim_role_gid = self.get_first_gid().unwrap();
+                let AstFormulaObject::CustomFormulaMember(_, exp) = context
+                    .formulas_map
+                    .get(&last_opt.unwrap())
+                    .unwrap()
+                    .clone();
+                return MultiDimensionalEntity::FormulaMemberWrap { dim_role_gid, exp };
+            }
 
-                    match head_entity {
-                        MultiDimensionalEntity::DimensionRoleWrap(dim_role) => {
-                            let tail_segs = AstSegments::Segs((&segs[1..]).to_vec());
-                            dim_role
-                                .locate_entity(&tail_segs, slice_tuple, context)
-                                .await
-                        }
-                        _ => {
-                            panic!("In method AstSegments::materialize(): head_entity is not a DimensionRoleWrap!");
-                        }
-                    }
+            // let mut segs_iter = self.segs.iter();
+            let ast_seg = self.segs.iter().next().unwrap();
+            let head_entity: MultiDimensionalEntity =
+                ast_seg.materialize(slice_tuple, context).await;
+
+            match head_entity {
+                MultiDimensionalEntity::DimensionRoleWrap(dim_role) => {
+
+
+                    // let tail_segs = AstSegments::Segs((&segs[1..]).to_vec());
+                    let tail_segs = AstSegments {
+                        segs: (self.segs[1..]).to_vec(),
+                    };
+                    
+                    
+                    dim_role
+                        .locate_entity(&tail_segs, slice_tuple, context)
+                        .await
+                }
+                _ => {
+                    panic!("In method AstSegments::materialize(): head_entity is not a DimensionRoleWrap!");
                 }
             }
         })

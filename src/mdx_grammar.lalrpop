@@ -102,7 +102,7 @@ pub Segments: Vec<mdx_ast::AstSeg> = {
 
 pub SegmentsWrap: mdx_ast::AstSegments = {
   <segs:Segments> => {
-    mdx_ast::AstSegments::Segs(segs)
+    mdx_ast::AstSegments{segs}
   }
 }
 
