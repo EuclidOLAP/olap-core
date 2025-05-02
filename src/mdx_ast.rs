@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::vec;
 
 use futures::future::BoxFuture;
-use std::pin::Pin;
+// use std::pin::Pin;
 
 use crate::mdd;
 use crate::mdd::CellValue;
@@ -847,8 +847,8 @@ pub enum AstExpFnAvg {
 impl ToCellValue for AstExpFnAvg {
     fn val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
-        context: &'a mut MultiDimensionalContext,
+        _slice_tuple: &'a Tuple,
+        _context: &'a mut MultiDimensionalContext,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move { CellValue::Str("avg函数有待实现".to_string()) })
     }
@@ -864,8 +864,8 @@ pub enum AstExpFnCount {
 impl ToCellValue for AstExpFnCount {
     fn val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
-        context: &'a mut MultiDimensionalContext,
+        _slice_tuple: &'a Tuple,
+        _context: &'a mut MultiDimensionalContext,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             let set = match self {
