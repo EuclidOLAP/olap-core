@@ -108,7 +108,7 @@ async fn handle_stat(optype: String, statement: String) -> (u64, Vec<CellValue>)
             // println!("{}", statement);
             // println!(">>>>>>>> <<<<<<<<<<<<< >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
             let ast_selstat = SelectionMDXParser::new()
-                .parse(MdxLexer::new(statement.as_str()))
+                .parse(MdxLexer::new(&statement))
                 .unwrap();
 
             exe_md_query(ast_selstat).await
