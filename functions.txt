@@ -1,0 +1,226 @@
+							Euclid	SSAS	Essbase	in-cu
+<< Array Functions >>                             				
+SetToArray                  ____	SSAS	____	____
+
+<< Date Functions >>                              				
+DateRoll                    ____	____	Esbs	____
+GetFirstDate                ____	____	Esbs	____
+GetFirstDay                 ____	____	Esbs	____
+GetLastDate                 ____	____	Esbs	____
+GetLastDay                  ____	____	Esbs	____
+GetNextDay                  ____	____	Esbs	____
+JulianDate                  ____	____	Esbs	____
+TodateEx                    ____	____	Esbs	____
+Today                       ____	____	Esbs	____
+UnixDate                    ____	____	Esbs	____
+
+<< Hierarchy Functions >>                         				
+Dimension                   ____	SSAS	____	____
+Dimensions                  ____	SSAS	____	____
+Hierarchy                   ____	SSAS	____	____
+
+<< Level Functions >>                             				
+Level                       ____	SSAS	Esbs	____
+Levels                      ____	SSAS	Esbs	____
+Generation                  ____	____	Esbs	____
+Generations                 ____	____	Esbs	____
+
+<< Logical Functions >>                           				
+IsEmpty                     ____	SSAS	Esbs	intc
+Case                        ____	SSAS	Esbs	intc
+IsAncestor                  ____	SSAS	Esbs	____
+IsGeneration                ____	SSAS	Esbs	____
+IsLeaf                      ____	SSAS	Esbs	____
+IsSibling                   ____	SSAS	Esbs	____
+Contains                    ____	____	Esbs	____
+Is                          ____	____	Esbs	____
+IsAccType                   ____	____	Esbs	____
+IsChild                     ____	____	Esbs	____
+IsLevel                     ____	____	Esbs	____
+IsUda                       ____	____	Esbs	____
+IsValid                     ____	____	Esbs	____
+
+<< Member Functions >>                            				
+ClosingPeriod               doing	SSAS	Esbs	intc
+CurrentMember               ____	SSAS	Esbs	intc
+FirstChild                  ____	SSAS	Esbs	intc
+FirstSibling                ____	SSAS	Esbs	intc
+Lag                         ____	SSAS	Esbs	intc
+LastChild                   ____	SSAS	Esbs	intc
+LastSibling                 ____	SSAS	Esbs	intc
+Lead                        ____	SSAS	Esbs	intc
+OpeningPeriod               ____	SSAS	Esbs	intc
+ParallelPeriod              ____	SSAS	Esbs	intc
+Parent                      Eucl	SSAS	Esbs	intc
+PrevMember                  ____	SSAS	Esbs	intc
+NextMember                  ____	SSAS	Esbs	intc
+Ancestor                    ____	SSAS	Esbs	____
+Cousin                      ____	SSAS	Esbs	____
+DefaultMember               ____	SSAS	Esbs	____
+CurrentAxisMember           ____	____	Esbs	____
+DataMember                  ____	SSAS	____	____
+DateToMember                ____	____	Esbs	____
+Item (Member)               ____	SSAS	____	____
+LinkMember                  ____	SSAS	____	____
+Members (String)            ____	SSAS	____	____
+Properties                  ____	____	____	intc
+StrToMbr                    ____	____	Esbs	____
+StrToMember                 ____	SSAS	____	____
+UnknownMember               ____	SSAS	____	____
+ValidMeasure                ____	SSAS	____	____
+
+<< Numeric Functions >>                           				
+CoalesceEmpty               ____	SSAS	Esbs	intc
+Count (Set)                 Eucl	SSAS	____	____
+IIf                         ____	SSAS	Esbs	____
+LookupCube                  ____	SSAS	____	____
+Sum                         ____	SSAS	Esbs	intc
+Avg                         Eucl	SSAS	Esbs	intc
+Max                         ____	SSAS	Esbs	intc
+Min                         ____	SSAS	Esbs	intc
+Aggregate                   ____	SSAS	Esbs	intc
+Median                      ____	SSAS	Esbs	intc
+Rank                        ____	SSAS	Esbs	intc
+Abs                         ____	____	Esbs	intc
+Correlation                 ____	SSAS	____	intc
+Covariance                  ____	SSAS	____	intc
+LinRegIntercept             ____	SSAS	____	intc
+LinRegR2                    ____	SSAS	____	intc
+LinRegSlope                 ____	SSAS	____	intc
+LinRegVariance              ____	SSAS	____	intc
+Stdev                       ____	SSAS	____	intc
+Var                         ____	SSAS	____	intc
+Ordinal                     ____	SSAS	Esbs	____
+CalculationCurrentPass      ____	SSAS	____	____
+CalculationPassValue        ____	SSAS	____	____
+CellValue                   ____	____	Esbs	____
+CovarianceN                 ____	SSAS	____	____
+DateDiff                    ____	____	Esbs	____
+DatePart                    ____	____	Esbs	____
+DistinctCount               ____	SSAS	____	____
+EnumText                    ____	____	Esbs	____
+EnumValue                   ____	____	Esbs	____
+Exp                         ____	____	Esbs	____
+Factorial                   ____	____	Esbs	____
+InStr                       ____	____	Esbs	____
+Int                         ____	____	Esbs	____
+Len                         ____	____	Esbs	____
+LinRegPoint                 ____	SSAS	____	____
+Ln                          ____	____	Esbs	____
+Log                         ____	____	Esbs	____
+Log10                       ____	____	Esbs	____
+Mod                         ____	____	Esbs	____
+NonEmptyCount               ____	____	Esbs	____
+NTile                       ____	____	Esbs	____
+Percentile                  ____	____	Esbs	____
+Power                       ____	____	Esbs	____
+Predict                     ____	SSAS	____	____
+RealValue                   ____	____	Esbs	____
+Remainder                   ____	____	Esbs	____
+RollupChildren              ____	SSAS	____	____
+Round                       ____	____	Esbs	____
+Stddev                      ____	SSAS	Esbs	____
+StddevP                     ____	SSAS	____	____
+Stddevp                     ____	____	Esbs	____
+StdevP                      ____	SSAS	____	____
+StrToNum                    ____	____	Esbs	____
+StrToValue                  ____	SSAS	____	____
+Todate                      ____	____	Esbs	____
+Truncate                    ____	____	Esbs	____
+Value                       ____	SSAS	____	____
+Variance                    ____	SSAS	____	____
+VarianceP                   ____	SSAS	____	____
+VarP                        ____	SSAS	____	____
+
+<< Set Functions >>                               				
+BottomPercent               ____	SSAS	____	intc
+Children                    Eucl	SSAS	____	intc
+CrossJoin                   ____	SSAS	Esbs	intc
+Descendants                 ____	SSAS	____	intc
+Except                      ____	SSAS	Esbs	intc
+Filter                      ____	SSAS	____	intc
+Intersect                   ____	SSAS	Esbs	intc
+LateralMembers              ____	____	____	____
+Members                     ____	____	____	intc
+Order                       ____	SSAS	____	intc
+Tail                        ____	SSAS	Esbs	____
+TopCount                    ____	SSAS	____	intc
+TopPercent                  ____	SSAS	____	intc
+Union                       ____	SSAS	Esbs	intc
+Ytd                         ____	SSAS	____	intc
+Qtd                         ____	SSAS	____	intc
+Distinct                    ____	SSAS	Esbs	intc
+DrilldownLevel              ____	SSAS	____	intc
+DrilldownLevelBottom        ____	SSAS	____	intc
+DrillDownLevelTop           ____	SSAS	____	intc
+DrillDownMember             ____	SSAS	____	intc
+DrillDownMemberBottom       ____	SSAS	____	intc
+DrillDownMemberTop          ____	SSAS	____	intc
+DrillupLevel                ____	SSAS	____	intc
+DrillupMember               ____	SSAS	____	intc
+Ancestors                   ____	SSAS	____	intc
+BottomCount                 ____	SSAS	Esbs	intc
+BottomSum                   ____	SSAS	Esbs	intc
+TopSum                      ____	SSAS	Esbs	intc
+Extract                     ____	SSAS	Esbs	intc
+PeriodsToDate               ____	SSAS	Esbs	intc
+Generate                    ____	SSAS	Esbs	____
+Head                        ____	SSAS	Esbs	____
+Subset                      ____	SSAS	Esbs	____
+AddCalculatedMembers        ____	SSAS	____	____
+AllMembers                  ____	SSAS	____	____
+Ascendants                  ____	SSAS	____	____
+Axis                        ____	SSAS	____	____
+CurrentOrdinal              ____	SSAS	____	____
+Exists                      ____	SSAS	____	____
+Hierarchize                 ____	SSAS	____	____
+LastPeriods                 ____	SSAS	____	____
+Members (Set)               ____	SSAS	____	____
+Mtd                         ____	SSAS	____	intc
+NameToSet                   ____	SSAS	____	____
+NonEmptyCrossjoin           ____	SSAS	____	____
+Siblings                    ____	SSAS	____	____
+StripCalculatedMembers      ____	SSAS	____	____
+StrToSet                    ____	SSAS	____	____
+ToggleDrillState            ____	SSAS	____	____
+TupleRange                  ____	____	Esbs	____
+Unorder                     ____	SSAS	____	____
+VisualTotals                ____	SSAS	____	____
+Wtd                         ____	SSAS	____	intc
+
+<< String Functions >>                            				
+Name                        ____	SSAS	____	intc
+CalculationPassValue        ____	SSAS	____	____
+CoalesceEmpty               ____	SSAS	____	____
+Concat                      ____	____	Esbs	____
+FormatDate                  ____	____	Esbs	____
+Left                        ____	____	Esbs	____
+LookupCube                  ____	SSAS	____	____
+Lower                       ____	____	Esbs	____
+LTrim                       ____	____	Esbs	____
+MemberToStr                 ____	SSAS	____	____
+NumToStr                    ____	____	Esbs	____
+Properties                  ____	SSAS	____	____
+Right                       ____	____	Esbs	____
+RTrim                       ____	____	Esbs	____
+SetToStr                    ____	SSAS	____	____
+Substring                   ____	____	Esbs	____
+TupleToStr                  ____	SSAS	____	____
+UniqueName                  ____	SSAS	____	____
+Upper                       ____	____	Esbs	____
+UserName                    ____	SSAS	____	____
+
+<< Subcube Functions >>                           				
+Leaves                      ____	SSAS	____	____
+This                        ____	SSAS	____	____
+
+<< Tuple Functions >>                             				
+Current                     ____	SSAS	____	____
+CurrentTuple                ____	____	Esbs	____
+Item                        ____	____	Esbs	____
+Item (Tuple)                ____	SSAS	____	____
+Root                        ____	SSAS	____	____
+StrToTuple                  ____	SSAS	____	____
+
+<< Other Functions >>                             				
+Error                       ____	SSAS	____	____

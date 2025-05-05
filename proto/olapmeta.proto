@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package olapmeta;
 
+message EmptyParameterRequest {}
+
 // Universal Olap Entity
 message UniversalOlapEntity {
     string olapEntityClass = 1;
@@ -64,6 +66,7 @@ service OlapMetaService {
     
     // 根据维度 GID 查询默认维度成员
     rpc GetDefaultDimensionMemberByDimensionGid (GetDefaultDimensionMemberRequest) returns (GrpcMember);
+    rpc GetChildMembersByGid (GetChildMembersByGidRequest) returns (GetChildMembersByGidResponse);
 
     // 根据 GID 查询 DimensionRole
     rpc GetDimensionRoleByGid (GetDimensionRoleByGidRequest) returns (GrpcDimensionRole);
@@ -76,6 +79,12 @@ service OlapMetaService {
     rpc LocateUniversalOlapEntityByName (LocateOlapEntityRequest) returns (UniversalOlapEntity);
 
     rpc GetUniversalOlapEntityByGid (GetUniversalOlapEntityByGidRequest) returns (UniversalOlapEntity);
+
+    rpc GetAllDimensionRoles (EmptyParameterRequest) returns (GetAllDimensionRolesResponse);
+}
+
+message GetAllDimensionRolesResponse {
+    repeated GrpcDimensionRole dimensionRoles = 1;
 }
 
 message GetUniversalOlapEntityByGidRequest {
@@ -94,10 +103,10 @@ message GetDimensionRoleByNameRequest {
 }
 
 message GrpcDimensionRole {
-    uint64 gid          = 1; // unsinged 64-bit integer
+    uint64 gid          = 1; // unsigned 64-bit integer
     string name         = 2;
-    uint64 cubeGid      = 3; // unsinged 64-bit integer
-    uint64 dimensionGid = 4; // unsinged 64-bit integer
+    uint64 cubeGid      = 3; // unsigned 64-bit integer
+    uint64 dimensionGid = 4; // unsigned 64-bit integer
     uint64 measureFlag  = 5; // 1 - it is a meaure dimension role; 0 - it is not.
 }
 
@@ -109,4 +118,12 @@ message GetDimensionRolesByCubeGidRequest {
 // 定义根据 Cube GID 查询 GrpcDimensionRole 列表的响应消息
 message GetDimensionRolesByCubeGidResponse {
     repeated GrpcDimensionRole dimensionRoles = 1;    // 返回的非度量维度角色列表
+}
+
+message GetChildMembersByGidRequest {
+    uint64 parentMemberGid = 1;
+}
+
+message GetChildMembersByGidResponse {
+    repeated GrpcMember childMembers = 1;
 }

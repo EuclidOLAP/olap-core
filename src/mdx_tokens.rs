@@ -42,11 +42,17 @@ pub enum Token {
     From,
     #[regex("(?i)where")]
     Where,
+
     #[regex(r"\[(?:[^\]]|\]\])*\]", |lex| {
         let raw = lex.slice();
-        raw[1..raw.len()-1].replace("]]", "]")
+        raw[1..raw.len() - 1].replace("]]", "]")
     })]
     BracketedString(String),
+    #[regex(r#""[^"]*""#, |lex| {
+        let raw = lex.slice();
+        raw[1..raw.len() - 1].to_string()
+    })]
+    QuotedString(String),
 
     #[token("+")]
     Plus,
@@ -94,6 +100,17 @@ pub enum Token {
 
     #[regex("(?i)Parent")]
     Parent,
+
+    #[regex("(?i)Children")]
+    Children,
+
+    #[regex("(?i)Avg")]
+    Avg,
+    #[regex("(?i)Count")]
+    Count,
+
+    #[regex("(?i)ClosingPeriod")]
+    ClosingPeriod,
 }
 
 impl fmt::Display for Token {

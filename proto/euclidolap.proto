@@ -31,4 +31,5 @@ message OLAPResponse {
 message GrpcOlapVector {
   bool null_flag = 1;
   double val = 2;
+  string str = 3;
 }

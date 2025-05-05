@@ -4,9 +4,11 @@ use crate::mdx_ast::AstFormulaObject;
 use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember/*,CustomFormulaSet*/};
 
 use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
-use crate::mdx_ast::AstFactory::{FactoryNum,FactorySegs,FactoryTuple,FactoryExp};
+use crate::mdx_ast::AstFactory::{FactoryNum, FactoryStr, FactorySegs,FactoryTuple,FactoryExp};
 
-use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent};
+use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent, AstMemberFnClosingPeriod};
+use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
+use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
 
 grammar;
 
@@ -25,6 +27,7 @@ extern {
     "from" => Token::From,
     "where" => Token::Where,
     "BracketedString" => Token::BracketedString(<String>),
+    "QuotedString" => Token::QuotedString(<String>),
 
     "Columns" => Token::Columns,
     "Rows" => Token::Rows,
@@ -51,6 +54,13 @@ extern {
     ";" => Token::Semicolon,
 
     "Parent" => Token::Parent,
+
+    "Children" => Token::Children,
+
+    "Avg" => Token::Avg,
+    "Count" => Token::Count,
+
+    "ClosingPeriod" => Token::ClosingPeriod,
   }
 }
 
@@ -69,6 +79,12 @@ pub Seg: mdx_ast::AstSeg = {
   <mfn: MemberFunction> => {
     mdx_ast::AstSeg::MemberFunction(mfn)
   },
+  <setfn: SetFnSpec> => {
+    mdx_ast::AstSeg::SetFunction(setfn)
+  },
+  <exp_fn: ExpFnSpec> => {
+    mdx_ast::AstSeg::ExpFn(exp_fn)
+  },
 }
 
 pub Segments: Vec<mdx_ast::AstSeg> = {
@@ -86,7 +102,7 @@ pub Segments: Vec<mdx_ast::AstSeg> = {
 
 pub SegmentsWrap: mdx_ast::AstSegments = {
   <segs:Segments> => {
-    mdx_ast::AstSegments::Segs(segs)
+    mdx_ast::AstSegments{segs}
   }
 }
 
@@ -164,7 +180,8 @@ pub Axes: Vec<mdx_ast::AstAxis> = {
 
 pub MdxStatement: mdx_ast::ExtMDXStatement = {
   "select" "on" "from" "where" => {
-    mdx_ast::ExtMDXStatement::Querying { basic_cube: mdx_ast::AstCube{} }
+    panic!("<<< MDX Grammar Exception >>> This could be a test, suggestive, useless, outdated code snippet.");
+    // mdx_ast::ExtMDXStatement::Querying { basic_cube: mdx_ast::AstCube{} }
   }
 }
 
@@ -280,6 +297,9 @@ Factory: AstFactory = {
     let double_val: f64 = int_val as f64;
     FactoryNum(double_val)
   },
+  <str:"QuotedString"> => {
+    FactoryStr(str)
+  },
   <segs_wrap:SegmentsWrap> => {
     FactorySegs(segs_wrap)
   },
@@ -295,6 +315,9 @@ MemberFunction: AstMemberFunction = {
   <parent: MemberFnParent> => {
     AstMemberFunction::Parent(parent)
   },
+  <cp: MemberFnClosingPeriod> => {
+    AstMemberFunction::ClosingPeriod(cp)
+  },
 }
 
 MemberFnParent: AstMemberFnParent = {
@@ -306,5 +329,71 @@ MemberFnParent: AstMemberFnParent = {
   },
   "Parent" "(" <segments: SegmentsWrap> ")" => {
     AstMemberFnParent::HasParam(segments)
+  },
+}
+
+MemberFnClosingPeriod: AstMemberFnClosingPeriod = {
+  "ClosingPeriod" => {
+    AstMemberFnClosingPeriod::NoParam
+  },
+  "ClosingPeriod" "(" ")" => {
+    AstMemberFnClosingPeriod::NoParam
+  },
+  "ClosingPeriod" "(" <level_segs: SegmentsWrap> ")" => {
+    AstMemberFnClosingPeriod::OneParam(level_segs)
+  },
+  "ClosingPeriod" "(" <level_segs: SegmentsWrap> "," <member_segs: SegmentsWrap> ")" => {
+    AstMemberFnClosingPeriod::TwoParams(level_segs, member_segs)
+  },
+}
+
+SetFnSpec: AstSetFunction = {
+  <chir: SetFnChildrenSpec> => {
+    AstSetFunction::Children(chir)
+  }
+}
+
+SetFnChildrenSpec: AstSetFnChildren = {
+  "Children" => {
+    AstSetFnChildren::NoParam
+  },
+  "Children" "(" ")" => {
+    AstSetFnChildren::NoParam
+  },
+  "Children" "(" <segments: SegmentsWrap> ")" => {
+    AstSetFnChildren::InnerParam(segments)
+  },
+}
+
+ExpFnSpec: AstExpFunction = {
+  <avg: ExpFnAvgSpec> => {
+    AstExpFunction::Avg(avg)
+  },
+  <count: ExpFnCountSpec> => {
+    AstExpFunction::Count(count)
+  },
+}
+
+ExpFnCountSpec: AstExpFnCount = {
+  "Count" => {
+    AstExpFnCount::NoParam
+  },
+  "Count" "(" ")" => {
+    AstExpFnCount::NoParam
+  },
+  "Count" "(" <set: SetWrap> ")" => {
+    AstExpFnCount::InnerParam(set)
+  },
+}
+
+ExpFnAvgSpec: AstExpFnAvg = {
+  "Avg" => {
+    AstExpFnAvg::NoParam
+  },
+  "Avg" "(" ")" => {
+    AstExpFnAvg::NoParam
+  },
+  "Avg" "(" <set: SetWrap> ")" => {
+    AstExpFnAvg::InnerParam(set)
   },
 }
