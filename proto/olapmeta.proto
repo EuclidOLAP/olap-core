@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package olapmeta;
 
+message EmptyParameterRequest {}
+
 // Universal Olap Entity
 message UniversalOlapEntity {
     string olapEntityClass = 1;
@@ -77,6 +79,12 @@ service OlapMetaService {
     rpc LocateUniversalOlapEntityByName (LocateOlapEntityRequest) returns (UniversalOlapEntity);
 
     rpc GetUniversalOlapEntityByGid (GetUniversalOlapEntityByGidRequest) returns (UniversalOlapEntity);
+
+    rpc GetAllDimensionRoles (EmptyParameterRequest) returns (GetAllDimensionRolesResponse);
+}
+
+message GetAllDimensionRolesResponse {
+    repeated GrpcDimensionRole dimensionRoles = 1;
 }
 
 message GetUniversalOlapEntityByGidRequest {

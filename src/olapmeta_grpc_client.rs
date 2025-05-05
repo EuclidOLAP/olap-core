@@ -1,6 +1,7 @@
 // src/olapmeta_grpc_client.rs
 use tonic::{transport::Channel, Request};
 use std::fmt;
+use olapmeta::EmptyParameterRequest;
 use olapmeta::olap_meta_service_client::OlapMetaServiceClient;
 use olapmeta::{CubeGidRequest, CubeNameRequest, CubeMetaResponse};
 use olapmeta::GetDimensionRolesByCubeGidRequest;
@@ -199,6 +200,26 @@ impl GrpcClient {
             = self.client.get_universal_olap_entity_by_gid(request).await?.into_inner();
 
         Ok(MultiDimensionalEntity::from_universal_olap_entity(&universal_olap_entity))
+    }
+
+    pub async fn get_all_dimension_roles(&mut self) -> Result<Vec<mdd::DimensionRole>, Box<dyn std::error::Error>> {
+        let response = self.client.get_all_dimension_roles(EmptyParameterRequest {}).await?;
+
+        // 将响应数据解析为 DimensionRole 列表
+        let dimension_roles: Vec<mdd::DimensionRole> = response
+            .into_inner()
+            .dimension_roles
+            .into_iter()
+            .map(|grpc_dr| mdd::DimensionRole {
+                gid: grpc_dr.gid,
+                // name: grpc_dr.name,
+                // cube_gid: grpc_dr.cube_gid,
+                dimension_gid: grpc_dr.dimension_gid,
+                measure_flag: grpc_dr.measure_flag == 1,
+            })
+            .collect();
+
+        Ok(dimension_roles)
     }
 
 }

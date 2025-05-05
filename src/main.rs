@@ -8,7 +8,7 @@ use mdd::CellValue;
 pub mod calcul;
 
 mod olapmeta_grpc_client;
-
+mod meta_cache;
 mod agg_service_client;
 
 mod euclidolap {
@@ -82,6 +82,9 @@ impl OlapApi for EuclidOLAPService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    meta_cache::init().await;
+
     // 定义服务端监听地址
     // let addr = "127.0.0.1:50052".parse().unwrap();
     let addr = "0.0.0.0:50052".parse().unwrap();
