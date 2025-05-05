@@ -7,9 +7,9 @@ use mdd::CellValue;
 
 pub mod calcul;
 
-mod olapmeta_grpc_client;
-mod meta_cache;
 mod agg_service_client;
+mod meta_cache;
+mod olapmeta_grpc_client;
 
 mod euclidolap {
     tonic::include_proto!("euclidolap");
@@ -38,7 +38,6 @@ impl OlapApi for EuclidOLAPService {
         &self,
         request: Request<OlapRequest>, // 从客户端接收的请求
     ) -> Result<Response<OlapResponse>, Status> {
-
         // 从请求中解析操作类型和语句
         let olap_request = request.into_inner();
         let operation_type = olap_request.operation_type;
@@ -82,7 +81,6 @@ impl OlapApi for EuclidOLAPService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-
     meta_cache::init().await;
 
     // 定义服务端监听地址
