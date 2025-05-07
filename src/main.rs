@@ -68,32 +68,22 @@ impl OlapApi for EuclidOLAPService {
         let grpc_olap_vectors: Vec<GrpcOlapVector> = cell_vals
             .iter()
             .map(|cell| match cell {
-                CellValue::Double(val) => GrpcOlapVector {
-                    null_flag: false,
-                    val: *val,
-                    str: format!("{}", *val),
-                },
-                CellValue::Str(str) => GrpcOlapVector {
-                    null_flag: false,
-                    val: 0.0,
-                    str: String::from(str),
-                },
-                CellValue::Null => GrpcOlapVector {
-                    null_flag: true,
-                    val: 0.0,
-                    str: String::from(""),
-                },
-                CellValue::Invalid => GrpcOlapVector {
-                    null_flag: false,
-                    val: 0.0,
-                    str: String::from("Invalid"),
-                },
+                CellValue::Double(val) => {
+                    GrpcOlapVector { null_flag: false, val: *val, str: format!("{}", *val) }
+                }
+                CellValue::Str(str) => {
+                    GrpcOlapVector { null_flag: false, val: 0.0, str: String::from(str) }
+                }
+                CellValue::Null => {
+                    GrpcOlapVector { null_flag: true, val: 0.0, str: String::from("") }
+                }
+                CellValue::Invalid => {
+                    GrpcOlapVector { null_flag: false, val: 0.0, str: String::from("Invalid") }
+                }
             })
             .collect();
 
-        let olap_resp = OlapResponse {
-            vectors: grpc_olap_vectors,
-        };
+        let olap_resp = OlapResponse { vectors: grpc_olap_vectors };
 
         Ok(Response::new(olap_resp))
     }
@@ -105,17 +95,12 @@ async fn handle_stat(optype: String, statement: String) -> (u64, Vec<CellValue>)
             // println!(">>>>>>>> MDX Statement >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
             // println!("{}", statement);
             // println!(">>>>>>>> <<<<<<<<<<<<< >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-            let ast_selstat = SelectionMDXParser::new()
-                .parse(MdxLexer::new(&statement))
-                .unwrap();
+            let ast_selstat = SelectionMDXParser::new().parse(MdxLexer::new(&statement)).unwrap();
 
             exe_md_query(ast_selstat).await
         }
         _ => {
-            panic!(
-                "In fn `handle_stat()`: Unexpected operation type: {}",
-                optype
-            );
+            panic!("In fn `handle_stat()`: Unexpected operation type: {}", optype);
         }
     }
 }
@@ -126,8 +111,5 @@ async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> (u64, Vec<
     let coordinates: Vec<OlapVectorCoordinate> =
         mdd::Axis::axis_vec_cartesian_product(&axes, &context);
 
-    (
-        context.cube.gid,
-        calcul::calculate(coordinates, &mut context).await,
-    )
+    (context.cube.gid, calcul::calculate(coordinates, &mut context).await)
 }

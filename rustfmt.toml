@@ -1,0 +1,20 @@
+# Rust edition
+edition = "2021"
+
+# 每行最大宽度
+max_width = 100
+
+# 是否使用制表符（false 表示使用空格）
+hard_tabs = false
+
+# 制表符等效空格数
+tab_spaces = 4
+
+# 函数参数、链式调用等是否压缩成一行，最大化利用行宽
+use_small_heuristics = "Max"
+
+# 控制换行符风格（Unix/Linux为LF，Windows为CRLF）
+newline_style = "Unix"
+
+# 在 match/if 表达式块内的注释对齐
+match_arm_leading_pipes = "Preserve"
