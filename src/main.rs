@@ -1,13 +1,5 @@
-use euclidolap::olap_api_server::{OlapApi, OlapApiServer};
-use euclidolap::{GrpcOlapVector, OlapRequest, OlapResponse};
-use tonic::{transport::Server, Request, Response, Status};
-
-mod mdd;
-use mdd::CellValue;
-
-pub mod calcul;
-
 mod agg_service_client;
+mod mdd;
 mod meta_cache;
 mod olapmeta_grpc_client;
 
@@ -15,19 +7,47 @@ mod euclidolap {
     tonic::include_proto!("euclidolap");
 }
 
+pub mod calcul;
 pub mod mdx_ast;
 pub mod mdx_lexer;
 pub mod mdx_tokens;
 
-use lalrpop_util::lalrpop_mod;
-
 lalrpop_mod!(pub mdx_grammar);
+
+use euclidolap::olap_api_server::{OlapApi, OlapApiServer};
+use euclidolap::{GrpcOlapVector, OlapRequest, OlapResponse};
+use mdd::CellValue;
+use tonic::{transport::Server, Request, Response, Status};
+
+use lalrpop_util::lalrpop_mod;
 
 use crate::mdx_grammar::SelectionMDXParser;
 
 use crate::mdx_lexer::Lexer as MdxLexer;
 
 use mdd::OlapVectorCoordinate;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    meta_cache::init().await;
+
+    // 定义服务端监听地址
+    // let addr = "127.0.0.1:50052".parse().unwrap();
+    let addr = "0.0.0.0:50052".parse().unwrap();
+
+    // 创建 Greeter 服务实例
+    let olap_api_server = EuclidOLAPService::default();
+
+    println!(">>> EuclidOLAP Server is listening on {} <<<", addr);
+
+    // 启动 gRPC 服务端
+    Server::builder()
+        .add_service(OlapApiServer::new(olap_api_server)) // 添加 Greeter 服务
+        .serve(addr) // 启动服务端
+        .await?;
+
+    Ok(())
+}
 
 #[derive(Debug, Default)]
 pub struct EuclidOLAPService {}
@@ -77,28 +97,6 @@ impl OlapApi for EuclidOLAPService {
 
         Ok(Response::new(olap_resp))
     }
-}
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    meta_cache::init().await;
-
-    // 定义服务端监听地址
-    // let addr = "127.0.0.1:50052".parse().unwrap();
-    let addr = "0.0.0.0:50052".parse().unwrap();
-
-    // 创建 Greeter 服务实例
-    let olap_api_server = EuclidOLAPService::default();
-
-    println!(">>> EuclidOLAP Server is listening on {} <<<", addr);
-
-    // 启动 gRPC 服务端
-    Server::builder()
-        .add_service(OlapApiServer::new(olap_api_server)) // 添加 Greeter 服务
-        .serve(addr) // 启动服务端
-        .await?;
-
-    Ok(())
 }
 
 async fn handle_stat(optype: String, statement: String) -> (u64, Vec<CellValue>) {
