@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
 
-use crate::olapmeta_grpc_client::GrpcClient;
 use crate::mdd;
+use crate::olapmeta_grpc_client::GrpcClient;
 
 // 全局线程安全的缓存
 static LEVEL_CACHE: Lazy<Mutex<HashMap<u64, mdd::Level>>> = Lazy::new(|| {

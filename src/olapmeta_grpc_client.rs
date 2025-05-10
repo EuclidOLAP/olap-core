@@ -91,9 +91,7 @@ impl GrpcClient {
         let grpc_member = response.into_inner();
 
         Ok(grpc_to_olap_member(grpc_member))
-
     }
-
 
     pub async fn get_child_members_by_gid(&mut self, parent_member_gid: u64)
         -> Result<Vec<mdd::Member>, Box<dyn std::error::Error>> {
@@ -143,20 +141,20 @@ impl GrpcClient {
             cube_gid,
             dimension_role_name: dimension_role_name.clone(),
         });
-    
+
         // 调用 gRPC 服务
         let response = self.client.get_dimension_role_by_name(request).await?;
-    
+
         // 提取响应数据
         let grpc_dim_role = response.into_inner();
-    
+
         // 将 grpc response 转换为 mdd::DimensionRole
         let dim_role = mdd::DimensionRole {
             gid: grpc_dim_role.gid,
             dimension_gid: grpc_dim_role.dimension_gid,
             measure_flag: grpc_dim_role.measure_flag == 1,
         };
-    
+
         Ok(dim_role)
     }
 
@@ -223,7 +221,6 @@ impl GrpcClient {
     }
 
     pub async fn get_all_levels(&mut self) -> Result<Vec<mdd::Level>, Box<dyn std::error::Error>> {
-
         let response = self.client.get_all_levels(EmptyParameterRequest {}).await?;
 
         let levels: Vec<mdd::Level> = response

@@ -51,10 +51,7 @@ pub enum MultiDimensionalEntity {
     SetWrap(Set),
     MemberWrap(Member),
     MemberRoleWrap(MemberRole),
-    FormulaMemberWrap {
-        dim_role_gid: u64,
-        exp: AstExpression,
-    },
+    FormulaMemberWrap { dim_role_gid: u64, exp: AstExpression },
     ExpFn(AstExpFunction),
     // Cube(Cube),           // 立方体实体
     // Dimension(Dimension), // 维度实体
@@ -242,9 +239,8 @@ impl MultiDimensionalEntityLocator for Set {
         _slice_tuple: &Tuple,
         _context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-
         let seg_list = &segs.segs;
-        
+
         let seg = seg_list.iter().next().unwrap();
 
         match seg {
@@ -352,9 +348,8 @@ impl MultiDimensionalEntityLocator for MemberRole {
         slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-
         let seg_list = &segs.segs;
-        
+
         let seg = seg_list.first().unwrap();
         match seg {
             AstSeg::MemberFunction(member_fn) => {
@@ -368,10 +363,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
             }
             AstSeg::SetFunction(set_fn) => {
                 let set = set_fn
-                    .get_set(
-                        Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
-                        context,
-                    )
+                    .get_set(Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())), context)
                     .await;
 
                 if seg_list.len() == 1 {
@@ -431,9 +423,8 @@ impl MultiDimensionalEntityLocator for DimensionRole {
         slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-
         let seg_list = &segs.segs;
-        
+
         let seg = seg_list.iter().next().unwrap();
         let entity = match seg {
             AstSeg::Gid(gid) | AstSeg::GidStr(gid, _) => {
@@ -474,7 +465,6 @@ impl MultiDimensionalEntityLocator for DimensionRole {
         _slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-
         match GidType::entity_type(gid) {
             GidType::Member => {
                 
