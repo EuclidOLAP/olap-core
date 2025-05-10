@@ -12,6 +12,8 @@ use crate::mdd::OlapVectorCoordinate;
 use crate::mdd::{GidType, MemberRole, MultiDimensionalEntity, Set, Tuple};
 use crate::olapmeta_grpc_client::GrpcClient;
 
+use crate::meta_cache;
+
 use crate::calcul::calculate;
 
 pub trait Materializable {
@@ -135,6 +137,12 @@ impl Materializable for AstSegments {
                     dim_role
                         .locate_entity(&tail_segs, slice_tuple, context)
                         .await
+                }
+                MultiDimensionalEntity::MemberRoleWrap(member_role) => {
+                    if self.segs.len() == 1 {
+                        return MultiDimensionalEntity::MemberRoleWrap(member_role);
+                    }
+                    todo!("[NVB676] MemberRoleWrap is not implemented yet.")
                 }
                 _ => {
                     panic!("In method AstSegments::materialize(): head_entity is not a DimensionRoleWrap!");
@@ -610,16 +618,52 @@ impl AstMemberFnClosingPeriod {
     ) -> MultiDimensionalEntity {
         match (left_outer_param, level_param, member_param) {
             (None, Some(lv_segs), None) => {
-                let level = lv_segs.materialize(slice_tuple, context).await;
-                println!(
-                    "44444444444444444 AstMemberFnClosingPeriod::do_get_member() level: {:?}",
-                    level
-                );
-
-                todo!("AstMemberFnClosingPeriod::do_get_member() kkkkkkkkkkkkkkkkkkkkkk OOOOO<>")
+                let olap_obj = lv_segs.materialize(slice_tuple, context).await;
+                if let MultiDimensionalEntity::LevelRole(lv_role) = olap_obj {
+                    MultiDimensionalEntity::MemberRoleWrap(MemberRole::BaseMember {
+                        dim_role: lv_role.dim_role.clone(),
+                        member: meta_cache::get_member_by_gid(lv_role.level.closing_period_gid),
+                    })
+                } else {
+                    panic!("[850BHE] The entity is not a LevelRole variant.");
+                }
             }
             _ => {
                 panic!("Invalid parameter combination. Only level_param should be Some, and left_outer_param and member_param should be None.");
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstMemberFnOpeningPeriod {
+    NoParam,
+    OneParam(AstSegments),
+    TwoParams(AstSegments, AstSegments),
+}
+
+impl AstMemberFnOpeningPeriod {
+    async fn do_get_member(
+        left_outer_param: Option<MultiDimensionalEntity>,
+        level_param: Option<&AstSegments>,
+        member_param: Option<&AstSegments>,
+        slice_tuple: &Tuple,
+        context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        match (left_outer_param, level_param, member_param) {
+            (None, Some(lv_segs), None) => {
+                let olap_obj = lv_segs.materialize(slice_tuple, context).await;
+                if let MultiDimensionalEntity::LevelRole(lv_role) = olap_obj {
+                    MultiDimensionalEntity::MemberRoleWrap(MemberRole::BaseMember {
+                        dim_role: lv_role.dim_role.clone(),
+                        member: meta_cache::get_member_by_gid(lv_role.level.opening_period_gid),
+                    })
+                } else {
+                    panic!("[833BHE] The entity is not a LevelRole variant.");
+                }
+            }
+            _ => {
+                panic!("[hsb778] Invalid parameter combination. Only level_param should be Some, and left_outer_param and member_param should be None.");
             }
         }
     }
@@ -668,6 +712,7 @@ impl AstMemberFnParent {
 pub enum AstMemberFunction {
     Parent(AstMemberFnParent),
     ClosingPeriod(AstMemberFnClosingPeriod),
+    OpeningPeriod(AstMemberFnOpeningPeriod),
 }
 
 impl AstMemberFunction {
@@ -711,6 +756,40 @@ impl AstMemberFunction {
                 member_segs,
             )) => {
                 AstMemberFnClosingPeriod::do_get_member(
+                    left_outer_param,
+                    Some(level_segs),
+                    Some(member_segs),
+                    slice_tuple,
+                    context,
+                )
+                .await
+            }
+            // OpeningPeriod()
+            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::NoParam) => {
+                AstMemberFnOpeningPeriod::do_get_member(
+                    left_outer_param,
+                    None,
+                    None,
+                    slice_tuple,
+                    context,
+                )
+                .await
+            }
+            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::OneParam(level_segs)) => {
+                AstMemberFnOpeningPeriod::do_get_member(
+                    left_outer_param,
+                    Some(level_segs),
+                    None,
+                    slice_tuple,
+                    context,
+                )
+                .await
+            }
+            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::TwoParams(
+                level_segs,
+                member_segs,
+            )) => {
+                AstMemberFnOpeningPeriod::do_get_member(
                     left_outer_param,
                     Some(level_segs),
                     Some(member_segs),

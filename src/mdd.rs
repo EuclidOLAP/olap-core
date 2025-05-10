@@ -1,5 +1,7 @@
 use core::panic;
 
+use crate::meta_cache;
+
 use crate::mdx_ast::AstExpFnAvg;
 use crate::mdx_ast::AstExpFnCount;
 use crate::mdx_ast::AstExpFunction;
@@ -42,6 +44,8 @@ impl GidType {
 // #[derive(Clone)]
 // #[derive(PartialEq)]
 pub enum MultiDimensionalEntity {
+    Level(Level),
+    LevelRole(LevelRole),
     DimensionRoleWrap(DimensionRole),
     TupleWrap(Tuple),
     SetWrap(Set),
@@ -55,7 +59,6 @@ pub enum MultiDimensionalEntity {
     // Cube(Cube),           // 立方体实体
     // Dimension(Dimension), // 维度实体
     // Hierarchy(Hierarchy), // 层次实体
-    // Level(Level),         // 层级实体
     Nothing,
 }
 
@@ -307,6 +310,18 @@ impl Tuple {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct LevelRole {
+    pub dim_role: DimensionRole,
+    pub level: Level,
+}
+
+impl LevelRole {
+    pub fn new(dim_role: DimensionRole, level: Level) -> Self {
+        LevelRole { dim_role, level }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum MemberRole {
     BaseMember {
         dim_role: DimensionRole,
@@ -393,6 +408,14 @@ impl MultiDimensionalEntityLocator for MemberRole {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct Level {
+    pub gid: u64,
+    pub name: String,
+    pub opening_period_gid: u64,
+    pub closing_period_gid: u64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct DimensionRole {
     pub gid: u64,
     // pub name: String,
@@ -433,6 +456,12 @@ impl MultiDimensionalEntityLocator for DimensionRole {
                     .locate_entity(&tail_segs, slice_tuple, context)
                     .await
             }
+            MultiDimensionalEntity::LevelRole(lv_role) => {
+                if seg_list.len() == 1 {
+                    return MultiDimensionalEntity::LevelRole(lv_role);
+                }
+                todo!("[HDJS8840] DimensionRole::locate_entity() LevelRole not implemented yet.")
+            }
             _ => {
                 panic!("[DimRole] locate_entity() Unsupported entity class.");
             }
@@ -445,24 +474,37 @@ impl MultiDimensionalEntityLocator for DimensionRole {
         _slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-        // let dim_gid = self.dimension_gid;
-        let olap_entity = context
-            .grpc_client
-            .locate_universal_olap_entity_by_gid(self.gid, gid)
-            .await
-            .unwrap();
 
-        match olap_entity {
-            MultiDimensionalEntity::MemberWrap(member) => {
-                let member_role = MemberRole::BaseMember {
-                    dim_role: self.clone(),
-                    member,
-                };
-                // return MultiDimensionalEntity::MemberRoleWrap(member_role);
-                MultiDimensionalEntity::MemberRoleWrap(member_role)
+        match GidType::entity_type(gid) {
+            GidType::Member => {
+                
+                    // let dim_gid = self.dimension_gid;
+                    let olap_entity = context
+                    .grpc_client
+                    .locate_universal_olap_entity_by_gid(self.gid, gid)
+                    .await
+                    .unwrap();
+
+                match olap_entity {
+                    MultiDimensionalEntity::MemberWrap(member) => {
+                        let member_role = MemberRole::BaseMember {
+                            dim_role: self.clone(),
+                            member,
+                        };
+                        // return MultiDimensionalEntity::MemberRoleWrap(member_role);
+                        MultiDimensionalEntity::MemberRoleWrap(member_role)
+                    }
+                    _ => {
+                        panic!("[DimRole] locate_entity_by_gid() Unsupported entity class.");
+                    }
+                }
+            }
+            GidType::Level => {
+                let level = meta_cache::get_level_by_gid(gid);
+                MultiDimensionalEntity::LevelRole(LevelRole::new(self.clone(), level))
             }
             _ => {
-                panic!("[DimRole] locate_entity_by_gid() Unsupported entity class.");
+                todo!("Unsupported entity type.");
             }
         }
     }

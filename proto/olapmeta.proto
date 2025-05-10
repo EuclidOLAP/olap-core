@@ -12,6 +12,8 @@ message UniversalOlapEntity {
     uint32 measureIndex = 4;
     uint32 level = 5;
     uint64 parentGid = 6;
+    uint64 openingPeriodGid = 7;
+    uint64 closingPeriodGid = 8;
 }
 
 message LocateOlapEntityRequest {
@@ -81,6 +83,10 @@ service OlapMetaService {
     rpc GetUniversalOlapEntityByGid (GetUniversalOlapEntityByGidRequest) returns (UniversalOlapEntity);
 
     rpc GetAllDimensionRoles (EmptyParameterRequest) returns (GetAllDimensionRolesResponse);
+
+    rpc GetAllLevels (EmptyParameterRequest) returns (GetAllLevelsResponse);
+
+    rpc GetAllMembers (EmptyParameterRequest) returns (GetAllMembersResponse);
 }
 
 message GetAllDimensionRolesResponse {
@@ -126,4 +132,12 @@ message GetChildMembersByGidRequest {
 
 message GetChildMembersByGidResponse {
     repeated GrpcMember childMembers = 1;
+}
+
+message GetAllLevelsResponse {
+    repeated UniversalOlapEntity levels = 1;
+}
+
+message GetAllMembersResponse {
+    repeated UniversalOlapEntity members = 1;
 }

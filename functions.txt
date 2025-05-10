@@ -41,7 +41,7 @@ IsUda                       ____	____	Esbs	____
 IsValid                     ____	____	Esbs	____
 
 << Member Functions >>                            				
-ClosingPeriod               doing	SSAS	Esbs	intc
+ClosingPeriod               Eucl	SSAS	Esbs	intc
 CurrentMember               ____	SSAS	Esbs	intc
 FirstChild                  ____	SSAS	Esbs	intc
 FirstSibling                ____	SSAS	Esbs	intc
@@ -49,7 +49,7 @@ Lag                         ____	SSAS	Esbs	intc
 LastChild                   ____	SSAS	Esbs	intc
 LastSibling                 ____	SSAS	Esbs	intc
 Lead                        ____	SSAS	Esbs	intc
-OpeningPeriod               ____	SSAS	Esbs	intc
+OpeningPeriod               Eucl	SSAS	Esbs	intc
 ParallelPeriod              ____	SSAS	Esbs	intc
 Parent                      Eucl	SSAS	Esbs	intc
 PrevMember                  ____	SSAS	Esbs	intc

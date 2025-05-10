@@ -1,28 +1,59 @@
+use std::collections::HashMap;
+use std::sync::Mutex;
+use once_cell::sync::Lazy;
+
 use crate::olapmeta_grpc_client::GrpcClient;
+use crate::mdd;
 
+// 全局线程安全的缓存
+static LEVEL_CACHE: Lazy<Mutex<HashMap<u64, mdd::Level>>> = Lazy::new(|| {
+    Mutex::new(HashMap::new())
+});
+
+// 全局线程安全的缓存
+static MEMBER_CACHE: Lazy<Mutex<HashMap<u64, mdd::Member>>> = Lazy::new(|| {
+    Mutex::new(HashMap::new())
+});
+
+/// 初始化时批量拉取 level 并放入缓存
 pub async fn init() {
-    println!("Initializing meta_cache module......... ...... ...");
-
     let mut grpc_cli = GrpcClient::new("http://192.168.66.51:50051".to_string())
         .await
         .expect("Failed to create client");
 
-    println!("grpc_cli: {:#?}", grpc_cli);
-    println!("meta_cache module initialized successfully &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&...............");
+    // levels 的类型是 Vec<mdd::Level>
+    let levels = grpc_cli.get_all_levels().await.unwrap();
 
-    let dimension_roles = grpc_cli.get_all_dimension_roles().await.unwrap();
-
-    println!(">>>>>>>");
-    println!(">>>>>>>>>>>>>>");
-    println!(">>>>>>>>>>>>>>>>>>>>>");
-    println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>> !?");
-
-    for role in dimension_roles {
-        println!("DimensionRole: {:?}", role);
+    let mut cache = LEVEL_CACHE.lock().unwrap();
+    for level in levels {
+        // println!("OO>>>>>>>>>>>>>> level: {:#?}", level);
+        cache.insert(level.gid, level);
     }
 
-    println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>> Okay");
-    println!(">>>>>>>>>>>>>>>>>>>>>");
-    println!(">>>>>>>>>>>>>>");
-    println!(">>>>>>>");
+    // members 的类型是 Vec<mdd::Member>
+    let members = grpc_cli.get_all_members().await.unwrap();
+
+    let mut cache = MEMBER_CACHE.lock().unwrap();
+    for member in members {
+        // println!("OO>>>>>>>>>>>>>> member: {:#?}", member);
+        cache.insert(member.gid, member);
+    }
+}
+
+/// 多线程安全地根据 gid 获取 level
+pub fn get_level_by_gid(gid: u64) -> mdd::Level {
+    let cache = LEVEL_CACHE.lock().unwrap();
+    match cache.get(&gid) {
+        Some(level) => level.clone(),
+        None => panic!("Level not found for gid {}", gid),
+    }
+}
+
+/// 多线程安全地根据 gid 获取 member
+pub fn get_member_by_gid(gid: u64) -> mdd::Member {
+    let cache = MEMBER_CACHE.lock().unwrap();
+    match cache.get(&gid) {
+        Some(member) => member.clone(),
+        None => panic!("Member not found for gid {}", gid),
+    }
 }

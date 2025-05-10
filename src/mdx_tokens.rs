@@ -111,6 +111,9 @@ pub enum Token {
 
     #[regex("(?i)ClosingPeriod")]
     ClosingPeriod,
+
+    #[regex("(?i)OpeningPeriod")]
+    OpeningPeriod,
 }
 
 impl fmt::Display for Token {

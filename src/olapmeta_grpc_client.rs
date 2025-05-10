@@ -222,6 +222,47 @@ impl GrpcClient {
         Ok(dimension_roles)
     }
 
+    pub async fn get_all_levels(&mut self) -> Result<Vec<mdd::Level>, Box<dyn std::error::Error>> {
+
+        let response = self.client.get_all_levels(EmptyParameterRequest {}).await?;
+
+        let levels: Vec<mdd::Level> = response
+            .into_inner()
+            .levels
+            .into_iter()
+            .map(|olap_obj| mdd::Level {
+                gid: olap_obj.gid,
+                name: olap_obj.name,
+                opening_period_gid: olap_obj.opening_period_gid,
+                closing_period_gid: olap_obj.closing_period_gid,
+            })
+            .collect();
+
+        Ok(levels)
+    }
+
+    pub async fn get_all_members(&mut self) -> Result<Vec<mdd::Member>, Box<dyn std::error::Error>> {
+
+        let response = self.client.get_all_members(EmptyParameterRequest {}).await?;
+
+        let members: Vec<mdd::Member> = response
+            .into_inner()
+            .members
+            .into_iter()
+            .map(|grpc_olap_obj| mdd::Member {
+                gid: grpc_olap_obj.gid,
+                name: grpc_olap_obj.name,
+                // dimension_gid: grpc_member.dimension_gid,
+                // hierarchy_gid: grpc_member.hierarchy_gid,
+                // level_gid: grpc_member.level_gid,
+                level: grpc_olap_obj.level,
+                parent_gid: grpc_olap_obj.parent_gid,
+                measure_index: grpc_olap_obj.measure_index,
+            })
+            .collect();
+
+        Ok(members)
+    }
 }
 
 impl fmt::Debug for GrpcClient {

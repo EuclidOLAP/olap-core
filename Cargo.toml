@@ -26,6 +26,8 @@ logos-codegen = "^0.14.2"
 # LALRPOP utilities with Unicode support
 lalrpop-util = { version = "0.22.0", features = ["unicode"] }
 
+once_cell = "1.20.2"
+
 [build-dependencies]
 # Used to compile .proto files into Rust code
 tonic-build = "0.9"
