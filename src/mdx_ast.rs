@@ -122,11 +122,8 @@ impl Materializable for AstSegments {
 
             if is_formula_member {
                 let dim_role_gid = self.get_first_gid().unwrap();
-                let AstFormulaObject::CustomFormulaMember(_, exp) = context
-                    .formulas_map
-                    .get(&last_opt.unwrap())
-                    .unwrap()
-                    .clone();
+                let AstFormulaObject::CustomFormulaMember(_, exp) =
+                    context.formulas_map.get(&last_opt.unwrap()).unwrap().clone();
                 return MultiDimensionalEntity::FormulaMemberWrap { dim_role_gid, exp };
             }
 
@@ -218,12 +215,7 @@ impl AstSet {
         let result;
         match self {
             AstSet::Tuples(tuples) => {
-                result = match tuples
-                    .iter()
-                    .next()
-                    .unwrap()
-                    .materialize(slice_tuple, context)
-                    .await
+                result = match tuples.iter().next().unwrap().materialize(slice_tuple, context).await
                 {
                     MultiDimensionalEntity::TupleWrap(tuple) => tuple.clone(),
                     _ => panic!("The entity is not a TupleWrap variant."),
@@ -891,12 +883,11 @@ impl AstLevelFnLevels {
     }
 
     async fn get_level_role(
-        &self, 
+        &self,
         left_outer_param: Option<MultiDimensionalEntity>,
-        slice_tuple: &Tuple, 
-        context: &mut MultiDimensionalContext
+        slice_tuple: &Tuple,
+        context: &mut MultiDimensionalContext,
     ) -> LevelRole {
-
         let mut param_dim_role: Option<DimensionRole> = None;
         let mut def_hierarchy_gid = 0;
 
