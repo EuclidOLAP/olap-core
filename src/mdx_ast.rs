@@ -913,7 +913,6 @@ impl AstLevelFnLevels {
         if let CellValue::Double(idx) = cell_val {
             let lv_val = idx as u32;
 
-            println!("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC def_hierarchy_gid: {}", def_hierarchy_gid);
             let olap_obj_level: Level = meta_cache::get_hierarchy_level(def_hierarchy_gid, lv_val);
             LevelRole::new(param_dim_role, olap_obj_level)
         } else {
