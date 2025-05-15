@@ -2,16 +2,16 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
 
-use crate::mdd;
+use crate::mdd::{Member, Level};
 use crate::olapmeta_grpc_client::GrpcClient;
 
 // 全局线程安全的缓存
-static LEVEL_CACHE: Lazy<Mutex<HashMap<u64, mdd::Level>>> = Lazy::new(|| {
+static LEVEL_CACHE: Lazy<Mutex<HashMap<u64, Level>>> = Lazy::new(|| {
     Mutex::new(HashMap::new())
 });
 
 // 全局线程安全的缓存
-static MEMBER_CACHE: Lazy<Mutex<HashMap<u64, mdd::Member>>> = Lazy::new(|| {
+static MEMBER_CACHE: Lazy<Mutex<HashMap<u64, Member>>> = Lazy::new(|| {
     Mutex::new(HashMap::new())
 });
 
@@ -21,7 +21,7 @@ pub async fn init() {
         .await
         .expect("Failed to create client");
 
-    // levels 的类型是 Vec<mdd::Level>
+    // levels 的类型是 Vec<Level>
     let levels = grpc_cli.get_all_levels().await.unwrap();
 
     let mut cache = LEVEL_CACHE.lock().unwrap();
@@ -30,7 +30,7 @@ pub async fn init() {
         cache.insert(level.gid, level);
     }
 
-    // members 的类型是 Vec<mdd::Member>
+    // members 的类型是 Vec<Member>
     let members = grpc_cli.get_all_members().await.unwrap();
 
     let mut cache = MEMBER_CACHE.lock().unwrap();
@@ -41,7 +41,7 @@ pub async fn init() {
 }
 
 /// 多线程安全地根据 gid 获取 level
-pub fn get_level_by_gid(gid: u64) -> mdd::Level {
+pub fn get_level_by_gid(gid: u64) -> Level {
     let cache = LEVEL_CACHE.lock().unwrap();
     match cache.get(&gid) {
         Some(level) => level.clone(),
@@ -50,7 +50,7 @@ pub fn get_level_by_gid(gid: u64) -> mdd::Level {
 }
 
 /// 多线程安全地根据 gid 获取 member
-pub fn get_member_by_gid(gid: u64) -> mdd::Member {
+pub fn get_member_by_gid(gid: u64) -> Member {
     let cache = MEMBER_CACHE.lock().unwrap();
     match cache.get(&gid) {
         Some(member) => member.clone(),
@@ -58,7 +58,7 @@ pub fn get_member_by_gid(gid: u64) -> mdd::Member {
     }
 }
 
-pub fn get_hierarchy_level(hierarchy_gid: u64, level_val: u32) -> mdd::Level {
+pub fn get_hierarchy_level(hierarchy_gid: u64, level_val: u32) -> Level {
 
     let cache = LEVEL_CACHE.lock().unwrap();
     for level in cache.values() {
