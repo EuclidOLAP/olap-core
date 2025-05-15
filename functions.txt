@@ -20,8 +20,8 @@ Dimensions                  ____	SSAS	____	____
 Hierarchy                   ____	SSAS	____	____
 
 << Level Functions >>                             				
-Level                       ____	SSAS	Esbs	____
-Levels                      ____	SSAS	Esbs	____
+Level                       Eucl	SSAS	Esbs	____
+Levels                      Eucl	SSAS	Esbs	____
 Generation                  ____	____	Esbs	____
 Generations                 ____	____	Esbs	____
 

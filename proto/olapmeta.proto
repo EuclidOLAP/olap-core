@@ -14,6 +14,9 @@ message UniversalOlapEntity {
     uint64 parentGid = 6;
     uint64 openingPeriodGid = 7;
     uint64 closingPeriodGid = 8;
+    uint64 levelGid = 9;
+    uint64 dimensionGid = 10;
+    uint64 hierarchyGid = 11;
 }
 
 message LocateOlapEntityRequest {
@@ -114,6 +117,7 @@ message GrpcDimensionRole {
     uint64 cubeGid      = 3; // unsigned 64-bit integer
     uint64 dimensionGid = 4; // unsigned 64-bit integer
     uint64 measureFlag  = 5; // 1 - it is a meaure dimension role; 0 - it is not.
+    uint64 defaultHierarchyGid = 6;
 }
 
 // 定义根据 Cube GID 查询 GrpcDimensionRole 列表的请求消息

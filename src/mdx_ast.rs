@@ -9,6 +9,7 @@ use crate::mdd::CellValue;
 use crate::mdd::MultiDimensionalContext;
 use crate::mdd::MultiDimensionalEntityLocator;
 use crate::mdd::OlapVectorCoordinate;
+use crate::mdd::{DimensionRole, Level, LevelRole};
 use crate::mdd::{GidType, MemberRole, MultiDimensionalEntity, Set, Tuple};
 use crate::olapmeta_grpc_client::GrpcClient;
 
@@ -48,6 +49,7 @@ pub enum AstSeg {
     MemberFunction(AstMemberFunction),
     SetFunction(AstSetFunction),
     ExpFn(AstExpFunction),
+    LevelFn(AstLevelFunction),
 }
 
 impl AstSeg {
@@ -74,6 +76,10 @@ impl Materializable for AstSeg {
                 // MemberFunction(AstMemberFunction),
                 AstSeg::MemberFunction(member_fn) => {
                     member_fn.get_member(None, slice_tuple, context).await
+                }
+                AstSeg::LevelFn(lv_fn) => {
+                    let lv_role = lv_fn.get_level_role(None, slice_tuple, context).await;
+                    MultiDimensionalEntity::LevelRole(lv_role)
                 }
                 _ => panic!("The entity is not a Gid or a Str variant. 1"),
             }
@@ -128,6 +134,10 @@ impl Materializable for AstSegments {
             let head_entity: MultiDimensionalEntity =
                 ast_seg.materialize(slice_tuple, context).await;
 
+            if self.segs.len() == 1 {
+                return head_entity;
+            }
+
             match head_entity {
                 MultiDimensionalEntity::DimensionRoleWrap(dim_role) => {
                     let tail_segs = AstSegments {
@@ -143,6 +153,12 @@ impl Materializable for AstSegments {
                         return MultiDimensionalEntity::MemberRoleWrap(member_role);
                     }
                     todo!("[NVB676] MemberRoleWrap is not implemented yet.")
+                }
+                MultiDimensionalEntity::LevelRole(lv_role) => {
+                    if self.segs.len() == 1 {
+                        return MultiDimensionalEntity::LevelRole(lv_role);
+                    }
+                    todo!("[NVB666DC] MemberRoleWrap is not implemented yet.")
                 }
                 _ => {
                     panic!("In method AstSegments::materialize(): head_entity is not a DimensionRoleWrap!");
@@ -799,6 +815,120 @@ impl AstMemberFunction {
                 .await
             }
         }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstLevelFunction {
+    Level(AstLevelFnLevel),
+    Levels(AstLevelFnLevels),
+}
+
+impl AstLevelFunction {
+    pub async fn get_level_role(
+        &self,
+        left_outer_param: Option<MultiDimensionalEntity>,
+        slice_tuple: &Tuple,
+        context: &mut MultiDimensionalContext,
+    ) -> LevelRole {
+        match self {
+            AstLevelFunction::Level(fn_level) => {
+                fn_level.get_level_role(left_outer_param, slice_tuple, context).await
+            }
+            AstLevelFunction::Levels(fn_levels) => {
+                fn_levels.get_level_role(left_outer_param, slice_tuple, context).await
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstLevelFnLevel {
+    NoParam,
+    OneParam(AstSegments),
+}
+
+impl AstLevelFnLevel {
+
+    fn do_get_level_role(&self, mr: MemberRole) -> LevelRole {
+        if let MemberRole::BaseMember { dim_role, member } = mr {
+            LevelRole::new(dim_role, meta_cache::get_level_by_gid(member.level_gid))
+        } else {
+            panic!("[003BHE] The entity is not a MemberRole variant.");
+        }
+    }
+
+    async fn get_level_role(
+        &self, 
+        left_outer_param: Option<MultiDimensionalEntity>,
+        slice_tuple: &Tuple, 
+        context: &mut MultiDimensionalContext
+    ) -> LevelRole {
+
+        if let Some(MultiDimensionalEntity::MemberRoleWrap(mr)) = left_outer_param {
+            return self.do_get_level_role(mr);
+        }
+
+        if let AstLevelFnLevel::OneParam(ast_segs) = self {
+            if let MultiDimensionalEntity::MemberRoleWrap(mr) = ast_segs.materialize(slice_tuple, context).await {
+                return self.do_get_level_role(mr);
+            }
+        }
+
+        panic!("[klu704] AstLevelFnLevel::do_get_level_role()");
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstLevelFnLevels {
+    dim_segs: Option<AstSegments>,
+    idx_exp: AstExpression,
+}
+
+impl AstLevelFnLevels {
+    pub fn new(dim_segs: Option<AstSegments>, idx_exp: AstExpression) -> Self {
+        Self { dim_segs, idx_exp }
+    }
+
+    async fn get_level_role(
+        &self, 
+        left_outer_param: Option<MultiDimensionalEntity>,
+        slice_tuple: &Tuple, 
+        context: &mut MultiDimensionalContext
+    ) -> LevelRole {
+
+        let mut param_dim_role: Option<DimensionRole> = None;
+        let mut def_hierarchy_gid = 0;
+
+        if let Some(MultiDimensionalEntity::DimensionRoleWrap(dr)) = left_outer_param {
+            def_hierarchy_gid = dr.default_hierarchy_gid;
+            param_dim_role = Some(dr);
+        } else if let Some(ast_segs) = &self.dim_segs {
+            if let MultiDimensionalEntity::DimensionRoleWrap(dr) = ast_segs.materialize(slice_tuple, context).await {
+                def_hierarchy_gid = dr.default_hierarchy_gid;
+                param_dim_role = Some(dr);
+            } else {
+                panic!("[003BHE] The entity is not a DimensionRole variant.");
+            }
+        }
+
+        if let None = param_dim_role {
+            panic!("[033BHE] The entity is not a DimensionRole variant.");
+        }
+
+        let param_dim_role = param_dim_role.unwrap();
+
+        let cell_val = self.idx_exp.val(slice_tuple, context).await;
+        if let CellValue::Double(idx) = cell_val {
+            let lv_val = idx as u32;
+
+            println!("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC def_hierarchy_gid: {}", def_hierarchy_gid);
+            let olap_obj_level: Level = meta_cache::get_hierarchy_level(def_hierarchy_gid, lv_val);
+            LevelRole::new(param_dim_role, olap_obj_level)
+        } else {
+           panic!("[klu704] AstLevelFnLevel::do_get_level_role()"); 
+        }
+
     }
 }
 

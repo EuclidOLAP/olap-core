@@ -145,6 +145,7 @@ impl MultiDimensionalEntity {
                 gid: entity.gid,
                 name: entity.name.clone(),
                 level: entity.level,
+                level_gid: entity.level_gid,
                 measure_index: entity.measure_index,
                 parent_gid: entity.parent_gid,
             }),
@@ -376,6 +377,13 @@ impl MultiDimensionalEntityLocator for MemberRole {
                     set.locate_entity(&tail_segs, slice_tuple, context).await
                 }
             }
+            AstSeg::LevelFn(level_fn) => {
+                if seg_list.len() > 1 {
+                    todo!("[bhso9957] MemberRole::locate_entity() LevelFn not implemented yet.");
+                }
+                let lv_role: LevelRole = level_fn.get_level_role(Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())), slice_tuple, context).await;
+                MultiDimensionalEntity::LevelRole(lv_role)
+            }
             _ => panic!("Panic in MemberRole::locate_entity() .. 67HUSran .."),
         }
     }
@@ -403,6 +411,9 @@ impl MultiDimensionalEntityLocator for MemberRole {
 pub struct Level {
     pub gid: u64,
     pub name: String,
+    pub level: u32,
+    pub dimension_gid: u64,
+    pub hierarchy_gid: u64,
     pub opening_period_gid: u64,
     pub closing_period_gid: u64,
 }
@@ -413,6 +424,7 @@ pub struct DimensionRole {
     // pub name: String,
     // pub cube_gid: u64,
     pub dimension_gid: u64,
+    pub default_hierarchy_gid: u64,
     pub measure_flag: bool,
 }
 
@@ -431,6 +443,11 @@ impl MultiDimensionalEntityLocator for DimensionRole {
                 self.locate_entity_by_gid(*gid, slice_tuple, context).await
             }
             AstSeg::Str(seg) => self.locate_entity_by_seg(seg, slice_tuple, context).await,
+            AstSeg::LevelFn(level_fn) => {
+                MultiDimensionalEntity::LevelRole(
+                    level_fn.get_level_role(Some(MultiDimensionalEntity::DimensionRoleWrap(self.clone())), slice_tuple, context).await
+                )
+            }
             _ => panic!("The entity is not a Gid or a Str variant. 3"),
         };
 
@@ -518,7 +535,7 @@ pub struct Member {
     pub name: String,
     // pub dimension_gid: u64,
     // pub hierarchy_gid: u64,
-    // pub level_gid: u64,
+    pub level_gid: u64,
     pub level: u32,
     pub parent_gid: u64,
     pub measure_index: u32,

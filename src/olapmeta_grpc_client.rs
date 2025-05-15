@@ -29,7 +29,7 @@ fn grpc_to_olap_member(grpc_member: GrpcMember) -> mdd::Member {
         name: grpc_member.name,
         // dimension_gid: grpc_member.dimension_gid,
         // hierarchy_gid: grpc_member.hierarchy_gid,
-        // level_gid: grpc_member.level_gid,
+        level_gid: grpc_member.level_gid,
         level: grpc_member.level,
         parent_gid: grpc_member.parent_gid,
         measure_index: grpc_member.measure_index,
@@ -72,6 +72,7 @@ impl GrpcClient {
                 // name: grpc_dr.name,
                 // cube_gid: grpc_dr.cube_gid,
                 dimension_gid: grpc_dr.dimension_gid,
+                default_hierarchy_gid: grpc_dr.default_hierarchy_gid,
                 measure_flag: grpc_dr.measure_flag == 1,
             })
             .collect();
@@ -125,6 +126,7 @@ impl GrpcClient {
             let dim_role = mdd::DimensionRole {
                 gid: grpc_dim_role.gid,
                 dimension_gid: grpc_dim_role.dimension_gid,
+                default_hierarchy_gid: grpc_dim_role.default_hierarchy_gid,
                 measure_flag: grpc_dim_role.measure_flag == 1,
             };
 
@@ -152,6 +154,7 @@ impl GrpcClient {
         let dim_role = mdd::DimensionRole {
             gid: grpc_dim_role.gid,
             dimension_gid: grpc_dim_role.dimension_gid,
+            default_hierarchy_gid: grpc_dim_role.default_hierarchy_gid,
             measure_flag: grpc_dim_role.measure_flag == 1,
         };
 
@@ -213,6 +216,7 @@ impl GrpcClient {
                 // name: grpc_dr.name,
                 // cube_gid: grpc_dr.cube_gid,
                 dimension_gid: grpc_dr.dimension_gid,
+                default_hierarchy_gid: grpc_dr.default_hierarchy_gid,
                 measure_flag: grpc_dr.measure_flag == 1,
             })
             .collect();
@@ -230,6 +234,9 @@ impl GrpcClient {
             .map(|olap_obj| mdd::Level {
                 gid: olap_obj.gid,
                 name: olap_obj.name,
+                level: olap_obj.level,
+                dimension_gid: olap_obj.dimension_gid,
+                hierarchy_gid: olap_obj.hierarchy_gid,
                 opening_period_gid: olap_obj.opening_period_gid,
                 closing_period_gid: olap_obj.closing_period_gid,
             })
@@ -246,12 +253,12 @@ impl GrpcClient {
             .into_inner()
             .members
             .into_iter()
-            .map(|grpc_olap_obj| mdd::Member {
+            .map(|grpc_olap_obj: olapmeta::UniversalOlapEntity| mdd::Member {
                 gid: grpc_olap_obj.gid,
                 name: grpc_olap_obj.name,
                 // dimension_gid: grpc_member.dimension_gid,
                 // hierarchy_gid: grpc_member.hierarchy_gid,
-                // level_gid: grpc_member.level_gid,
+                level_gid: grpc_olap_obj.level_gid,
                 level: grpc_olap_obj.level,
                 parent_gid: grpc_olap_obj.parent_gid,
                 measure_index: grpc_olap_obj.measure_index,

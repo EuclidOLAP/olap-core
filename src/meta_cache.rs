@@ -57,3 +57,17 @@ pub fn get_member_by_gid(gid: u64) -> mdd::Member {
         None => panic!("Member not found for gid {}", gid),
     }
 }
+
+pub fn get_hierarchy_level(hierarchy_gid: u64, level_val: u32) -> mdd::Level {
+
+    let cache = LEVEL_CACHE.lock().unwrap();
+    for level in cache.values() {
+        if level.hierarchy_gid == hierarchy_gid && level.level == level_val {
+            return level.clone();
+        }
+    }
+    panic!(
+        "Level not found for hierarchy_gid = {} and level = {}",
+        hierarchy_gid, level_val
+    );
+}

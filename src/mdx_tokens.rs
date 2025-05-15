@@ -114,6 +114,12 @@ pub enum Token {
 
     #[regex("(?i)OpeningPeriod")]
     OpeningPeriod,
+
+    #[regex("(?i)Level")]
+    Level,
+
+    #[regex("(?i)Levels")]
+    Levels,
 }
 
 impl fmt::Display for Token {

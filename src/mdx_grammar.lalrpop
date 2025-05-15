@@ -6,6 +6,7 @@ use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember/*,CustomFormulaSet*/}
 use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
 use crate::mdx_ast::AstFactory::{FactoryNum, FactoryStr, FactorySegs,FactoryTuple,FactoryExp};
 
+use crate::mdx_ast::{AstLevelFunction, AstLevelFnLevel, AstLevelFnLevels};
 use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent, AstMemberFnClosingPeriod, AstMemberFnOpeningPeriod};
 use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
 use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
@@ -62,6 +63,9 @@ extern {
 
     "ClosingPeriod" => Token::ClosingPeriod,
     "OpeningPeriod" => Token::OpeningPeriod,
+
+    "Level" => Token::Level,
+    "Levels" => Token::Levels,
   }
 }
 
@@ -85,6 +89,9 @@ pub Seg: mdx_ast::AstSeg = {
   },
   <exp_fn: ExpFnSpec> => {
     mdx_ast::AstSeg::ExpFn(exp_fn)
+  },
+  <lv_fn: LevelFunction> => {
+    mdx_ast::AstSeg::LevelFn(lv_fn)
   },
 }
 
@@ -309,6 +316,36 @@ Factory: AstFactory = {
   },
   "(" <exp:Expression> ")" => {
     FactoryExp(exp)
+  },
+}
+
+LevelFunction: AstLevelFunction = {
+  <lv: LvFnLevel> => {
+    AstLevelFunction::Level(lv)
+  },
+  <lvs: LvFnLevels> => {
+    AstLevelFunction::Levels(lvs)
+  },
+}
+
+LvFnLevel: AstLevelFnLevel = {
+  "Level" => {
+    AstLevelFnLevel::NoParam
+  },
+  "Level" "(" ")" => {
+    AstLevelFnLevel::NoParam
+  },
+  "Level" "(" <segments: SegmentsWrap> ")" => {
+    AstLevelFnLevel::OneParam(segments)
+  },
+}
+
+LvFnLevels: AstLevelFnLevels = {
+  "Levels" "(" <idx_exp: Expression> ")" => {
+    AstLevelFnLevels::new(None, idx_exp)
+  },
+  "Levels" "(" <dim_segs: SegmentsWrap> "," <idx_exp: Expression> ")" => {
+    AstLevelFnLevels::new(Some(dim_segs), idx_exp)
   },
 }
 
