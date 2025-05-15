@@ -1,20 +1,20 @@
 # Rust edition
 edition = "2021"
 
-# 每行最大宽度
+# Maximum line width (characters per line)
 max_width = 100
 
-# 是否使用制表符（false 表示使用空格）
+# Use hard tabs (true) or spaces (false) for indentation
 hard_tabs = false
 
-# 制表符等效空格数
+# Number of spaces per tab character
 tab_spaces = 4
 
-# 函数参数、链式调用等是否压缩成一行，最大化利用行宽
+# Aggressively format chains and parameters to fit lines
 use_small_heuristics = "Max"
 
-# 控制换行符风格（Unix/Linux为LF，Windows为CRLF）
+# Line ending style (Unix/Linux: LF, Windows: CRLF)
 newline_style = "Unix"
 
-# 在 match/if 表达式块内的注释对齐
+# Preserve leading pipes in match arms for comment alignment
 match_arm_leading_pipes = "Preserve"
