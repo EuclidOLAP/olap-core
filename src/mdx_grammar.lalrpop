@@ -10,6 +10,7 @@ use crate::mdx_ast::{AstLevelFunction, AstLevelFnLevel, AstLevelFnLevels};
 use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent, AstMemberFnClosingPeriod, AstMemberFnOpeningPeriod};
 use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
 use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
+use crate::mdx_ast::{AstExpFnName};
 
 use crate::mdx_ast::AstExpFnIIf;
 
@@ -90,6 +91,8 @@ extern {
     "And" => Token::And,
 
     "IsLeaf" => Token::IsLeaf,
+
+    "Name" => Token::Name,
   }
 }
 
@@ -454,6 +457,21 @@ ExpFnSpec: AstExpFunction = {
   },
   <iif: ExpFnIIfSpec> => {
     AstExpFunction::IIf(iif)
+  },
+  <name: ExpFnNameSpec> => {
+    AstExpFunction::Name(name)
+  },
+}
+
+ExpFnNameSpec: AstExpFnName = {
+  "Name" => {
+    AstExpFnName::NoParam
+  },
+  "Name" "(" ")" => {
+    AstExpFnName::NoParam
+  },
+  "Name" "(" <olap_obj_segs: SegmentsWrap> ")" => {
+    AstExpFnName::InnerParam(olap_obj_segs)
   },
 }
 

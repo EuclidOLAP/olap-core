@@ -147,6 +147,9 @@ pub enum Token {
 
     #[regex("(?i)IsLeaf")]
     IsLeaf,
+
+    #[regex("(?i)Name")]
+    Name,
 }
 
 impl fmt::Display for Token {

@@ -93,6 +93,7 @@ async fn calculate_formula_vectors(
                             member_roles: cord.member_roles,
                         },
                         context,
+                        None,
                     )
                     .await,
                 );

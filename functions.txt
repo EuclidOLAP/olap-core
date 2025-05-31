@@ -189,7 +189,7 @@ VisualTotals                ____	SSAS	____	____
 Wtd                         ____	SSAS	____	intc
 
 << String Functions >>                            				
-Name                        todo	SSAS	____	intc
+Name                        Eucl	SSAS	____	intc
 CalculationPassValue        ____	SSAS	____	____
 CoalesceEmpty               ____	SSAS	____	____
 Concat                      ____	____	Esbs	____

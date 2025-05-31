@@ -1,5 +1,6 @@
 use core::panic;
 
+use crate::mdx_ast::ToCellValue;
 use crate::meta_cache;
 
 use crate::mdx_ast::AstExpFnAvg;
@@ -40,9 +41,7 @@ impl GidType {
     }
 }
 
-#[derive(Debug)]
-// #[derive(Clone)]
-// #[derive(PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum MultiDimensionalEntity {
     Level(Level),
     LevelRole(LevelRole),
@@ -60,7 +59,7 @@ pub enum MultiDimensionalEntity {
     Nothing,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CellValue {
     Double(f64),
     Str(String),
@@ -414,6 +413,15 @@ impl MultiDimensionalEntityLocator for MemberRole {
                 }
                 let lv_role: LevelRole = level_fn.get_level_role(Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())), slice_tuple, context).await;
                 MultiDimensionalEntity::LevelRole(lv_role)
+            }
+            AstSeg::ExpFn(exp_fn) => {
+                if seg_list.len() > 1 {
+                    todo!("[bhso9957] MemberRole::locate_entity() LevelFn not implemented yet.");
+                }
+                let cell_val = exp_fn.val(slice_tuple, context, 
+                    Some(MultiDimensionalEntity::MemberRoleWrap(self.clone()))
+                ).await;
+                MultiDimensionalEntity::CellValue(cell_val)
             }
             _ => panic!("Panic in MemberRole::locate_entity() .. 67HUSran .."),
         }

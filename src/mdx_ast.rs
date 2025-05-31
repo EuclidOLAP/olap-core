@@ -31,6 +31,7 @@ pub trait ToCellValue {
         &'a self,
         slice_tuple: &'a Tuple,
         context: &'a mut MultiDimensionalContext,
+        outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue>;
 }
 
@@ -91,7 +92,7 @@ impl Materializable for AstSeg {
                     MultiDimensionalEntity::LevelRole(lv_role)
                 }
                 AstSeg::ExpFn(exp_fn) => {
-                    let exp_val = exp_fn.val(slice_tuple, context).await;
+                    let exp_val = exp_fn.val(slice_tuple, context, None).await;
                     MultiDimensionalEntity::CellValue(exp_val)
                 }
                 _ => panic!("The entity is not a Gid or a Str variant. 1"),
@@ -512,16 +513,17 @@ impl ToCellValue for AstExpression {
         &'a self,
         slice_tuple: &'a Tuple,
         context: &'a mut MultiDimensionalContext,
+        outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             let mut result = CellValue::Invalid;
             for (index, (op, term)) in self.terms.iter().enumerate() {
                 if index == 0 {
-                    result = Box::pin(term.val(slice_tuple, context)).await;
+                    result = Box::pin(term.val(slice_tuple, context, None)).await;
                     continue;
                 }
 
-                let term_value = Box::pin(term.val(slice_tuple, context)).await;
+                let term_value = Box::pin(term.val(slice_tuple, context, None)).await;
                 match *op {
                     '+' => result = result + term_value,
                     '-' => result = result - term_value,
@@ -547,6 +549,7 @@ impl ToCellValue for AstFactory {
         &'a self,
         slice_tuple: &'a Tuple,
         context: &'a mut MultiDimensionalContext,
+        outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             match self {
@@ -569,8 +572,8 @@ impl ToCellValue for AstFactory {
                     MultiDimensionalEntity::FormulaMemberWrap {
                         dim_role_gid: _,
                         exp,
-                    } => exp.val(slice_tuple, context).await,
-                    MultiDimensionalEntity::ExpFn(exp_fn) => exp_fn.val(slice_tuple, context).await,
+                    } => exp.val(slice_tuple, context, None).await,
+                    MultiDimensionalEntity::ExpFn(exp_fn) => exp_fn.val(slice_tuple, context, None).await,
                     MultiDimensionalEntity::CellValue(cell_value) => cell_value.clone(),
                     _ => panic!("The entity is not a CellValue variant."),
                 },
@@ -586,7 +589,7 @@ impl ToCellValue for AstFactory {
                         _ => panic!("The entity is not a TupleWrap variant."),
                     }
                 }
-                AstFactory::FactoryExp(exp) => exp.val(slice_tuple, context).await,
+                AstFactory::FactoryExp(exp) => exp.val(slice_tuple, context, None).await,
             }
         })
     }
@@ -602,16 +605,17 @@ impl ToCellValue for AstTerm {
         &'a self,
         slice_tuple: &'a Tuple,
         context: &'a mut MultiDimensionalContext,
+        outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             let mut result = CellValue::Invalid;
             for (index, (op, factory)) in self.factories.iter().enumerate() {
                 if index == 0 {
-                    result = factory.val(slice_tuple, context).await;
+                    result = factory.val(slice_tuple, context, None).await;
                     continue;
                 }
 
-                let factory_value = factory.val(slice_tuple, context).await;
+                let factory_value = factory.val(slice_tuple, context, None).await;
                 match *op {
                     '*' => result = result * factory_value,
                     '/' => result = result / factory_value,
@@ -923,7 +927,7 @@ impl AstLevelFnLevels {
 
         let param_dim_role = param_dim_role.unwrap();
 
-        let cell_val = self.idx_exp.val(slice_tuple, context).await;
+        let cell_val = self.idx_exp.val(slice_tuple, context, None).await;
         if let CellValue::Double(idx) = cell_val {
             let lv_val = idx as u32;
 
@@ -1000,6 +1004,7 @@ pub enum AstExpFunction {
     Avg(AstExpFnAvg),
     Count(AstExpFnCount),
     IIf(AstExpFnIIf),
+    Name(AstExpFnName),
 }
 
 impl ToCellValue for AstExpFunction {
@@ -1007,12 +1012,69 @@ impl ToCellValue for AstExpFunction {
         &'a self,
         slice_tuple: &'a Tuple,
         context: &'a mut MultiDimensionalContext,
+        outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             match self {
-                AstExpFunction::Avg(avg_fn) => avg_fn.val(slice_tuple, context).await,
-                AstExpFunction::Count(count_fn) => count_fn.val(slice_tuple, context).await,
-                AstExpFunction::IIf(iif_fn) => iif_fn.val(slice_tuple, context).await,
+                AstExpFunction::Avg(avg_fn) => avg_fn.val(slice_tuple, context, None).await,
+                AstExpFunction::Count(count_fn) => count_fn.val(slice_tuple, context, None).await,
+                AstExpFunction::IIf(iif_fn) => iif_fn.val(slice_tuple, context, None).await,
+                AstExpFunction::Name(name_fn) => {
+                    if let Some(olap_obj) = outer_param {
+                        let name_fn = AstExpFnName::OuterParam(Box::new(olap_obj));
+                        name_fn.val(slice_tuple, context, None).await
+                    } else {
+                        name_fn.val(slice_tuple, context, None).await
+                    }
+                },
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstExpFnName {
+    NoParam,
+    InnerParam(AstSegments),
+    OuterParam(Box<MultiDimensionalEntity>),
+}
+
+impl ToCellValue for AstExpFnName {
+    fn val<'a>(
+        &'a self,
+        slice_tuple: &'a Tuple,
+        context: &'a mut MultiDimensionalContext,
+        outer_param: Option<MultiDimensionalEntity>,
+    ) -> BoxFuture<'a, CellValue> {
+        Box::pin(async move {
+            //  CellValue::Str("avg函数有待实现".to_string()) 
+            match self {
+                AstExpFnName::InnerParam(segs) => {
+                    let olap_obj = segs.materialize(slice_tuple, context).await;
+                    if let MultiDimensionalEntity::MemberRoleWrap(member_role) = olap_obj {
+                        match member_role {
+                            MemberRole::BaseMember { member, .. } => {
+                                CellValue::Str(member.name.clone())
+                            }
+                            _ => CellValue::Str("name函数参数错误".to_string()),
+                        }
+                    } else {
+                        CellValue::Str("name函数参数错误".to_string())
+                    }
+                }
+                AstExpFnName::OuterParam(entity) => {
+                    if let MultiDimensionalEntity::MemberRoleWrap(member_role) = entity.as_ref() {  
+                        match member_role {
+                            MemberRole::BaseMember { member, .. } => {
+                                CellValue::Str(member.name.clone())
+                            }
+                            _ => CellValue::Str("name函数参数错误".to_string()),
+                        }
+                    } else {
+                        CellValue::Str("name函数参数错误".to_string())
+                    }
+                }
+                _ => panic!("[dsuc-0-8492] AstExpFnName::val()"),
             }
         })
     }
@@ -1030,6 +1092,7 @@ impl ToCellValue for AstExpFnAvg {
         &'a self,
         _slice_tuple: &'a Tuple,
         _context: &'a mut MultiDimensionalContext,
+        outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move { CellValue::Str("avg函数有待实现".to_string()) })
     }
@@ -1047,6 +1110,7 @@ impl ToCellValue for AstExpFnCount {
         &'a self,
         _slice_tuple: &'a Tuple,
         _context: &'a mut MultiDimensionalContext,
+        outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             let set = match self {
@@ -1074,14 +1138,15 @@ impl ToCellValue for AstExpFnIIf {
         &'a self,
         slice_tuple: &'a Tuple,
         context: &'a mut MultiDimensionalContext,
+        outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
 
             let bool_val = self.bool_exp.bool_val(slice_tuple, context).await;
             if bool_val {
-                self.exp_t.val(slice_tuple, context).await
+                self.exp_t.val(slice_tuple, context, None).await
             } else {
-                self.exp_f.val(slice_tuple, context).await
+                self.exp_f.val(slice_tuple, context, None).await
             }
         })
     }
@@ -1161,8 +1226,8 @@ impl ToBoolValue for AstBoolFactory {
         Box::pin(async move {
             match self {
                 AstBoolFactory::ExpressionComparesAnother(exp1, op, exp2) => {
-                    let val1 = exp1.val(slice_tuple, context).await;
-                    let val2 = exp2.val(slice_tuple, context).await;
+                    let val1 = exp1.val(slice_tuple, context, None).await;
+                    let val2 = exp2.val(slice_tuple, context, None).await;
                     val1.logical_cmp(op, &val2)
                 }
                 AstBoolFactory::BoolExp(bool_exp) => bool_exp.bool_val(slice_tuple, context).await,
