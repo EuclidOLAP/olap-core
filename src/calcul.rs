@@ -21,11 +21,7 @@ pub async fn calculate(
 
     'outside: for (idx, cord) in vs.into_iter().enumerate() {
         for mr in &cord.member_roles {
-            if let MemberRole::FormulaMember {
-                dim_role_gid: _,
-                exp: _,
-            } = mr
-            {
+            if let MemberRole::FormulaMember { dim_role_gid: _, exp: _ } = mr {
                 frml_indices.push(idx);
                 frml_cords.push(cord);
                 continue 'outside;
@@ -42,30 +38,26 @@ pub async fn calculate(
         .into_iter()
         .zip(base_null_flags.into_iter())
         .zip(base_indices.into_iter())
-        .map(|((val, flag), idx)| {
-            if flag {
-                (CellValue::Null, idx)
-            } else {
-                (CellValue::Double(val), idx)
-            }
-        })
+        .map(
+            |((val, flag), idx)| {
+                if flag {
+                    (CellValue::Null, idx)
+                } else {
+                    (CellValue::Double(val), idx)
+                }
+            },
+        )
         .collect();
 
     let calc_cell_vals = calculate_formula_vectors(frml_cords, context).await;
-    let calc_combined: Vec<(CellValue, usize)> = calc_cell_vals
-        .into_iter()
-        .zip(frml_indices.into_iter())
-        .collect();
+    let calc_combined: Vec<(CellValue, usize)> =
+        calc_cell_vals.into_iter().zip(frml_indices.into_iter()).collect();
 
     let mut cells_indices = base_combined;
     cells_indices.extend(calc_combined);
     cells_indices.sort_by(|a, b| a.1.cmp(&b.1));
 
-    cells_indices
-        .into_iter()
-        .map(|(cell_val, _)| cell_val)
-        .collect()
-
+    cells_indices.into_iter().map(|(cell_val, _)| cell_val).collect()
 }
 
 async fn calculate_formula_vectors(
@@ -76,27 +68,15 @@ async fn calculate_formula_vectors(
 
     'outer_loop: for cord in coordinates {
         for mr in cord.member_roles.iter().rev() {
-            if let MemberRole::FormulaMember {
-                dim_role_gid: _,
-                exp,
-            } = mr
-            {
+            if let MemberRole::FormulaMember { dim_role_gid: _, exp } = mr {
                 // VCE C langueage
                 // Expression *exp = mr->member_formula->exp;
                 // Expression_evaluate(md_ctx, exp, cube, cal_tp, gd);
 
                 let exp = exp.clone();
 
-                values.push(
-                    exp.val(
-                        &Tuple {
-                            member_roles: cord.member_roles,
-                        },
-                        context,
-                        None,
-                    )
-                    .await,
-                );
+                values
+                    .push(exp.val(&Tuple { member_roles: cord.member_roles }, context, None).await);
 
                 continue 'outer_loop;
             }
