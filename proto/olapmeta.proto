@@ -26,24 +26,24 @@ message LocateOlapEntityRequest {
     string targetEntityName = 3;
 }
 
-// 定义 CubeMeta 对象
+// Defines the CubeMeta object
 message CubeMeta {
-    uint64 gid = 1;    // 无符号 64 位整数
-    string name = 2;    // 字符串名称
+    uint64 gid = 1;    // Unsigned 64-bit integer
+    string name = 2;   // Cube name
 }
 
-// 根据无符号 64 位整数查询 Cube
+// Request to retrieve Cube by unsigned 64-bit GID
 message CubeGidRequest {
-    uint64 gid = 1;    // 请求的 GID
+    uint64 gid = 1;    // Requested Cube GID
 }
 
-// 根据字符串查询 Cube
+// Request to retrieve Cube by name
 message CubeNameRequest {
-    string name = 1;   // 请求的 Cube 名称
+    string name = 1;   // Requested Cube name
 }
 
 message CubeMetaResponse {
-    CubeMeta cubeMeta = 1;    // 返回的 Cube 对象
+    CubeMeta cubeMeta = 1;  // Returned CubeMeta object
 }
 
 message GrpcMember {
@@ -58,39 +58,34 @@ message GrpcMember {
     bool leaf = 9;
 }
 
-// 根据维度 GID 查询默认维度成员的请求消息
+// Request message to get the default member for a given dimension GID
 message GetDefaultDimensionMemberRequest {
-    uint64 dimensionGid = 1; // 请求的维度 GID
+    uint64 dimensionGid = 1; // Requested dimension GID
 }
 
-// 定义 OLAP 服务接口
+// OLAP service interface definition
 service OlapMetaService {
     rpc GetCubeByGid (CubeGidRequest) returns (CubeMetaResponse);
     rpc GetCubeByName (CubeNameRequest) returns (CubeMetaResponse);
     
-    // 根据 Cube GID 查询非度量维度角色列表
+    // Retrieve dimension roles (excluding measure roles) by Cube GID
     rpc GetDimensionRolesByCubeGid (GetDimensionRolesByCubeGidRequest) returns (GetDimensionRolesByCubeGidResponse);
     
-    // 根据维度 GID 查询默认维度成员
+    // Retrieve the default dimension member by dimension GID
     rpc GetDefaultDimensionMemberByDimensionGid (GetDefaultDimensionMemberRequest) returns (GrpcMember);
     rpc GetChildMembersByGid (GetChildMembersByGidRequest) returns (GetChildMembersByGidResponse);
 
-    // 根据 GID 查询 DimensionRole
+    // Retrieve DimensionRole by GID
     rpc GetDimensionRoleByGid (GetDimensionRoleByGidRequest) returns (GrpcDimensionRole);
 
-    // 根据名称查询 DimensionRole
+    // Retrieve DimensionRole by name
     rpc GetDimensionRoleByName (GetDimensionRoleByNameRequest) returns (GrpcDimensionRole);
 
     rpc LocateUniversalOlapEntityByGid  (LocateOlapEntityRequest) returns (UniversalOlapEntity);
-
     rpc LocateUniversalOlapEntityByName (LocateOlapEntityRequest) returns (UniversalOlapEntity);
-
     rpc GetUniversalOlapEntityByGid (GetUniversalOlapEntityByGidRequest) returns (UniversalOlapEntity);
-
     rpc GetAllDimensionRoles (EmptyParameterRequest) returns (GetAllDimensionRolesResponse);
-
     rpc GetAllLevels (EmptyParameterRequest) returns (GetAllLevelsResponse);
-
     rpc GetAllMembers (EmptyParameterRequest) returns (GetAllMembersResponse);
 }
 
@@ -102,34 +97,34 @@ message GetUniversalOlapEntityByGidRequest {
     uint64 universalOlapEntityGid = 1;
 }
 
-// 定义 DimensionRole 查询请求消息
+// Request message to retrieve DimensionRole by GID
 message GetDimensionRoleByGidRequest {
-    uint64 dimensionRoleGid = 1;    // 请求的 DimensionRole GID
+    uint64 dimensionRoleGid = 1; // Requested DimensionRole GID
 }
 
-// 新增：根据名称查询 DimensionRole 的请求消息
+// Request message to retrieve DimensionRole by name
 message GetDimensionRoleByNameRequest {
     uint64 cubeGid           = 1;
     string dimensionRoleName = 2;
 }
 
 message GrpcDimensionRole {
-    uint64 gid          = 1; // unsigned 64-bit integer
+    uint64 gid          = 1; // Unsigned 64-bit integer
     string name         = 2;
-    uint64 cubeGid      = 3; // unsigned 64-bit integer
-    uint64 dimensionGid = 4; // unsigned 64-bit integer
-    uint64 measureFlag  = 5; // 1 - it is a meaure dimension role; 0 - it is not.
+    uint64 cubeGid      = 3; // Unsigned 64-bit integer
+    uint64 dimensionGid = 4; // Unsigned 64-bit integer
+    uint64 measureFlag  = 5; // 1 - measure dimension role; 0 - non-measure
     uint64 defaultHierarchyGid = 6;
 }
 
-// 定义根据 Cube GID 查询 GrpcDimensionRole 列表的请求消息
+// Request message to retrieve DimensionRole list by Cube GID
 message GetDimensionRolesByCubeGidRequest {
-    uint64 gid = 1;    // 请求的 Cube GID
+    uint64 gid = 1; // Requested Cube GID
 }
 
-// 定义根据 Cube GID 查询 GrpcDimensionRole 列表的响应消息
+// Response message containing DimensionRole list by Cube GID
 message GetDimensionRolesByCubeGidResponse {
-    repeated GrpcDimensionRole dimensionRoles = 1;    // 返回的非度量维度角色列表
+    repeated GrpcDimensionRole dimensionRoles = 1; // Non-measure dimension roles
 }
 
 message GetChildMembersByGidRequest {
