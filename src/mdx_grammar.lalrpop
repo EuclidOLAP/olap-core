@@ -11,6 +11,15 @@ use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent, AstMemberFnClosingPer
 use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
 use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
 
+use crate::mdx_ast::AstExpFnIIf;
+
+use crate::mdx_ast::AstBoolExp;
+use crate::mdx_ast::AstBoolTerm;
+use crate::mdx_ast::AstBoolFactory;
+
+use crate::mdx_ast::AstBoolFunction;
+use crate::mdx_ast::AstBoolFnIsLeaf;
+
 grammar;
 
 extern {
@@ -52,6 +61,13 @@ extern {
     "{" => Token::CurlyBraceLeft,
     "}" => Token::CurlyBraceRight,
 
+    "<" => Token::LT,
+    "<=" => Token::LE,
+    "=" => Token::EQ,
+    "<>" => Token::NE,
+    ">" => Token::GT,
+    ">=" => Token::GE,
+
     ";" => Token::Semicolon,
 
     "Parent" => Token::Parent,
@@ -66,6 +82,14 @@ extern {
 
     "Level" => Token::Level,
     "Levels" => Token::Levels,
+
+    "IIf" => Token::IIf,
+
+    "Not" => Token::Not,
+    "Or" => Token::Or,
+    "And" => Token::And,
+
+    "IsLeaf" => Token::IsLeaf,
   }
 }
 
@@ -428,6 +452,9 @@ ExpFnSpec: AstExpFunction = {
   <count: ExpFnCountSpec> => {
     AstExpFunction::Count(count)
   },
+  <iif: ExpFnIIfSpec> => {
+    AstExpFunction::IIf(iif)
+  },
 }
 
 ExpFnCountSpec: AstExpFnCount = {
@@ -451,5 +478,81 @@ ExpFnAvgSpec: AstExpFnAvg = {
   },
   "Avg" "(" <set: SetWrap> ")" => {
     AstExpFnAvg::InnerParam(set)
+  },
+}
+
+ExpFnIIfSpec: AstExpFnIIf = {
+  "IIf" "(" <bool_exp: BoolExpression> "," <exp_t: Expression> "," <exp_f: Expression> ")" => {
+    AstExpFnIIf {
+      bool_exp,
+      exp_t,
+      exp_f,
+    }
+  }
+}
+
+BoolExpression: AstBoolExp = {
+  <bt: BoolTerm> => {
+    AstBoolExp::BoolTerm(bt)
+  },
+  "Not" <bt: BoolTerm> => {
+    AstBoolExp::NotBoolTerm(bt)
+  },
+  <bool_exp: BoolExpression> "Or" <bt: BoolTerm> => {
+    AstBoolExp::BoolExpOrBoolTerm(Box::new(bool_exp), bt)
+  }
+}
+
+BoolTerm: AstBoolTerm = {
+  <bf: BoolFactory> => {
+    AstBoolTerm::BoolFactory(bf)
+  },
+  <bt: BoolTerm> "And" <bf: BoolFactory> => {
+    AstBoolTerm::BoolTermAndBoolFactory(Box::new(bt), bf)
+  }
+}
+
+BoolFactory: AstBoolFactory = {
+  <exp_left: Expression> "<" <exp_right: Expression> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<"), exp_right)
+  },
+  <exp_left: Expression> "<=" <exp_right: Expression> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<="), exp_right)
+  },
+  <exp_left: Expression> "=" <exp_right: Expression> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("="), exp_right)
+  },
+  <exp_left: Expression> "<>" <exp_right: Expression> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<>"), exp_right)
+  },
+  <exp_left: Expression> ">" <exp_right: Expression> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">"), exp_right)
+  },
+  <exp_left: Expression> ">=" <exp_right: Expression> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">="), exp_right)
+  },
+  "(" <bool_exp: BoolExpression> ")" => {
+    AstBoolFactory::BoolExp(Box::new(bool_exp))
+  },
+  <bool_fn: BoolFunction> => {
+    AstBoolFactory::BoolFn(bool_fn)
+  }
+}
+
+BoolFunction: AstBoolFunction = {
+  <is_leaf: BoolFnIsLeaf> => {
+    AstBoolFunction::IsLeaf(is_leaf)
+  }
+}
+
+BoolFnIsLeaf: AstBoolFnIsLeaf = {
+  // "IsLeaf" => {
+  //   AstBoolFnIsLeaf::new(None)
+  // },
+  // "IsLeaf" "(" ")" => {
+  //   AstBoolFnIsLeaf::new(None)
+  // },
+  "IsLeaf" "(" <member_segs: SegmentsWrap> ")" => {
+    AstBoolFnIsLeaf::new(member_segs)
   },
 }

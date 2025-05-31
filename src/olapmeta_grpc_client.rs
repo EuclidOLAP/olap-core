@@ -33,6 +33,7 @@ fn grpc_to_olap_member(grpc_member: GrpcMember) -> mdd::Member {
         level: grpc_member.level,
         parent_gid: grpc_member.parent_gid,
         measure_index: grpc_member.measure_index,
+        leaf: grpc_member.leaf,
     }
 }
 
@@ -262,6 +263,7 @@ impl GrpcClient {
                 level: grpc_olap_obj.level,
                 parent_gid: grpc_olap_obj.parent_gid,
                 measure_index: grpc_olap_obj.measure_index,
+                leaf: grpc_olap_obj.leaf,
             })
             .collect();
 

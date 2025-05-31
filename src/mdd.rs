@@ -53,6 +53,7 @@ pub enum MultiDimensionalEntity {
     MemberRoleWrap(MemberRole),
     FormulaMemberWrap { dim_role_gid: u64, exp: AstExpression },
     ExpFn(AstExpFunction),
+    CellValue(CellValue),
     // Cube(Cube),           // 立方体实体
     // Dimension(Dimension), // 维度实体
     // Hierarchy(Hierarchy), // 层次实体
@@ -136,6 +137,32 @@ impl ops::Div for CellValue {
     }
 }
 
+impl CellValue {
+    pub fn logical_cmp(&self, op: &String, other: &CellValue) -> bool {
+        match (self, other) {
+            (CellValue::Double(a), CellValue::Double(b)) => match op.as_str() {
+                "<" => a < b,
+                "<=" => a <= b,
+                "=" => a == b,
+                "<>" => a != b,
+                ">" => a > b,
+                ">=" => a >= b,
+                _ => false,
+            },
+            (CellValue::Str(a), CellValue::Str(b)) => match op.as_str() {
+                "<" => a < b,
+                "<=" => a <= b,
+                "=" => a == b,
+                "<>" => a != b,
+                ">" => a > b,
+                ">=" => a >= b,
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+}
+
 impl MultiDimensionalEntity {
     pub fn from_universal_olap_entity(entity: &UniversalOlapEntity) -> Self {
         let entity_type = entity.olap_entity_class.as_str();
@@ -148,6 +175,7 @@ impl MultiDimensionalEntity {
                 level_gid: entity.level_gid,
                 measure_index: entity.measure_index,
                 parent_gid: entity.parent_gid,
+                leaf: entity.leaf,
             }),
             _ => {
                 panic!("Unsupported entity class: {}", entity.olap_entity_class);
@@ -261,6 +289,9 @@ impl MultiDimensionalEntityLocator for Set {
                     let set_copy = self.clone();
                     let count_fn = AstExpFnCount::OuterParam(set_copy);
                     return MultiDimensionalEntity::ExpFn(AstExpFunction::Count(count_fn));
+                }
+                _ => {
+                    todo!("[bhsHC957] Set::locate_entity() Unsupported ExpFn function.")
                 }
             },
             _ => panic!("The entity is not a Gid or a Str variant. 3"),
@@ -539,6 +570,7 @@ pub struct Member {
     pub level: u32,
     pub parent_gid: u64,
     pub measure_index: u32,
+    pub leaf: bool,
 }
 
 #[derive(Debug)]

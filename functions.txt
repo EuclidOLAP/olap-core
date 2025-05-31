@@ -30,7 +30,7 @@ IsEmpty                     ____	SSAS	Esbs	intc
 Case                        ____	SSAS	Esbs	intc
 IsAncestor                  ____	SSAS	Esbs	____
 IsGeneration                ____	SSAS	Esbs	____
-IsLeaf                      ____	SSAS	Esbs	____
+IsLeaf                      Eucl	SSAS	Esbs	____
 IsSibling                   ____	SSAS	Esbs	____
 Contains                    ____	____	Esbs	____
 Is                          ____	____	Esbs	____
@@ -72,7 +72,7 @@ ValidMeasure                ____	SSAS	____	____
 << Numeric Functions >>                           				
 CoalesceEmpty               ____	SSAS	Esbs	intc
 Count (Set)                 Eucl	SSAS	____	____
-IIf                         ____	SSAS	Esbs	____
+IIf                         Eucl	SSAS	Esbs	____
 LookupCube                  ____	SSAS	____	____
 Sum                         ____	SSAS	Esbs	intc
 Avg                         Eucl	SSAS	Esbs	intc

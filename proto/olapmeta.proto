@@ -17,6 +17,7 @@ message UniversalOlapEntity {
     uint64 levelGid = 9;
     uint64 dimensionGid = 10;
     uint64 hierarchyGid = 11;
+    bool leaf = 12;
 }
 
 message LocateOlapEntityRequest {
@@ -54,6 +55,7 @@ message GrpcMember {
     uint32 level = 6;
     uint64 parentGid = 7;
     uint32 measureIndex = 8;
+    bool leaf = 9;
 }
 
 // 根据维度 GID 查询默认维度成员的请求消息

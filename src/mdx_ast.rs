@@ -1,3 +1,4 @@
+use core::panic;
 use std::collections::HashMap;
 use std::vec;
 
@@ -31,6 +32,14 @@ pub trait ToCellValue {
         slice_tuple: &'a Tuple,
         context: &'a mut MultiDimensionalContext,
     ) -> BoxFuture<'a, CellValue>;
+}
+
+pub trait ToBoolValue {
+    fn bool_val<'a>(
+        &'a self,
+        slice_tuple: &'a Tuple,
+        context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, bool>;
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -80,6 +89,10 @@ impl Materializable for AstSeg {
                 AstSeg::LevelFn(lv_fn) => {
                     let lv_role = lv_fn.get_level_role(None, slice_tuple, context).await;
                     MultiDimensionalEntity::LevelRole(lv_role)
+                }
+                AstSeg::ExpFn(exp_fn) => {
+                    let exp_val = exp_fn.val(slice_tuple, context).await;
+                    MultiDimensionalEntity::CellValue(exp_val)
                 }
                 _ => panic!("The entity is not a Gid or a Str variant. 1"),
             }
@@ -558,6 +571,7 @@ impl ToCellValue for AstFactory {
                         exp,
                     } => exp.val(slice_tuple, context).await,
                     MultiDimensionalEntity::ExpFn(exp_fn) => exp_fn.val(slice_tuple, context).await,
+                    MultiDimensionalEntity::CellValue(cell_value) => cell_value.clone(),
                     _ => panic!("The entity is not a CellValue variant."),
                 },
                 AstFactory::FactoryTuple(tuple) => {
@@ -985,6 +999,7 @@ impl AstSetFunction {
 pub enum AstExpFunction {
     Avg(AstExpFnAvg),
     Count(AstExpFnCount),
+    IIf(AstExpFnIIf),
 }
 
 impl ToCellValue for AstExpFunction {
@@ -997,6 +1012,7 @@ impl ToCellValue for AstExpFunction {
             match self {
                 AstExpFunction::Avg(avg_fn) => avg_fn.val(slice_tuple, context).await,
                 AstExpFunction::Count(count_fn) => count_fn.val(slice_tuple, context).await,
+                AstExpFunction::IIf(iif_fn) => iif_fn.val(slice_tuple, context).await,
             }
         })
     }
@@ -1042,6 +1058,170 @@ impl ToCellValue for AstExpFnCount {
             };
 
             CellValue::Double(set.tuples.len() as f64)
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstExpFnIIf{
+    pub bool_exp: AstBoolExp,
+    pub exp_t: AstExpression,
+    pub exp_f: AstExpression,
+}
+
+impl ToCellValue for AstExpFnIIf {
+    fn val<'a>(
+        &'a self,
+        slice_tuple: &'a Tuple,
+        context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, CellValue> {
+        Box::pin(async move {
+
+            let bool_val = self.bool_exp.bool_val(slice_tuple, context).await;
+            if bool_val {
+                self.exp_t.val(slice_tuple, context).await
+            } else {
+                self.exp_f.val(slice_tuple, context).await
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstBoolExp{
+    BoolTerm(AstBoolTerm),
+    NotBoolTerm(AstBoolTerm),
+    BoolExpOrBoolTerm(Box<AstBoolExp>, AstBoolTerm),
+}
+
+impl ToBoolValue for AstBoolExp{
+    fn bool_val<'a>(
+        &'a self,
+        slice_tuple: &'a Tuple,
+        context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, bool> {
+        Box::pin(async move {
+            match self {
+                AstBoolExp::BoolTerm(bool_term) => bool_term.bool_val(slice_tuple, context).await,
+                AstBoolExp::NotBoolTerm(bool_term) => !bool_term.bool_val(slice_tuple, context).await,
+                AstBoolExp::BoolExpOrBoolTerm(bool_exp, bool_term) => {
+                    let exp_bool = bool_exp.bool_val(slice_tuple, context).await;
+                    if exp_bool {
+                        true
+                    } else {
+                        bool_term.bool_val(slice_tuple, context).await
+                    }
+                }
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstBoolTerm{
+    BoolFactory(AstBoolFactory),
+    BoolTermAndBoolFactory(Box<AstBoolTerm>, AstBoolFactory),
+}
+
+impl ToBoolValue for AstBoolTerm{
+    fn bool_val<'a>(
+        &'a self,
+        slice_tuple: &'a Tuple,
+        context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, bool> {
+        Box::pin(async move {
+            match self {
+                AstBoolTerm::BoolFactory(bool_factory) => bool_factory.bool_val(slice_tuple, context).await,
+                AstBoolTerm::BoolTermAndBoolFactory(bool_term, bool_factory) => {
+                    let term_bool = bool_term.bool_val(slice_tuple, context).await;
+                    if term_bool {
+                        bool_factory.bool_val(slice_tuple, context).await
+                    } else {
+                        false
+                    }
+                }
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstBoolFactory{
+    ExpressionComparesAnother(AstExpression, String, AstExpression),
+    BoolExp(Box<AstBoolExp>),
+    BoolFn(AstBoolFunction),
+}
+
+impl ToBoolValue for AstBoolFactory {
+    fn bool_val<'a>(
+        &'a self,
+        slice_tuple: &'a Tuple,
+        context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, bool> {
+        Box::pin(async move {
+            match self {
+                AstBoolFactory::ExpressionComparesAnother(exp1, op, exp2) => {
+                    let val1 = exp1.val(slice_tuple, context).await;
+                    let val2 = exp2.val(slice_tuple, context).await;
+                    val1.logical_cmp(op, &val2)
+                }
+                AstBoolFactory::BoolExp(bool_exp) => bool_exp.bool_val(slice_tuple, context).await,
+                AstBoolFactory::BoolFn(bool_fn) => bool_fn.bool_val(slice_tuple, context).await,
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstBoolFunction{
+    IsLeaf(AstBoolFnIsLeaf),
+}
+
+impl ToBoolValue for AstBoolFunction {
+    fn bool_val<'a>(
+        &'a self,
+        slice_tuple: &'a Tuple,
+        context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, bool> {
+        Box::pin(async move {
+            match self {
+                AstBoolFunction::IsLeaf(is_leaf_fn) => is_leaf_fn.bool_val(slice_tuple, context).await,
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstBoolFnIsLeaf{
+    pub member_segs: AstSegments,
+}
+
+impl AstBoolFnIsLeaf {
+    pub fn new(member_segs: AstSegments) -> Self {
+        Self {
+            member_segs,
+        }
+    }
+}
+
+impl ToBoolValue for AstBoolFnIsLeaf{
+    fn bool_val<'a>(
+        &'a self,
+        slice_tuple: &'a Tuple,
+        context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, bool> {
+        Box::pin(async move {
+            let olap_obj = self.member_segs.materialize(slice_tuple, context).await;
+            if let MultiDimensionalEntity::MemberRoleWrap(member_role) = olap_obj {
+                match member_role {
+                    MemberRole::BaseMember { member, .. } => {
+                        member.leaf
+                    }
+                    _ => true,
+                }
+            } else {
+                panic!("[hsju6679] The entity is not a MemberRole variant.");
+            }
         })
     }
 }
