@@ -79,10 +79,7 @@ fn transform_coordinates(coordinates: Vec<OlapVectorCoordinate>) -> Vec<GrpcVect
         });
         member_roles.sort_by_key(|mr| mr.get_dim_role_gid());
 
-        let mut gvc = GrpcVectorCoordinate {
-            member_gid_arr: vec![],
-            measure_index,
-        };
+        let mut gvc = GrpcVectorCoordinate { member_gid_arr: vec![], measure_index };
 
         for mr in member_roles {
             if let MemberRole::BaseMember { dim_role: _, member } = mr {
