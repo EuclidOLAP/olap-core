@@ -66,17 +66,15 @@ fn transform_coordinates(coordinates: Vec<OlapVectorCoordinate>) -> Vec<GrpcVect
     for ocv in coordinates {
         let mut member_roles = ocv.member_roles;
         let mut measure_index: u32 = 0;
-        member_roles.retain(|mr| {
-            match mr {
-                MemberRole::BaseMember{dim_role,member} => {
-                    if dim_role.measure_flag {
-                        measure_index = member.measure_index;
-                    }
-                    !dim_role.measure_flag
-                },
-                MemberRole::FormulaMember{..} => {
-                    panic!("FormulaMember is not supported in grpc_client.");
+        member_roles.retain(|mr| match mr {
+            MemberRole::BaseMember { dim_role, member } => {
+                if dim_role.measure_flag {
+                    measure_index = member.measure_index;
                 }
+                !dim_role.measure_flag
+            }
+            MemberRole::FormulaMember { .. } => {
+                panic!("FormulaMember is not supported in grpc_client.");
             }
         });
         member_roles.sort_by_key(|mr| mr.get_dim_role_gid());
