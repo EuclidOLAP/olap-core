@@ -151,13 +151,9 @@ impl Materializable for AstSegments {
 
             match head_entity {
                 MultiDimensionalEntity::DimensionRoleWrap(dim_role) => {
-                    let tail_segs = AstSegments {
-                        segs: (self.segs[1..]).to_vec(),
-                    };
+                    let tail_segs = AstSegments { segs: (self.segs[1..]).to_vec() };
 
-                    dim_role
-                        .locate_entity(&tail_segs, slice_tuple, context)
-                        .await
+                    dim_role.locate_entity(&tail_segs, slice_tuple, context).await
                 }
                 MultiDimensionalEntity::MemberRoleWrap(member_role) => {
                     if self.segs.len() == 1 {
@@ -300,10 +296,7 @@ impl AstAxis {
                 let olap_entity = ast_set.materialize(slice_tuple, context).await;
                 match olap_entity {
                     MultiDimensionalEntity::SetWrap(set) => {
-                        axis = mdd::Axis {
-                            set,
-                            pos_num: *pos as u32,
-                        };
+                        axis = mdd::Axis { set, pos_num: *pos as u32 };
                     }
                     _ => {
                         panic!("The entity is not a SetWrap variant.");
@@ -356,24 +349,18 @@ impl AstSelectionStatement {
             _ => panic!("The entity is not a Gid or a Str variant. 2"),
         }
 
-        let mut cube_def_tuple = mdd::Tuple {
-            member_roles: Vec::new(),
-        };
+        let mut cube_def_tuple = mdd::Tuple { member_roles: Vec::new() };
 
-        let dimension_roles = grpc_cli
-            .get_dimension_roles_by_cube_gid(cube.gid)
-            .await
-            .unwrap();
+        let dimension_roles = grpc_cli.get_dimension_roles_by_cube_gid(cube.gid).await.unwrap();
         for dim_role in dimension_roles {
             let dim_def_member = grpc_cli
                 .get_default_dimension_member_by_dimension_gid(dim_role.dimension_gid)
                 .await
                 .unwrap();
 
-            cube_def_tuple.member_roles.push(MemberRole::BaseMember {
-                dim_role,
-                member: dim_def_member,
-            });
+            cube_def_tuple
+                .member_roles
+                .push(MemberRole::BaseMember { dim_role, member: dim_def_member });
         }
 
         let mut formulas_map: HashMap<u64, AstFormulaObject> = HashMap::new();
@@ -390,22 +377,18 @@ impl AstSelectionStatement {
             cube,
             cube_def_tuple,
             where_tuple: None,
-            query_slice_tuple: Tuple {
-                member_roles: vec![],
-            },
+            query_slice_tuple: Tuple { member_roles: vec![] },
             grpc_client: grpc_cli,
             formulas_map,
         };
 
         let mut where_tuple: Option<Tuple> = None;
         if let Some(mdx_where) = &self.basic_slice {
-            where_tuple = match mdx_where
-                .materialize(&context.cube_def_tuple.clone(), &mut context)
-                .await
-            {
-                MultiDimensionalEntity::TupleWrap(tuple) => Some(tuple),
-                _ => panic!("The entity is not a TupleWrap variant."),
-            }
+            where_tuple =
+                match mdx_where.materialize(&context.cube_def_tuple.clone(), &mut context).await {
+                    MultiDimensionalEntity::TupleWrap(tuple) => Some(tuple),
+                    _ => panic!("The entity is not a TupleWrap variant."),
+                }
         };
 
         context.where_tuple = where_tuple;
@@ -423,23 +406,14 @@ impl AstSelectionStatement {
         match grpc_cli.get_cube_by_gid(gid).await {
             Ok(response) => response
                 .cube_meta
-                .map(|meta| mdd::Cube {
-                    gid: meta.gid,
-                    name: meta.name,
-                })
+                .map(|meta| mdd::Cube { gid: meta.gid, name: meta.name })
                 .unwrap_or_else(|| {
                     println!("Error fetching Cube by GID: CubeMeta is None");
-                    mdd::Cube {
-                        gid: 0,
-                        name: String::from(">>> No cube found <<<"),
-                    }
+                    mdd::Cube { gid: 0, name: String::from(">>> No cube found <<<") }
                 }),
             Err(e) => {
                 println!("Error fetching Cube by GID: {}", e);
-                mdd::Cube {
-                    gid: 0,
-                    name: String::from(">>> No cube found <<<"),
-                }
+                mdd::Cube { gid: 0, name: String::from(">>> No cube found <<<") }
             }
         }
     }
@@ -450,24 +424,15 @@ impl AstSelectionStatement {
                 println!("Received Cube by Name: {:?}", response);
                 response
                     .cube_meta
-                    .map(|meta| mdd::Cube {
-                        gid: meta.gid,
-                        name: meta.name,
-                    })
+                    .map(|meta| mdd::Cube { gid: meta.gid, name: meta.name })
                     .unwrap_or_else(|| {
                         println!("Error fetching Cube by Name: CubeMeta is None");
-                        mdd::Cube {
-                            gid: 0,
-                            name: String::from(">>> No cube found <<<"),
-                        }
+                        mdd::Cube { gid: 0, name: String::from(">>> No cube found <<<") }
                     })
             }
             Err(e) => {
                 println!("Error fetching Cube by Name: {}", e);
-                mdd::Cube {
-                    gid: 0,
-                    name: String::from(">>> No cube found <<<"),
-                }
+                mdd::Cube { gid: 0, name: String::from(">>> No cube found <<<") }
             }
         }
     }
@@ -479,9 +444,7 @@ impl AstSelectionStatement {
 
         for _ in 0..axes_count {
             for ast_axis in self.axes.iter() {
-                let fiducial_tuple = ast_axis
-                    .generate_fiducial_tuple(&slice_tuple, context)
-                    .await;
+                let fiducial_tuple = ast_axis.generate_fiducial_tuple(&slice_tuple, context).await;
                 slice_tuple = slice_tuple.merge(&fiducial_tuple);
             }
         }
@@ -558,22 +521,19 @@ impl ToCellValue for AstFactory {
                 AstFactory::FactorySegs(segs) => match segs.materialize(slice_tuple, context).await
                 {
                     MultiDimensionalEntity::MemberRoleWrap(mr) => {
-                        let ovc_tp = slice_tuple.merge(&Tuple {
-                            member_roles: vec![mr],
-                        });
+                        let ovc_tp = slice_tuple.merge(&Tuple { member_roles: vec![mr] });
 
-                        let ovc = OlapVectorCoordinate {
-                            member_roles: ovc_tp.member_roles,
-                        };
+                        let ovc = OlapVectorCoordinate { member_roles: ovc_tp.member_roles };
 
                         let cell_values = calculate(vec![ovc], context).await;
                         cell_values.first().unwrap().clone()
                     }
-                    MultiDimensionalEntity::FormulaMemberWrap {
-                        dim_role_gid: _,
-                        exp,
-                    } => exp.val(slice_tuple, context, None).await,
-                    MultiDimensionalEntity::ExpFn(exp_fn) => exp_fn.val(slice_tuple, context, None).await,
+                    MultiDimensionalEntity::FormulaMemberWrap { dim_role_gid: _, exp } => {
+                        exp.val(slice_tuple, context, None).await
+                    }
+                    MultiDimensionalEntity::ExpFn(exp_fn) => {
+                        exp_fn.val(slice_tuple, context, None).await
+                    }
                     MultiDimensionalEntity::CellValue(cell_value) => cell_value.clone(),
                     _ => panic!("The entity is not a CellValue variant."),
                 },
@@ -859,7 +819,6 @@ pub enum AstLevelFnLevel {
 }
 
 impl AstLevelFnLevel {
-
     fn do_get_level_role(&self, mr: MemberRole) -> LevelRole {
         if let MemberRole::BaseMember { dim_role, member } = mr {
             LevelRole::new(dim_role, meta_cache::get_level_by_gid(member.level_gid))
@@ -869,18 +828,19 @@ impl AstLevelFnLevel {
     }
 
     async fn get_level_role(
-        &self, 
+        &self,
         left_outer_param: Option<MultiDimensionalEntity>,
-        slice_tuple: &Tuple, 
-        context: &mut MultiDimensionalContext
+        slice_tuple: &Tuple,
+        context: &mut MultiDimensionalContext,
     ) -> LevelRole {
-
         if let Some(MultiDimensionalEntity::MemberRoleWrap(mr)) = left_outer_param {
             return self.do_get_level_role(mr);
         }
 
         if let AstLevelFnLevel::OneParam(ast_segs) = self {
-            if let MultiDimensionalEntity::MemberRoleWrap(mr) = ast_segs.materialize(slice_tuple, context).await {
+            if let MultiDimensionalEntity::MemberRoleWrap(mr) =
+                ast_segs.materialize(slice_tuple, context).await
+            {
                 return self.do_get_level_role(mr);
             }
         }
@@ -913,7 +873,9 @@ impl AstLevelFnLevels {
             def_hierarchy_gid = dr.default_hierarchy_gid;
             param_dim_role = Some(dr);
         } else if let Some(ast_segs) = &self.dim_segs {
-            if let MultiDimensionalEntity::DimensionRoleWrap(dr) = ast_segs.materialize(slice_tuple, context).await {
+            if let MultiDimensionalEntity::DimensionRoleWrap(dr) =
+                ast_segs.materialize(slice_tuple, context).await
+            {
                 def_hierarchy_gid = dr.default_hierarchy_gid;
                 param_dim_role = Some(dr);
             } else {
@@ -934,9 +896,8 @@ impl AstLevelFnLevels {
             let olap_obj_level: Level = meta_cache::get_hierarchy_level(def_hierarchy_gid, lv_val);
             LevelRole::new(param_dim_role, olap_obj_level)
         } else {
-           panic!("[klu704] AstLevelFnLevel::do_get_level_role()"); 
+            panic!("[klu704] AstLevelFnLevel::do_get_level_role()");
         }
-
     }
 }
 
@@ -953,11 +914,8 @@ impl AstSetFnChildren {
     ) -> Set {
         if let MultiDimensionalEntity::MemberRoleWrap(mr) = left_unique_param.unwrap() {
             if let MemberRole::BaseMember { dim_role, member } = mr {
-                let children = context
-                    .grpc_client
-                    .get_child_members_by_gid(member.gid)
-                    .await
-                    .unwrap();
+                let children =
+                    context.grpc_client.get_child_members_by_gid(member.gid).await.unwrap();
 
                 let tuples: Vec<Tuple> = children
                     .into_iter()
@@ -1026,7 +984,7 @@ impl ToCellValue for AstExpFunction {
                     } else {
                         name_fn.val(slice_tuple, context, None).await
                     }
-                },
+                }
             }
         })
     }
@@ -1047,7 +1005,7 @@ impl ToCellValue for AstExpFnName {
         outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
-            //  CellValue::Str("avg函数有待实现".to_string()) 
+            //  CellValue::Str("avg函数有待实现".to_string())
             match self {
                 AstExpFnName::InnerParam(segs) => {
                     let olap_obj = segs.materialize(slice_tuple, context).await;
@@ -1063,7 +1021,7 @@ impl ToCellValue for AstExpFnName {
                     }
                 }
                 AstExpFnName::OuterParam(entity) => {
-                    if let MultiDimensionalEntity::MemberRoleWrap(member_role) = entity.as_ref() {  
+                    if let MultiDimensionalEntity::MemberRoleWrap(member_role) = entity.as_ref() {
                         match member_role {
                             MemberRole::BaseMember { member, .. } => {
                                 CellValue::Str(member.name.clone())
@@ -1127,7 +1085,7 @@ impl ToCellValue for AstExpFnCount {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct AstExpFnIIf{
+pub struct AstExpFnIIf {
     pub bool_exp: AstBoolExp,
     pub exp_t: AstExpression,
     pub exp_f: AstExpression,
@@ -1141,7 +1099,6 @@ impl ToCellValue for AstExpFnIIf {
         outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
-
             let bool_val = self.bool_exp.bool_val(slice_tuple, context).await;
             if bool_val {
                 self.exp_t.val(slice_tuple, context, None).await
@@ -1153,13 +1110,13 @@ impl ToCellValue for AstExpFnIIf {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstBoolExp{
+pub enum AstBoolExp {
     BoolTerm(AstBoolTerm),
     NotBoolTerm(AstBoolTerm),
     BoolExpOrBoolTerm(Box<AstBoolExp>, AstBoolTerm),
 }
 
-impl ToBoolValue for AstBoolExp{
+impl ToBoolValue for AstBoolExp {
     fn bool_val<'a>(
         &'a self,
         slice_tuple: &'a Tuple,
@@ -1168,7 +1125,9 @@ impl ToBoolValue for AstBoolExp{
         Box::pin(async move {
             match self {
                 AstBoolExp::BoolTerm(bool_term) => bool_term.bool_val(slice_tuple, context).await,
-                AstBoolExp::NotBoolTerm(bool_term) => !bool_term.bool_val(slice_tuple, context).await,
+                AstBoolExp::NotBoolTerm(bool_term) => {
+                    !bool_term.bool_val(slice_tuple, context).await
+                }
                 AstBoolExp::BoolExpOrBoolTerm(bool_exp, bool_term) => {
                     let exp_bool = bool_exp.bool_val(slice_tuple, context).await;
                     if exp_bool {
@@ -1183,12 +1142,12 @@ impl ToBoolValue for AstBoolExp{
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstBoolTerm{
+pub enum AstBoolTerm {
     BoolFactory(AstBoolFactory),
     BoolTermAndBoolFactory(Box<AstBoolTerm>, AstBoolFactory),
 }
 
-impl ToBoolValue for AstBoolTerm{
+impl ToBoolValue for AstBoolTerm {
     fn bool_val<'a>(
         &'a self,
         slice_tuple: &'a Tuple,
@@ -1196,7 +1155,9 @@ impl ToBoolValue for AstBoolTerm{
     ) -> BoxFuture<'a, bool> {
         Box::pin(async move {
             match self {
-                AstBoolTerm::BoolFactory(bool_factory) => bool_factory.bool_val(slice_tuple, context).await,
+                AstBoolTerm::BoolFactory(bool_factory) => {
+                    bool_factory.bool_val(slice_tuple, context).await
+                }
                 AstBoolTerm::BoolTermAndBoolFactory(bool_term, bool_factory) => {
                     let term_bool = bool_term.bool_val(slice_tuple, context).await;
                     if term_bool {
@@ -1211,7 +1172,7 @@ impl ToBoolValue for AstBoolTerm{
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstBoolFactory{
+pub enum AstBoolFactory {
     ExpressionComparesAnother(AstExpression, String, AstExpression),
     BoolExp(Box<AstBoolExp>),
     BoolFn(AstBoolFunction),
@@ -1238,7 +1199,7 @@ impl ToBoolValue for AstBoolFactory {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstBoolFunction{
+pub enum AstBoolFunction {
     IsLeaf(AstBoolFnIsLeaf),
 }
 
@@ -1250,26 +1211,26 @@ impl ToBoolValue for AstBoolFunction {
     ) -> BoxFuture<'a, bool> {
         Box::pin(async move {
             match self {
-                AstBoolFunction::IsLeaf(is_leaf_fn) => is_leaf_fn.bool_val(slice_tuple, context).await,
+                AstBoolFunction::IsLeaf(is_leaf_fn) => {
+                    is_leaf_fn.bool_val(slice_tuple, context).await
+                }
             }
         })
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct AstBoolFnIsLeaf{
+pub struct AstBoolFnIsLeaf {
     pub member_segs: AstSegments,
 }
 
 impl AstBoolFnIsLeaf {
     pub fn new(member_segs: AstSegments) -> Self {
-        Self {
-            member_segs,
-        }
+        Self { member_segs }
     }
 }
 
-impl ToBoolValue for AstBoolFnIsLeaf{
+impl ToBoolValue for AstBoolFnIsLeaf {
     fn bool_val<'a>(
         &'a self,
         slice_tuple: &'a Tuple,
@@ -1279,9 +1240,7 @@ impl ToBoolValue for AstBoolFnIsLeaf{
             let olap_obj = self.member_segs.materialize(slice_tuple, context).await;
             if let MultiDimensionalEntity::MemberRoleWrap(member_role) = olap_obj {
                 match member_role {
-                    MemberRole::BaseMember { member, .. } => {
-                        member.leaf
-                    }
+                    MemberRole::BaseMember { member, .. } => member.leaf,
                     _ => true,
                 }
             } else {

@@ -221,11 +221,7 @@ impl MultiDimensionalContext {
     pub async fn find_entity_by_gid(&mut self, gid: u64) -> MultiDimensionalEntity {
         match GidType::entity_type(gid) {
             GidType::DimensionRole => {
-                let dim_role = self
-                    .grpc_client
-                    .get_dimension_role_by_gid(gid)
-                    .await
-                    .unwrap();
+                let dim_role = self.grpc_client.get_dimension_role_by_gid(gid).await.unwrap();
                 MultiDimensionalEntity::DimensionRoleWrap(dim_role)
             }
             _ => {
@@ -241,11 +237,8 @@ impl MultiDimensionalContext {
             "MultiDimensionalContext >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> find_entity_by_str({})",
             seg
         );
-        let dim_role = self
-            .grpc_client
-            .get_dimension_role_by_name(self.cube.gid, seg)
-            .await
-            .unwrap();
+        let dim_role =
+            self.grpc_client.get_dimension_role_by_name(self.cube.gid, seg).await.unwrap();
         MultiDimensionalEntity::DimensionRoleWrap(dim_role)
     }
 }
@@ -325,10 +318,7 @@ impl Tuple {
     pub fn merge(&self, other: &Tuple) -> Self {
         let mut mrs = self.member_roles.clone();
         mrs.retain(|mr| {
-            !other
-                .member_roles
-                .iter()
-                .any(|or| or.get_dim_role_gid() == mr.get_dim_role_gid())
+            !other.member_roles.iter().any(|or| or.get_dim_role_gid() == mr.get_dim_role_gid())
         });
         mrs.extend(other.member_roles.clone());
 
@@ -350,24 +340,15 @@ impl LevelRole {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MemberRole {
-    BaseMember {
-        dim_role: DimensionRole,
-        member: Member,
-    },
-    FormulaMember {
-        dim_role_gid: u64,
-        exp: AstExpression,
-    },
+    BaseMember { dim_role: DimensionRole, member: Member },
+    FormulaMember { dim_role_gid: u64, exp: AstExpression },
 }
 
 impl MemberRole {
     pub fn get_dim_role_gid(&self) -> u64 {
         match self {
             MemberRole::BaseMember { dim_role, .. } => dim_role.gid,
-            MemberRole::FormulaMember {
-                dim_role_gid,
-                exp: _,
-            } => *dim_role_gid,
+            MemberRole::FormulaMember { dim_role_gid, exp: _ } => *dim_role_gid,
         }
     }
 }
@@ -401,9 +382,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
                     MultiDimensionalEntity::SetWrap(set)
                 } else {
                     // let tail_segs = AstSegments::Segs(seg_list[1..].to_vec());
-                    let tail_segs = AstSegments{
-                        segs: (seg_list[1..].to_vec())
-                    };
+                    let tail_segs = AstSegments { segs: (seg_list[1..].to_vec()) };
                     set.locate_entity(&tail_segs, slice_tuple, context).await
                 }
             }
@@ -411,16 +390,26 @@ impl MultiDimensionalEntityLocator for MemberRole {
                 if seg_list.len() > 1 {
                     todo!("[bhso9957] MemberRole::locate_entity() LevelFn not implemented yet.");
                 }
-                let lv_role: LevelRole = level_fn.get_level_role(Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())), slice_tuple, context).await;
+                let lv_role: LevelRole = level_fn
+                    .get_level_role(
+                        Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
+                        slice_tuple,
+                        context,
+                    )
+                    .await;
                 MultiDimensionalEntity::LevelRole(lv_role)
             }
             AstSeg::ExpFn(exp_fn) => {
                 if seg_list.len() > 1 {
                     todo!("[bhso9957] MemberRole::locate_entity() LevelFn not implemented yet.");
                 }
-                let cell_val = exp_fn.val(slice_tuple, context, 
-                    Some(MultiDimensionalEntity::MemberRoleWrap(self.clone()))
-                ).await;
+                let cell_val = exp_fn
+                    .val(
+                        slice_tuple,
+                        context,
+                        Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
+                    )
+                    .await;
                 MultiDimensionalEntity::CellValue(cell_val)
             }
             _ => panic!("Panic in MemberRole::locate_entity() .. 67HUSran .."),
@@ -482,11 +471,15 @@ impl MultiDimensionalEntityLocator for DimensionRole {
                 self.locate_entity_by_gid(*gid, slice_tuple, context).await
             }
             AstSeg::Str(seg) => self.locate_entity_by_seg(seg, slice_tuple, context).await,
-            AstSeg::LevelFn(level_fn) => {
-                MultiDimensionalEntity::LevelRole(
-                    level_fn.get_level_role(Some(MultiDimensionalEntity::DimensionRoleWrap(self.clone())), slice_tuple, context).await
-                )
-            }
+            AstSeg::LevelFn(level_fn) => MultiDimensionalEntity::LevelRole(
+                level_fn
+                    .get_level_role(
+                        Some(MultiDimensionalEntity::DimensionRoleWrap(self.clone())),
+                        slice_tuple,
+                        context,
+                    )
+                    .await,
+            ),
             _ => panic!("The entity is not a Gid or a Str variant. 3"),
         };
 
@@ -496,12 +489,8 @@ impl MultiDimensionalEntityLocator for DimensionRole {
                     return MultiDimensionalEntity::MemberRoleWrap(member_role);
                 }
 
-                let tail_segs = AstSegments{
-                    segs: (seg_list[1..].to_vec())
-                };
-                member_role
-                    .locate_entity(&tail_segs, slice_tuple, context)
-                    .await
+                let tail_segs = AstSegments { segs: (seg_list[1..].to_vec()) };
+                member_role.locate_entity(&tail_segs, slice_tuple, context).await
             }
             MultiDimensionalEntity::LevelRole(lv_role) => {
                 if seg_list.len() == 1 {
@@ -523,9 +512,8 @@ impl MultiDimensionalEntityLocator for DimensionRole {
     ) -> MultiDimensionalEntity {
         match GidType::entity_type(gid) {
             GidType::Member => {
-                
-                    // let dim_gid = self.dimension_gid;
-                    let olap_entity = context
+                // let dim_gid = self.dimension_gid;
+                let olap_entity = context
                     .grpc_client
                     .locate_universal_olap_entity_by_gid(self.gid, gid)
                     .await
@@ -533,10 +521,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
 
                 match olap_entity {
                     MultiDimensionalEntity::MemberWrap(member) => {
-                        let member_role = MemberRole::BaseMember {
-                            dim_role: self.clone(),
-                            member,
-                        };
+                        let member_role = MemberRole::BaseMember { dim_role: self.clone(), member };
                         // return MultiDimensionalEntity::MemberRoleWrap(member_role);
                         MultiDimensionalEntity::MemberRoleWrap(member_role)
                     }
@@ -608,9 +593,8 @@ impl Axis {
             let mut ov_coordinates: Vec<OlapVectorCoordinate> = Vec::new();
             let axis = axes.iter().next().unwrap();
             for ax_tuple in &axis.set.tuples {
-                ov_coordinates.push(OlapVectorCoordinate {
-                    member_roles: ax_tuple.member_roles.clone(),
-                });
+                ov_coordinates
+                    .push(OlapVectorCoordinate { member_roles: ax_tuple.member_roles.clone() });
             }
             return ov_coordinates;
         }
