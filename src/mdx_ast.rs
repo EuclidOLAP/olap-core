@@ -476,7 +476,7 @@ impl ToCellValue for AstExpression {
         &'a self,
         slice_tuple: &'a Tuple,
         context: &'a mut MultiDimensionalContext,
-        outer_param: Option<MultiDimensionalEntity>,
+        _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             let mut result = CellValue::Invalid;
@@ -512,7 +512,7 @@ impl ToCellValue for AstFactory {
         &'a self,
         slice_tuple: &'a Tuple,
         context: &'a mut MultiDimensionalContext,
-        outer_param: Option<MultiDimensionalEntity>,
+        _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             match self {
@@ -565,7 +565,7 @@ impl ToCellValue for AstTerm {
         &'a self,
         slice_tuple: &'a Tuple,
         context: &'a mut MultiDimensionalContext,
-        outer_param: Option<MultiDimensionalEntity>,
+        _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             let mut result = CellValue::Invalid;
@@ -1002,7 +1002,7 @@ impl ToCellValue for AstExpFnName {
         &'a self,
         slice_tuple: &'a Tuple,
         context: &'a mut MultiDimensionalContext,
-        outer_param: Option<MultiDimensionalEntity>,
+        _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             //  CellValue::Str("avg函数有待实现".to_string())
@@ -1050,7 +1050,7 @@ impl ToCellValue for AstExpFnAvg {
         &'a self,
         _slice_tuple: &'a Tuple,
         _context: &'a mut MultiDimensionalContext,
-        outer_param: Option<MultiDimensionalEntity>,
+        _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move { CellValue::Str("avg函数有待实现".to_string()) })
     }
@@ -1068,7 +1068,7 @@ impl ToCellValue for AstExpFnCount {
         &'a self,
         _slice_tuple: &'a Tuple,
         _context: &'a mut MultiDimensionalContext,
-        outer_param: Option<MultiDimensionalEntity>,
+        _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             let set = match self {
@@ -1096,7 +1096,7 @@ impl ToCellValue for AstExpFnIIf {
         &'a self,
         slice_tuple: &'a Tuple,
         context: &'a mut MultiDimensionalContext,
-        outer_param: Option<MultiDimensionalEntity>,
+        _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             let bool_val = self.bool_exp.bool_val(slice_tuple, context).await;
