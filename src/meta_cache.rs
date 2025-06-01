@@ -1,19 +1,15 @@
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::sync::Mutex;
-use once_cell::sync::Lazy;
 
-use crate::mdd::{Member, Level};
+use crate::mdd::{Level, Member};
 use crate::olapmeta_grpc_client::GrpcClient;
 
 // 全局线程安全的缓存
-static LEVEL_CACHE: Lazy<Mutex<HashMap<u64, Level>>> = Lazy::new(|| {
-    Mutex::new(HashMap::new())
-});
+static LEVEL_CACHE: Lazy<Mutex<HashMap<u64, Level>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 // 全局线程安全的缓存
-static MEMBER_CACHE: Lazy<Mutex<HashMap<u64, Member>>> = Lazy::new(|| {
-    Mutex::new(HashMap::new())
-});
+static MEMBER_CACHE: Lazy<Mutex<HashMap<u64, Member>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 /// 初始化时批量拉取 level 并放入缓存
 pub async fn init() {
@@ -59,15 +55,11 @@ pub fn get_member_by_gid(gid: u64) -> Member {
 }
 
 pub fn get_hierarchy_level(hierarchy_gid: u64, level_val: u32) -> Level {
-
     let cache = LEVEL_CACHE.lock().unwrap();
     for level in cache.values() {
         if level.hierarchy_gid == hierarchy_gid && level.level == level_val {
             return level.clone();
         }
     }
-    panic!(
-        "Level not found for hierarchy_gid = {} and level = {}",
-        hierarchy_gid, level_val
-    );
+    panic!("Level not found for hierarchy_gid = {} and level = {}", hierarchy_gid, level_val);
 }
