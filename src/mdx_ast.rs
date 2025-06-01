@@ -44,11 +44,6 @@ pub trait ToBoolValue {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum ExtMDXStatement {
-    Querying { basic_cube: AstCube },
-}
-
-#[derive(Clone, Debug, PartialEq)]
 pub struct AstCube {}
 
 #[derive(Clone, Debug, PartialEq)]
