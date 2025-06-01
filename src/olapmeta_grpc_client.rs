@@ -1,16 +1,16 @@
 // src/olapmeta_grpc_client.rs
-use tonic::{transport::Channel, Request};
-use std::fmt;
-use olapmeta::EmptyParameterRequest;
 use olapmeta::olap_meta_service_client::OlapMetaServiceClient;
-use olapmeta::{CubeGidRequest, CubeNameRequest, CubeMetaResponse};
-use olapmeta::GetDimensionRolesByCubeGidRequest;
+use olapmeta::EmptyParameterRequest;
+use olapmeta::GetChildMembersByGidRequest;
 use olapmeta::GetDefaultDimensionMemberRequest;
 use olapmeta::GetDimensionRoleByGidRequest;
-use olapmeta::LocateOlapEntityRequest;
+use olapmeta::GetDimensionRolesByCubeGidRequest;
 use olapmeta::GetUniversalOlapEntityByGidRequest;
-use olapmeta::GetChildMembersByGidRequest;
 use olapmeta::GrpcMember;
+use olapmeta::LocateOlapEntityRequest;
+use olapmeta::{CubeGidRequest, CubeMetaResponse, CubeNameRequest};
+use std::fmt;
+use tonic::{transport::Channel, Request};
 
 use crate::mdd;
 use crate::mdd::MultiDimensionalEntity;
@@ -45,7 +45,10 @@ impl GrpcClient {
     }
 
     // 通过 GID 获取 Cube
-    pub async fn get_cube_by_gid(&mut self, gid: u64) -> Result<CubeMetaResponse, Box<dyn std::error::Error>> {
+    pub async fn get_cube_by_gid(
+        &mut self,
+        gid: u64,
+    ) -> Result<CubeMetaResponse, Box<dyn std::error::Error>> {
         // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_cube_by_gid({})", gid);
         let request = Request::new(CubeGidRequest { gid });
         let response = self.client.get_cube_by_gid(request).await?;
@@ -53,15 +56,24 @@ impl GrpcClient {
     }
 
     // 通过 Name 获取 Cube
-    pub async fn get_cube_by_name(&mut self, name: String) -> Result<CubeMetaResponse, Box<dyn std::error::Error>> {
+    pub async fn get_cube_by_name(
+        &mut self,
+        name: String,
+    ) -> Result<CubeMetaResponse, Box<dyn std::error::Error>> {
         // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_cube_by_name({})", name);
         let request = Request::new(CubeNameRequest { name });
         let response = self.client.get_cube_by_name(request).await?;
         Ok(response.into_inner())
     }
 
-    pub async fn get_dimension_roles_by_cube_gid(&mut self, cube_gid: u64) -> Result<Vec<mdd::DimensionRole>, Box<dyn std::error::Error>> {
-        let response = self.client.get_dimension_roles_by_cube_gid(GetDimensionRolesByCubeGidRequest { gid: cube_gid }).await?;
+    pub async fn get_dimension_roles_by_cube_gid(
+        &mut self,
+        cube_gid: u64,
+    ) -> Result<Vec<mdd::DimensionRole>, Box<dyn std::error::Error>> {
+        let response = self
+            .client
+            .get_dimension_roles_by_cube_gid(GetDimensionRolesByCubeGidRequest { gid: cube_gid })
+            .await?;
 
         // 将响应数据解析为 DimensionRole 列表
         let dimension_roles: Vec<mdd::DimensionRole> = response
@@ -81,10 +93,10 @@ impl GrpcClient {
         Ok(dimension_roles)
     }
 
-
-    pub async fn get_default_dimension_member_by_dimension_gid(&mut self, dimension_gid: u64)
-        -> Result<mdd::Member, Box<dyn std::error::Error>> {
-
+    pub async fn get_default_dimension_member_by_dimension_gid(
+        &mut self,
+        dimension_gid: u64,
+    ) -> Result<mdd::Member, Box<dyn std::error::Error>> {
         // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_default_dimension_member_by_dimension_gid({})", dimension_gid);
         let request = GetDefaultDimensionMemberRequest { dimension_gid };
 
@@ -95,43 +107,43 @@ impl GrpcClient {
         Ok(grpc_to_olap_member(grpc_member))
     }
 
-    pub async fn get_child_members_by_gid(&mut self, parent_member_gid: u64)
-        -> Result<Vec<mdd::Member>, Box<dyn std::error::Error>> {
+    pub async fn get_child_members_by_gid(
+        &mut self,
+        parent_member_gid: u64,
+    ) -> Result<Vec<mdd::Member>, Box<dyn std::error::Error>> {
+        // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_child_members_by_gid({})", parent_member_gid);
+        let req = GetChildMembersByGidRequest { parent_member_gid };
 
-            // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_child_members_by_gid({})", parent_member_gid);
-            let req = GetChildMembersByGidRequest {
-                parent_member_gid
-            };
+        let response = self.client.get_child_members_by_gid(req).await?;
+        let response = response.into_inner();
+        let children = response
+            .child_members
+            .into_iter()
+            .map(|grpc_member| grpc_to_olap_member(grpc_member))
+            .collect();
 
-            let response = self.client.get_child_members_by_gid(req).await?;
-            let response = response.into_inner();
-            let children = response.child_members.into_iter()
-                .map(|grpc_member| grpc_to_olap_member(grpc_member) ).collect();
-
-            Ok(children)
+        Ok(children)
     }
 
+    pub async fn get_dimension_role_by_gid(
+        &mut self,
+        dim_role_gid: u64,
+    ) -> Result<mdd::DimensionRole, Box<dyn std::error::Error>> {
+        // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_dimension_role_by_gid({})", dim_role_gid);
+        let req = GetDimensionRoleByGidRequest { dimension_role_gid: dim_role_gid };
 
-    pub async fn get_dimension_role_by_gid(&mut self, dim_role_gid: u64)
-        -> Result<mdd::DimensionRole, Box<dyn std::error::Error>> {
+        let response = self.client.get_dimension_role_by_gid(req).await?;
 
-            // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_dimension_role_by_gid({})", dim_role_gid);
-            let req = GetDimensionRoleByGidRequest {
-                dimension_role_gid: dim_role_gid
-            };
+        let grpc_dim_role = response.into_inner();
 
-            let response = self.client.get_dimension_role_by_gid(req).await?;
+        let dim_role = mdd::DimensionRole {
+            gid: grpc_dim_role.gid,
+            dimension_gid: grpc_dim_role.dimension_gid,
+            default_hierarchy_gid: grpc_dim_role.default_hierarchy_gid,
+            measure_flag: grpc_dim_role.measure_flag == 1,
+        };
 
-            let grpc_dim_role = response.into_inner();
-
-            let dim_role = mdd::DimensionRole {
-                gid: grpc_dim_role.gid,
-                dimension_gid: grpc_dim_role.dimension_gid,
-                default_hierarchy_gid: grpc_dim_role.default_hierarchy_gid,
-                measure_flag: grpc_dim_role.measure_flag == 1,
-            };
-
-            Ok(dim_role)
+        Ok(dim_role)
     }
 
     pub async fn get_dimension_role_by_name(
@@ -174,8 +186,8 @@ impl GrpcClient {
             target_entity_name: "".to_string(),
         });
 
-        let universal_olap_entity
-            = self.client.locate_universal_olap_entity_by_gid(request).await?.into_inner();
+        let universal_olap_entity =
+            self.client.locate_universal_olap_entity_by_gid(request).await?.into_inner();
 
         Ok(MultiDimensionalEntity::from_universal_olap_entity(&universal_olap_entity))
     }
@@ -194,17 +206,18 @@ impl GrpcClient {
         gid: u64,
     ) -> Result<MultiDimensionalEntity, Box<dyn std::error::Error>> {
         // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_universal_olap_entity_by_gid({})", gid );
-        let request = Request::new(GetUniversalOlapEntityByGidRequest {
-            universal_olap_entity_gid: gid,
-        });
+        let request =
+            Request::new(GetUniversalOlapEntityByGidRequest { universal_olap_entity_gid: gid });
 
-        let universal_olap_entity
-            = self.client.get_universal_olap_entity_by_gid(request).await?.into_inner();
+        let universal_olap_entity =
+            self.client.get_universal_olap_entity_by_gid(request).await?.into_inner();
 
         Ok(MultiDimensionalEntity::from_universal_olap_entity(&universal_olap_entity))
     }
 
-    pub async fn get_all_dimension_roles(&mut self) -> Result<Vec<mdd::DimensionRole>, Box<dyn std::error::Error>> {
+    pub async fn get_all_dimension_roles(
+        &mut self,
+    ) -> Result<Vec<mdd::DimensionRole>, Box<dyn std::error::Error>> {
         let response = self.client.get_all_dimension_roles(EmptyParameterRequest {}).await?;
 
         // 将响应数据解析为 DimensionRole 列表
@@ -246,8 +259,9 @@ impl GrpcClient {
         Ok(levels)
     }
 
-    pub async fn get_all_members(&mut self) -> Result<Vec<mdd::Member>, Box<dyn std::error::Error>> {
-
+    pub async fn get_all_members(
+        &mut self,
+    ) -> Result<Vec<mdd::Member>, Box<dyn std::error::Error>> {
         let response = self.client.get_all_members(EmptyParameterRequest {}).await?;
 
         let members: Vec<mdd::Member> = response
