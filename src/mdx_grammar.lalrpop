@@ -98,7 +98,7 @@ extern {
 
 
 // multi-dimensional object segment
-pub Seg: mdx_ast::AstSeg = {
+Seg: mdx_ast::AstSeg = {
   "&" <int:"int"> => {
     mdx_ast::AstSeg::Gid(int)
   },
@@ -122,7 +122,7 @@ pub Seg: mdx_ast::AstSeg = {
   },
 }
 
-pub Segments: Vec<mdx_ast::AstSeg> = {
+Segments: Vec<mdx_ast::AstSeg> = {
   <seg:Seg> => {
     let mut list = Vec::with_capacity(6);
     list.push(seg);
@@ -135,7 +135,7 @@ pub Segments: Vec<mdx_ast::AstSeg> = {
   }
 }
 
-pub SegmentsWrap: mdx_ast::AstSegments = {
+SegmentsWrap: mdx_ast::AstSegments = {
   <segs:Segments> => {
     mdx_ast::AstSegments{segs}
   }
@@ -152,13 +152,13 @@ Tuple: Vec<mdx_ast::AstSegments> = {
   }
 }
 
-pub TupleWrap: mdx_ast::AstTuple = {
+TupleWrap: mdx_ast::AstTuple = {
   "(" <tuple:Tuple> ")" => {
     mdx_ast::AstTuple::SegsList(tuple)
   }
 }
 
-pub TupleWrap_2: mdx_ast::AstTuple = {
+TupleWrap_2: mdx_ast::AstTuple = {
   "(" <sw:SegmentsWrap> "," <tuple:Tuple> ")" => {
     let mut list = tuple; // Vec<mdx_ast::AstSegments>
     list.insert(0, sw); // mdx_ast::AstSegments
@@ -177,14 +177,14 @@ Set: Vec<mdx_ast::AstTuple> = {
   }
 }
 
-pub SetWrap: mdx_ast::AstSet = {
+SetWrap: mdx_ast::AstSet = {
   "{" <tuples:Set> "}" => {
     mdx_ast::AstSet::Tuples(tuples)
   }
 }
 
 // COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
-pub Axis: mdx_ast::AstAxis = {
+Axis: mdx_ast::AstAxis = {
   <ast_set:SetWrap> "on" <axpos:AxisPos> => {
     mdx_ast::AstAxis::SetDefinition {
       ast_set,
@@ -202,7 +202,7 @@ AxisPos: u64 = {
   "Sections"    => 4,
 }
 
-pub Axes: Vec<mdx_ast::AstAxis> = {
+Axes: Vec<mdx_ast::AstAxis> = {
   <axis:Axis> => {
     vec![axis]
   },
