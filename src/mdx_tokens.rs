@@ -132,17 +132,17 @@ pub enum Token {
     #[regex("(?i)And")]
     And,
 
-    #[token("<")]   // Less Than
+    #[token("<")] // Less Than
     LT,
-    #[token("<=")]  // Less Than or Equal To
+    #[token("<=")] // Less Than or Equal To
     LE,
-    #[token("=")]   // Equal To
+    #[token("=")] // Equal To
     EQ,
-    #[token("<>")]  // Not Equal To
+    #[token("<>")] // Not Equal To
     NE,
-    #[token(">")]   // Greater Than
+    #[token(">")] // Greater Than
     GT,
-    #[token(">=")]  // Greater Than or Equal To
+    #[token(">=")] // Greater Than or Equal To
     GE,
 
     #[regex("(?i)IsLeaf")]
