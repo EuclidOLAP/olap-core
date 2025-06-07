@@ -480,6 +480,9 @@ impl MultiDimensionalEntityLocator for DimensionRole {
                     )
                     .await,
             ),
+            AstSeg::MemberFunction(member_fn) => {
+                member_fn.get_member(Some(MultiDimensionalEntity::DimensionRoleWrap(self.clone())), slice_tuple, context).await
+            },
             _ => panic!("The entity is not a Gid or a Str variant. 3"),
         };
 

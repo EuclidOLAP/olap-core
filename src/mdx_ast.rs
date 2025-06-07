@@ -651,6 +651,52 @@ impl AstMemberFnOpeningPeriod {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum AstMemberFnCurrentMember {
+    NoParam,
+    InnerParam(AstSegments),
+}
+
+impl AstMemberFnCurrentMember {
+    async fn do_get_member(
+        &self,
+        outer_param: Option<MultiDimensionalEntity>,
+        slice_tuple: &Tuple,
+        context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+
+        let param: MultiDimensionalEntity;
+
+        if let Some(outer_param) = outer_param {
+            param = outer_param;
+        } else {
+            if let AstMemberFnCurrentMember::InnerParam(ast_segs) = self {
+                param = ast_segs.materialize(slice_tuple, context).await;
+            } else {
+                panic!("[34BH85BHE] Invalid parameter combination. Only inner_param should be Some, and outer_param should be None.")
+            }
+        }
+
+        match param {
+            MultiDimensionalEntity::DimensionRoleWrap(param_dim_role) => {
+                for mr in slice_tuple.member_roles.iter() {
+                    if let MemberRole::BaseMember { dim_role, member } = mr {
+                        if dim_role.gid == param_dim_role.gid && member.level > 0 {
+                            return MultiDimensionalEntity::MemberRoleWrap(
+                                MemberRole::BaseMember { dim_role:param_dim_role.clone(), member:meta_cache::get_member_by_gid(member.gid) }
+                            );
+                        }
+                    }
+                }
+                todo!("[GGBH76] It's not implemented yet.")
+            }
+            _ => panic!("[34BH85BHE] The entity is not a MemberRole or a Member variant."),
+        }
+
+        // todo!()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum AstMemberFnParent {
     NoParam,
     HasParam(AstSegments),
@@ -694,6 +740,7 @@ pub enum AstMemberFunction {
     Parent(AstMemberFnParent),
     ClosingPeriod(AstMemberFnClosingPeriod),
     OpeningPeriod(AstMemberFnOpeningPeriod),
+    CurrentMember(AstMemberFnCurrentMember),
 }
 
 impl AstMemberFunction {
@@ -704,6 +751,10 @@ impl AstMemberFunction {
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         match self {
+            // CurrentMember()
+            AstMemberFunction::CurrentMember(current_member) => {
+                current_member.do_get_member(left_outer_param, slice_tuple, context).await
+            }
             // parent()
             AstMemberFunction::Parent(AstMemberFnParent::NoParam) => {
                 AstMemberFnParent::do_get_member(left_outer_param, context).await

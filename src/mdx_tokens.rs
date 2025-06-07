@@ -100,6 +100,8 @@ pub enum Token {
 
     #[regex("(?i)Parent")]
     Parent,
+    #[regex("(?i)CurrentMember")]
+    CurrentMember,
 
     #[regex("(?i)Children")]
     Children,

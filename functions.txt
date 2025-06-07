@@ -42,7 +42,7 @@ IsValid                     ____	____	Esbs	____
 
 << Member Functions >>                            				
 ClosingPeriod               Eucl	SSAS	Esbs	intc
-CurrentMember               todo	SSAS	Esbs	intc
+CurrentMember               Eucl	SSAS	Esbs	intc
 FirstChild                  todo	SSAS	Esbs	intc
 FirstSibling                todo	SSAS	Esbs	intc
 Lag                         todo	SSAS	Esbs	intc

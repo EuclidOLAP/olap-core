@@ -8,6 +8,7 @@ use crate::mdx_ast::AstFactory::{FactoryNum, FactoryStr, FactorySegs,FactoryTupl
 
 use crate::mdx_ast::{AstLevelFunction, AstLevelFnLevel, AstLevelFnLevels};
 use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent, AstMemberFnClosingPeriod, AstMemberFnOpeningPeriod};
+use crate::mdx_ast::{AstMemberFnCurrentMember};
 use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
 use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
 use crate::mdx_ast::{AstExpFnName};
@@ -72,6 +73,7 @@ extern {
     ";" => Token::Semicolon,
 
     "Parent" => Token::Parent,
+    "CurrentMember" => Token::CurrentMember,
 
     "Children" => Token::Children,
 
@@ -379,6 +381,9 @@ MemberFunction: AstMemberFunction = {
   <op: MemberFnOpeningPeriod> => {
     AstMemberFunction::OpeningPeriod(op)
   },
+  <cur_mbr: MemberFnCurrentMember> => {
+    AstMemberFunction::CurrentMember(cur_mbr)
+  },
 }
 
 MemberFnParent: AstMemberFnParent = {
@@ -420,6 +425,18 @@ MemberFnOpeningPeriod: AstMemberFnOpeningPeriod = {
   },
   "OpeningPeriod" "(" <level_segs: SegmentsWrap> "," <member_segs: SegmentsWrap> ")" => {
     AstMemberFnOpeningPeriod::TwoParams(level_segs, member_segs)
+  },
+}
+
+MemberFnCurrentMember: AstMemberFnCurrentMember = {
+  "CurrentMember" => {
+    AstMemberFnCurrentMember::NoParam
+  },
+  "CurrentMember" "(" ")" => {
+    AstMemberFnCurrentMember::NoParam
+  },
+  "CurrentMember" "(" <segments: SegmentsWrap> ")" => {
+    AstMemberFnCurrentMember::InnerParam(segments)
   },
 }
 
