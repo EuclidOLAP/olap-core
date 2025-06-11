@@ -210,8 +210,8 @@ pub trait MultiDimensionalEntityLocator {
 #[derive(Debug)]
 pub struct MultiDimensionalContext {
     pub cube: Cube,
-    pub cube_def_tuple: Tuple,
-    pub where_tuple: Option<Tuple>,
+    // pub cube_def_tuple: Tuple,
+    // pub where_tuple: Option<Tuple>,
     pub query_slice_tuple: Tuple,
     pub grpc_client: GrpcClient,
     pub formulas_map: HashMap<u64, AstFormulaObject>,

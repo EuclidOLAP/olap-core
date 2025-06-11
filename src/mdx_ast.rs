@@ -370,8 +370,8 @@ impl AstSelectionStatement {
 
         let mut context = mdd::MultiDimensionalContext {
             cube,
-            cube_def_tuple,
-            where_tuple: None,
+            // cube_def_tuple,
+            // where_tuple: None,
             query_slice_tuple: Tuple { member_roles: vec![] },
             grpc_client: grpc_cli,
             formulas_map,
@@ -380,16 +380,16 @@ impl AstSelectionStatement {
         let mut where_tuple: Option<Tuple> = None;
         if let Some(mdx_where) = &self.basic_slice {
             where_tuple =
-                match mdx_where.materialize(&context.cube_def_tuple.clone(), &mut context).await {
+                match mdx_where.materialize(&cube_def_tuple, &mut context).await {
                     MultiDimensionalEntity::TupleWrap(tuple) => Some(tuple),
                     _ => panic!("The entity is not a TupleWrap variant."),
                 }
         };
 
-        context.where_tuple = where_tuple;
+        // context.where_tuple = where_tuple;
 
-        let mut query_slice_tuple = context.cube_def_tuple.clone();
-        if let Some(where_tuple) = &context.where_tuple {
+        let mut query_slice_tuple = cube_def_tuple.clone();
+        if let Some(where_tuple) = &where_tuple {
             query_slice_tuple = query_slice_tuple.merge(where_tuple);
         }
         context.query_slice_tuple = query_slice_tuple;
