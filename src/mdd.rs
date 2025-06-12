@@ -53,7 +53,7 @@ pub enum MultiDimensionalEntity {
     FormulaMemberWrap { dim_role_gid: u64, exp: AstExpression },
     ExpFn(AstExpFunction),
     CellValue(CellValue),
-    // Cube(Cube),           // 立方体实体
+    Cube(Cube),
     // Dimension(Dimension), // 维度实体
     // Hierarchy(Hierarchy), // 层次实体
     Nothing,
@@ -223,6 +223,10 @@ impl MultiDimensionalContext {
             GidType::DimensionRole => {
                 let dim_role = self.grpc_client.get_dimension_role_by_gid(gid).await.unwrap();
                 MultiDimensionalEntity::DimensionRoleWrap(dim_role)
+            }
+            GidType::Cube => {
+                let cube = meta_cache::get_cube_by_gid(gid);
+                MultiDimensionalEntity::Cube(cube)
             }
             _ => {
                 panic!(
@@ -569,11 +573,56 @@ pub struct Member {
     pub leaf: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Cube {
     pub gid: u64,
     pub name: String,
 }
+
+impl MultiDimensionalEntityLocator for Cube {
+    async fn locate_entity(
+        &self,
+        segs: &AstSegments,
+        _slice_tuple: &Tuple,
+        _context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        if segs.segs.len() != 1 {
+            todo!("[bhs987sub3] Cube::locate_entity() not implemented yet.");
+        }
+
+        let seg = segs.segs.first().unwrap();
+
+        if let AstSeg::ExpFn(AstExpFunction::LookupCube(look_up_fn)) = seg {
+            let mut look_up_fn = look_up_fn.clone();
+            look_up_fn.set_cube(self.clone());
+            MultiDimensionalEntity::ExpFn(AstExpFunction::LookupCube(look_up_fn))
+        } else {
+            unimplemented!("[nsbk8562] Cube::locate_entity() not implemented yet.")
+        }
+    }
+
+    async fn locate_entity_by_gid(
+        &self,
+        _gid: u64,
+        _slice_tuple: &Tuple,
+        _context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        todo!()
+    }
+
+    async fn locate_entity_by_seg(
+        &self,
+        _seg: &String,
+        _slice_tuple: &Tuple,
+        _context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        todo!()
+    }
+}
+
+
+
+
 
 #[derive(Debug)]
 pub struct Axis {

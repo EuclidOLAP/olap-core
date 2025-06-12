@@ -110,6 +110,8 @@ pub enum Token {
     Avg,
     #[regex("(?i)Count")]
     Count,
+    #[regex("(?i)Tunnel")]
+    Tunnel,
 
     #[regex("(?i)ClosingPeriod")]
     ClosingPeriod,

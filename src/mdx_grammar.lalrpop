@@ -12,6 +12,7 @@ use crate::mdx_ast::{AstMemberFnCurrentMember};
 use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
 use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
 use crate::mdx_ast::{AstExpFnName};
+use crate::mdx_ast::{AstExpFnLookupCube};
 
 use crate::mdx_ast::AstExpFnIIf;
 
@@ -79,6 +80,7 @@ extern {
 
     "Avg" => Token::Avg,
     "Count" => Token::Count,
+    "Tunnel" => Token::Tunnel,
 
     "ClosingPeriod" => Token::ClosingPeriod,
     "OpeningPeriod" => Token::OpeningPeriod,
@@ -468,6 +470,9 @@ ExpFnSpec: AstExpFunction = {
   <iif: ExpFnIIfSpec> => {
     AstExpFunction::IIf(iif)
   },
+  <lookup_cube: ExpFnLookupCubeSpec> => {
+    AstExpFunction::LookupCube(lookup_cube)
+  },
   <name: ExpFnNameSpec> => {
     AstExpFunction::Name(name)
   },
@@ -517,6 +522,15 @@ ExpFnIIfSpec: AstExpFnIIf = {
       exp_f,
     }
   }
+}
+
+ExpFnLookupCubeSpec: AstExpFnLookupCube = {
+    "Tunnel" "(" <cube_segs: SegmentsWrap> "," <exp_on_another_cube: Expression> ")" => {
+      AstExpFnLookupCube::new(Some(cube_segs), exp_on_another_cube)
+    },
+    "Tunnel" "(" <exp_on_another_cube: Expression> ")" => {
+      AstExpFnLookupCube::new(None, exp_on_another_cube)
+    },
 }
 
 BoolExpression: AstBoolExp = {

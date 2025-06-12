@@ -162,6 +162,15 @@ impl Materializable for AstSegments {
                     }
                     todo!("[NVB666DC] MemberRoleWrap is not implemented yet.")
                 }
+                MultiDimensionalEntity::Cube(cube) => {
+                    if self.segs.len() == 1 {
+                        // return MultiDimensionalEntity::Cube(cube);
+                        MultiDimensionalEntity::Cube(cube)
+                    } else {
+                        let tail_segs = AstSegments { segs: (self.segs[1..]).to_vec() };
+                        cube.locate_entity(&tail_segs, slice_tuple, context).await
+                    }
+                }
                 _ => {
                     panic!("In method AstSegments::materialize(): head_entity is not a DimensionRoleWrap!");
                 }
@@ -379,11 +388,10 @@ impl AstSelectionStatement {
 
         let mut where_tuple: Option<Tuple> = None;
         if let Some(mdx_where) = &self.basic_slice {
-            where_tuple =
-                match mdx_where.materialize(&cube_def_tuple, &mut context).await {
-                    MultiDimensionalEntity::TupleWrap(tuple) => Some(tuple),
-                    _ => panic!("The entity is not a TupleWrap variant."),
-                }
+            where_tuple = match mdx_where.materialize(&cube_def_tuple, &mut context).await {
+                MultiDimensionalEntity::TupleWrap(tuple) => Some(tuple),
+                _ => panic!("The entity is not a TupleWrap variant."),
+            }
         };
 
         // context.where_tuple = where_tuple;
@@ -682,7 +690,10 @@ impl AstMemberFnCurrentMember {
                     if let MemberRole::BaseMember { dim_role, member } = mr {
                         if dim_role.gid == param_dim_role.gid && member.level > 0 {
                             return MultiDimensionalEntity::MemberRoleWrap(
-                                MemberRole::BaseMember { dim_role:param_dim_role.clone(), member:meta_cache::get_member_by_gid(member.gid) }
+                                MemberRole::BaseMember {
+                                    dim_role: param_dim_role.clone(),
+                                    member: meta_cache::get_member_by_gid(member.gid),
+                                },
                             );
                         }
                     }
@@ -1008,6 +1019,7 @@ pub enum AstExpFunction {
     Avg(AstExpFnAvg),
     Count(AstExpFnCount),
     IIf(AstExpFnIIf),
+    LookupCube(AstExpFnLookupCube),
     Name(AstExpFnName),
 }
 
@@ -1030,6 +1042,31 @@ impl ToCellValue for AstExpFunction {
                     } else {
                         name_fn.val(slice_tuple, context, None).await
                     }
+                }
+                AstExpFunction::LookupCube(eval_fn) => {
+                    let the_cube;
+                    if let Some(cube) = &eval_fn.cube {
+                        the_cube = cube.clone();
+                    } else if let Some(ast_segs) = &eval_fn.cube_segs {
+                        match ast_segs.materialize(slice_tuple, context).await {
+                            MultiDimensionalEntity::Cube(cube) => {
+                                the_cube = cube.clone();
+                            }
+                            _ => panic!("[dsuc-0-8492] AstExpFunction::val()"),
+                        }
+                    } else {
+                        panic!("[dsuc-0-::-8492] AstExpFunction::val()")
+                    }
+
+                    let exp = eval_fn.exp.clone();
+
+                    // let mut eval_ctx = MultiDimensionalContext::new(&the_cube).await;
+                    // 执行到下面这行报stack overflow错误了，应该是因为val方法传进去的参数不是针对eval那个Cube的？
+                    // exp.val(&eval_ctx.query_slice_tuple.clone(), &mut eval_ctx, None).await
+                    // let cell_val = exp.val(slice_tuple, context, None).await;
+                    // CellValue::Str(format!("lookup cube: {}, cell_val: {}", the_cube.name, cell_val));
+
+                    CellValue::Str(format!(">>>{}, {:?}<<<", the_cube.name, exp))
                 }
             }
         })
@@ -1127,6 +1164,23 @@ impl ToCellValue for AstExpFnCount {
 
             CellValue::Double(set.tuples.len() as f64)
         })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstExpFnLookupCube {
+    pub cube_segs: Option<AstSegments>,
+    pub cube: Option<mdd::Cube>,
+    pub exp: AstExpression,
+}
+
+impl AstExpFnLookupCube {
+    pub fn new(cube_segs: Option<AstSegments>, exp: AstExpression) -> Self {
+        Self { cube_segs, cube: None, exp }
+    }
+
+    pub fn set_cube(&mut self, cube: mdd::Cube) {
+        self.cube = Some(cube);
     }
 }
 

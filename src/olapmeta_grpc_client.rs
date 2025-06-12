@@ -283,6 +283,25 @@ impl GrpcClient {
 
         Ok(members)
     }
+
+    pub async fn get_all_cubes(
+        &mut self,
+    ) -> Result<Vec<mdd::Cube>, Box<dyn std::error::Error>> {
+        let response = self.client.get_all_cubes(EmptyParameterRequest {}).await?;
+
+        let cubes: Vec<mdd::Cube> = response
+            .into_inner()
+            .cubes
+            .into_iter()
+            .map(|grpc_olap_obj: olapmeta::UniversalOlapEntity| mdd::Cube {
+                gid: grpc_olap_obj.gid,
+                name: grpc_olap_obj.name,
+            })
+            .collect();
+
+        Ok(cubes)
+    }
+
 }
 
 impl fmt::Debug for GrpcClient {

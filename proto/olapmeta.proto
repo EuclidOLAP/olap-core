@@ -87,6 +87,7 @@ service OlapMetaService {
     rpc GetAllDimensionRoles (EmptyParameterRequest) returns (GetAllDimensionRolesResponse);
     rpc GetAllLevels (EmptyParameterRequest) returns (GetAllLevelsResponse);
     rpc GetAllMembers (EmptyParameterRequest) returns (GetAllMembersResponse);
+    rpc GetAllCubes (EmptyParameterRequest) returns (GetAllCubesResponse);
 }
 
 message GetAllDimensionRolesResponse {
@@ -141,4 +142,8 @@ message GetAllLevelsResponse {
 
 message GetAllMembersResponse {
     repeated UniversalOlapEntity members = 1;
+}
+
+message GetAllCubesResponse {
+    repeated UniversalOlapEntity cubes = 1;
 }
