@@ -73,7 +73,7 @@ ValidMeasure                ____	SSAS	____	____
 CoalesceEmpty               todo	SSAS	Esbs	intc
 Count (Set)                 Eucl	SSAS	____	____
 IIf                         Eucl	SSAS	Esbs	____
-LookupCube                  todo	SSAS	____	____
+LookupCube/Tunnel           doing	SSAS	____	____
 Sum                         todo	SSAS	Esbs	intc
 Avg                         Eucl	SSAS	Esbs	intc
 Max                         todo	SSAS	Esbs	intc

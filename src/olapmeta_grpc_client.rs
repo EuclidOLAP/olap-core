@@ -284,9 +284,7 @@ impl GrpcClient {
         Ok(members)
     }
 
-    pub async fn get_all_cubes(
-        &mut self,
-    ) -> Result<Vec<mdd::Cube>, Box<dyn std::error::Error>> {
+    pub async fn get_all_cubes(&mut self) -> Result<Vec<mdd::Cube>, Box<dyn std::error::Error>> {
         let response = self.client.get_all_cubes(EmptyParameterRequest {}).await?;
 
         let cubes: Vec<mdd::Cube> = response
@@ -301,7 +299,6 @@ impl GrpcClient {
 
         Ok(cubes)
     }
-
 }
 
 impl fmt::Debug for GrpcClient {

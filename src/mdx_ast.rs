@@ -671,7 +671,6 @@ impl AstMemberFnCurrentMember {
         slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
-
         let param: MultiDimensionalEntity;
 
         if let Some(outer_param) = outer_param {
