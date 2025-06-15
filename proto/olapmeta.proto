@@ -18,6 +18,10 @@ message UniversalOlapEntity {
     uint64 dimensionGid = 10;
     uint64 hierarchyGid = 11;
     bool leaf = 12;
+    uint64 cubeGid = 13;
+    uint64 dimensionRoleGid = 14;
+    uint64 mountPointGid = 15;
+    string exp = 16;
 }
 
 message LocateOlapEntityRequest {
@@ -88,6 +92,7 @@ service OlapMetaService {
     rpc GetAllLevels (EmptyParameterRequest) returns (GetAllLevelsResponse);
     rpc GetAllMembers (EmptyParameterRequest) returns (GetAllMembersResponse);
     rpc GetAllCubes (EmptyParameterRequest) returns (GetAllCubesResponse);
+    rpc GetAllFormulaMembers (EmptyParameterRequest) returns (GetAllFormulaMembersResponse);
 }
 
 message GetAllDimensionRolesResponse {
@@ -146,4 +151,8 @@ message GetAllMembersResponse {
 
 message GetAllCubesResponse {
     repeated UniversalOlapEntity cubes = 1;
+}
+
+message GetAllFormulaMembersResponse {
+    repeated UniversalOlapEntity formulaMembers = 1;
 }

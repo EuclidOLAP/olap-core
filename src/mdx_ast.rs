@@ -2,6 +2,9 @@ use core::panic;
 use std::collections::HashMap;
 // use std::vec;
 
+use crate::mdx_grammar::SelectionMDXParser;
+use crate::mdx_lexer::Lexer as MdxLexer;
+
 use futures::future::BoxFuture;
 // use std::pin::Pin;
 
@@ -1059,13 +1062,12 @@ impl ToCellValue for AstExpFunction {
 
                     let exp = eval_fn.exp.clone();
 
-                    // let mut eval_ctx = MultiDimensionalContext::new(&the_cube).await;
-                    // 执行到下面这行报stack overflow错误了，应该是因为val方法传进去的参数不是针对eval那个Cube的？
-                    // exp.val(&eval_ctx.query_slice_tuple.clone(), &mut eval_ctx, None).await
-                    // let cell_val = exp.val(slice_tuple, context, None).await;
-                    // CellValue::Str(format!("lookup cube: {}, cell_val: {}", the_cube.name, cell_val));
+                    let mdx_with_str = meta_cache::mdx_formula_members_fragment(&the_cube);
+                    let tunnel_mdx = format!("with\n{}\nSelect {{ ( &0 ) }} on rows\nfrom &{}", mdx_with_str, the_cube.gid);
+                    let tunnel_ast = SelectionMDXParser::new().parse(MdxLexer::new(&tunnel_mdx)).unwrap();
+                    let mut tunnel_context = tunnel_ast.gen_md_context().await;
 
-                    CellValue::Str(format!(">>>{}, {:?}<<<", the_cube.name, exp))
+                    exp.val(&tunnel_context.query_slice_tuple.clone(), &mut tunnel_context, None).await
                 }
             }
         })

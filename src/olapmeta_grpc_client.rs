@@ -7,6 +7,7 @@ use olapmeta::GetDimensionRoleByGidRequest;
 use olapmeta::GetDimensionRolesByCubeGidRequest;
 use olapmeta::GetUniversalOlapEntityByGidRequest;
 use olapmeta::GrpcMember;
+use olapmeta::UniversalOlapEntity;
 use olapmeta::LocateOlapEntityRequest;
 use olapmeta::{CubeGidRequest, CubeMetaResponse, CubeNameRequest};
 use std::fmt;
@@ -298,6 +299,20 @@ impl GrpcClient {
             .collect();
 
         Ok(cubes)
+    }
+
+    pub async fn get_all_formula_members(&mut self) -> Result<Vec<UniversalOlapEntity>, Box<dyn std::error::Error>> {
+
+        let response = self.client.get_all_formula_members(EmptyParameterRequest {}).await?;
+
+        let formula_members: Vec<UniversalOlapEntity> = response
+            .into_inner()
+            .formula_members
+            .into_iter()
+            .map(|grpc_olap_obj: UniversalOlapEntity| grpc_olap_obj)
+            .collect();
+
+        Ok(formula_members)
     }
 }
 

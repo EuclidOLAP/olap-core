@@ -4,6 +4,7 @@ use std::sync::Mutex;
 
 use crate::mdd::{Cube, Level, Member};
 use crate::olapmeta_grpc_client::GrpcClient;
+use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 
 // 全局线程安全的缓存
 static LEVEL_CACHE: Lazy<Mutex<HashMap<u64, Level>>> = Lazy::new(|| Mutex::new(HashMap::new()));
@@ -13,6 +14,9 @@ static MEMBER_CACHE: Lazy<Mutex<HashMap<u64, Member>>> = Lazy::new(|| Mutex::new
 
 // 全局线程安全的缓存
 static CUBE_CACHE: Lazy<Mutex<HashMap<u64, Cube>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+
+// 全局线程安全的缓存
+static FORMULA_MEMBER_CACHE: Lazy<Mutex<HashMap<u64, UniversalOlapEntity>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 /// 初始化时批量拉取 level 并放入缓存
 pub async fn init() {
@@ -45,6 +49,13 @@ pub async fn init() {
     for cube in cubes {
         // println!("OO>>>>>>>>>>>>>> cube: {:#?}", cube);
         cache.insert(cube.gid, cube);
+    }
+
+    let formula_members = grpc_cli.get_all_formula_members().await.unwrap();
+    let mut cache = FORMULA_MEMBER_CACHE.lock().unwrap();
+    for fm in formula_members {
+        println!(">>>>>>>>>>>>>>>> A Formula Member >>>>>>>>>>>>>>>>>>>>>>>>>>>>\n{:#?}", fm);
+        cache.insert(fm.gid, fm);
     }
 }
 
@@ -83,4 +94,21 @@ pub fn get_hierarchy_level(hierarchy_gid: u64, level_val: u32) -> Level {
         }
     }
     panic!("Level not found for hierarchy_gid = {} and level = {}", hierarchy_gid, level_val);
+}
+
+pub fn mdx_formula_members_fragment(cube: &Cube) -> String {
+    let cache = FORMULA_MEMBER_CACHE.lock().unwrap();
+
+    let fragments: Vec<String> = cache
+        .values()
+        .filter(|fm| fm.cube_gid == cube.gid)
+        .map(|fm| {
+            format!(
+                "Member &{}.&{}.&{}[{}] as {}",
+                fm.dimension_role_gid, fm.mount_point_gid, fm.gid, fm.name, fm.exp
+            )
+        })
+        .collect();
+
+    fragments.join(",\n")
 }
