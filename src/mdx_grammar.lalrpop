@@ -1,97 +1,133 @@
-                    use crate::mdx_tokens::{Token, LexicalError};
+use crate::mdx_tokens::{Token, LexicalError};
 
-                    use crate::mdx_ast;
-                    use crate::mdx_ast::AstFormulaObject;
-                    use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember};
-                    use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
-                    use crate::mdx_ast::AstFactory::{FactoryNum, FactoryStr, FactorySegs,FactoryTuple,FactoryExp};
-                    use crate::mdx_ast::{AstLevelFunction, AstLevelFnLevel, AstLevelFnLevels};
-                    use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent, AstMemberFnClosingPeriod, AstMemberFnOpeningPeriod};
-                    use crate::mdx_ast::{AstMemberFnCurrentMember};
-                    use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
-                    use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
-                    use crate::mdx_ast::{AstExpFnName};
-                    use crate::mdx_ast::{AstExpFnLookupCube};
-                    use crate::mdx_ast::AstExpFnIIf;
-                    use crate::mdx_ast::AstBoolExp;
-                    use crate::mdx_ast::AstBoolTerm;
-                    use crate::mdx_ast::AstBoolFactory;
-                    use crate::mdx_ast::AstBoolFunction;
-                    use crate::mdx_ast::AstBoolFnIsLeaf;
+use crate::mdx_ast;
+use crate::mdx_ast::AstFormulaObject;
+use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember};
+use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
+use crate::mdx_ast::AstFactory::{FactoryNum, FactoryStr, FactorySegs,FactoryTuple,FactoryExp};
+use crate::mdx_ast::{AstLevelFunction, AstLevelFnLevel, AstLevelFnLevels};
+use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent, AstMemberFnClosingPeriod, AstMemberFnOpeningPeriod};
+use crate::mdx_ast::{AstMemberFnCurrentMember};
+use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
+use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
+use crate::mdx_ast::{AstExpFnName};
+use crate::mdx_ast::{AstExpFnLookupCube};
+use crate::mdx_ast::AstExpFnIIf;
+use crate::mdx_ast::AstBoolExp;
+use crate::mdx_ast::AstBoolTerm;
+use crate::mdx_ast::AstBoolFactory;
+use crate::mdx_ast::AstBoolFunction;
+use crate::mdx_ast::AstBoolFnIsLeaf;
 
-                    grammar;
+grammar;
 
-                    extern {
-                      type Location = usize;
-                      type Error = LexicalError;
+extern {
+  type Location = usize;
+  type Error = LexicalError;
 
-                      enum Token {
-                        "with" => Token::With,
-                        "member" => Token::Member,
-                        "set" => Token::Set,
-                        "as" => Token::As,
+  enum Token {
+    "with" => Token::With,
+    "member" => Token::Member,
+    "set" => Token::Set,
+    "as" => Token::As,
 
-                        "select" => Token::Select,
-                        "on" => Token::On,
-                        "from" => Token::From,
-                        "where" => Token::Where,
-                        "BracketedString" => Token::BracketedString(<String>),
-                        "QuotedString" => Token::QuotedString(<String>),
+    "select" => Token::Select,
+    "on" => Token::On,
+    "from" => Token::From,
+    "where" => Token::Where,
+    "BracketedString" => Token::BracketedString(<String>),
+    "QuotedString" => Token::QuotedString(<String>),
 
-                        "Columns" => Token::Columns,
-                        "Rows" => Token::Rows,
-                        "Pages" => Token::Pages,
-                        "Chapters" => Token::Chapters,
-                        "Sections" => Token::Sections,
+    "Columns" => Token::Columns,
+    "Rows" => Token::Rows,
+    "Pages" => Token::Pages,
+    "Chapters" => Token::Chapters,
+    "Sections" => Token::Sections,
 
-                        "+" => Token::Plus,
-                        "-" => Token::Minus,
-                        "*" => Token::Multiplied,
-                        "/" => Token::Divided,
+    "+" => Token::Plus,
+    "-" => Token::Minus,
+    "*" => Token::Multiplied,
+    "/" => Token::Divided,
 
-                        "," => Token::Comma,
-                        "&" => Token::Ampersand,
-                        "." => Token::Dot,
-                        "int" => Token::Integer(<u64>),
-                        "double" => Token::Double(<f64>),
+    "," => Token::Comma,
+    "&" => Token::Ampersand,
+    "." => Token::Dot,
+    "int" => Token::Integer(<u64>),
+    "double" => Token::Double(<f64>),
 
-                        "(" => Token::RoundBracketLeft,
-                        ")" => Token::RoundBracketRight,
-                        "{" => Token::CurlyBraceLeft,
-                        "}" => Token::CurlyBraceRight,
+    "(" => Token::RoundBracketLeft,
+    ")" => Token::RoundBracketRight,
+    "{" => Token::CurlyBraceLeft,
+    "}" => Token::CurlyBraceRight,
 
-                        "<" => Token::LT,
-                        "<=" => Token::LE,
-                        "=" => Token::EQ,
-                        "<>" => Token::NE,
-                        ">" => Token::GT,
-                        ">=" => Token::GE,
+    "<" => Token::LT,
+    "<=" => Token::LE,
+    "=" => Token::EQ,
+    "<>" => Token::NE,
+    ">" => Token::GT,
+    ">=" => Token::GE,
 
-                        ";" => Token::Semicolon,
+    ";" => Token::Semicolon,
 
-                        "Parent" => Token::Parent,
-                        "CurrentMember" => Token::CurrentMember,
-                        "ClosingPeriod" => Token::ClosingPeriod,
-                        "OpeningPeriod" => Token::OpeningPeriod,
+    "Parent" => Token::Parent,
+    "CurrentMember" => Token::CurrentMember,
+    "ClosingPeriod" => Token::ClosingPeriod,
+    "OpeningPeriod" => Token::OpeningPeriod,
 
-                        "Children" => Token::Children,
+    "Children" => Token::Children,
 
-                        "Avg" => Token::Avg,
-                        "Count" => Token::Count,
-                        "Tunnel" => Token::Tunnel,
-                        "IIf" => Token::IIf,
+    "Avg" => Token::Avg,
+    "Count" => Token::Count,
+    "Tunnel" => Token::Tunnel,
+    "IIf" => Token::IIf,
 
-                        "Name" => Token::Name,
+    "Name" => Token::Name,
 
-                        "Level" => Token::Level,
-                        "Levels" => Token::Levels,
+    "Level" => Token::Level,
+    "Levels" => Token::Levels,
 
-                        "Not" => Token::Not,
-                        "Or" => Token::Or,
-                        "And" => Token::And,
+    "Not" => Token::Not,
+    "Or" => Token::Or,
+    "And" => Token::And,
 
-                        "IsLeaf" => Token::IsLeaf,
-                      }
+    "IsLeaf" => Token::IsLeaf,
+  }
+}
+
+                    // AstSelectionStatement
+                    pub SelectionMDX: mdx_ast::AstSelectionStatement = {
+                      "select" <axes:Axes> "from" <cube:Segments> (";")? => {
+                        mdx_ast::AstSelectionStatement {
+                          formula_objs: vec![],
+                          axes,
+                          cube,
+                          basic_slice: None,
+                        }
+                      },
+                      "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
+                        mdx_ast::AstSelectionStatement {
+                          formula_objs: vec![],
+                          axes,
+                          cube,
+                          basic_slice: Some(tuple),
+                        }
+                      },
+                      "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> (";")? => {
+                        mdx_ast::AstSelectionStatement {
+                          formula_objs: cfos,
+                          axes,
+                          cube,
+                          basic_slice: None,
+                        }
+                      },
+                      "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
+                        mdx_ast::AstSelectionStatement {
+                          formula_objs: cfos,
+                          axes,
+                          cube,
+                          basic_slice: Some(tuple),
+                        }
+                      },
                     }
 
                     // multi-dimensional object segment
@@ -208,42 +244,6 @@
                         list.push(axis);
                         list
                       }
-                    }
-
-                    // AstSelectionStatement
-                    pub SelectionMDX: mdx_ast::AstSelectionStatement = {
-                      "select" <axes:Axes> "from" <cube:Segments> (";")? => {
-                        mdx_ast::AstSelectionStatement {
-                          formula_objs: vec![],
-                          axes,
-                          cube,
-                          basic_slice: None,
-                        }
-                      },
-                      "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
-                        mdx_ast::AstSelectionStatement {
-                          formula_objs: vec![],
-                          axes,
-                          cube,
-                          basic_slice: Some(tuple),
-                        }
-                      },
-                      "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> (";")? => {
-                        mdx_ast::AstSelectionStatement {
-                          formula_objs: cfos,
-                          axes,
-                          cube,
-                          basic_slice: None,
-                        }
-                      },
-                      "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
-                        mdx_ast::AstSelectionStatement {
-                          formula_objs: cfos,
-                          axes,
-                          cube,
-                          basic_slice: Some(tuple),
-                        }
-                      },
                     }
 
                     CustomFormulaObjects: Vec<AstFormulaObject> = {
