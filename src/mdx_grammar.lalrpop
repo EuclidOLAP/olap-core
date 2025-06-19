@@ -1,11 +1,10 @@
 use crate::mdx_tokens::{Token, LexicalError};
+
 use crate::mdx_ast;
 use crate::mdx_ast::AstFormulaObject;
-use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember/*,CustomFormulaSet*/};
-
+use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember};
 use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
 use crate::mdx_ast::AstFactory::{FactoryNum, FactoryStr, FactorySegs,FactoryTuple,FactoryExp};
-
 use crate::mdx_ast::{AstLevelFunction, AstLevelFnLevel, AstLevelFnLevels};
 use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent, AstMemberFnClosingPeriod, AstMemberFnOpeningPeriod};
 use crate::mdx_ast::{AstMemberFnCurrentMember};
@@ -13,13 +12,10 @@ use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
 use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
 use crate::mdx_ast::{AstExpFnName};
 use crate::mdx_ast::{AstExpFnLookupCube};
-
 use crate::mdx_ast::AstExpFnIIf;
-
 use crate::mdx_ast::AstBoolExp;
 use crate::mdx_ast::AstBoolTerm;
 use crate::mdx_ast::AstBoolFactory;
-
 use crate::mdx_ast::AstBoolFunction;
 use crate::mdx_ast::AstBoolFnIsLeaf;
 
@@ -75,31 +71,28 @@ extern {
 
     "Parent" => Token::Parent,
     "CurrentMember" => Token::CurrentMember,
+    "ClosingPeriod" => Token::ClosingPeriod,
+    "OpeningPeriod" => Token::OpeningPeriod,
 
     "Children" => Token::Children,
 
     "Avg" => Token::Avg,
     "Count" => Token::Count,
     "Tunnel" => Token::Tunnel,
+    "IIf" => Token::IIf,
 
-    "ClosingPeriod" => Token::ClosingPeriod,
-    "OpeningPeriod" => Token::OpeningPeriod,
+    "Name" => Token::Name,
 
     "Level" => Token::Level,
     "Levels" => Token::Levels,
-
-    "IIf" => Token::IIf,
 
     "Not" => Token::Not,
     "Or" => Token::Or,
     "And" => Token::And,
 
     "IsLeaf" => Token::IsLeaf,
-
-    "Name" => Token::Name,
   }
 }
-
 
 // multi-dimensional object segment
 Seg: mdx_ast::AstSeg = {
