@@ -1,37 +1,18 @@
 							Euclid	SSAS	Essbase	in-cu
-<< Array Functions >>                             				
-SetToArray                  ____	SSAS	____	____
 
-<< Date Functions >>                              				
-DateRoll                    ____	____	Esbs	____
-GetFirstDate                ____	____	Esbs	____
-GetFirstDay                 ____	____	Esbs	____
-GetLastDate                 ____	____	Esbs	____
-GetLastDay                  ____	____	Esbs	____
-GetNextDay                  ____	____	Esbs	____
-JulianDate                  ____	____	Esbs	____
-TodateEx                    ____	____	Esbs	____
-Today                       ____	____	Esbs	____
-UnixDate                    ____	____	Esbs	____
-
-<< Hierarchy Functions >>                         				
-Dimension                   ____	SSAS	____	____
-Dimensions                  ____	SSAS	____	____
-Hierarchy                   ____	SSAS	____	____
-
-<< Level Functions >>                             				
-Level                       ____	SSAS	Esbs	____
-Levels                      ____	SSAS	Esbs	____
+<< Level Functions >>
+Level                       Eucl	SSAS	Esbs	____
+Levels                      Eucl	SSAS	Esbs	____
 Generation                  ____	____	Esbs	____
 Generations                 ____	____	Esbs	____
 
-<< Logical Functions >>                           				
-IsEmpty                     ____	SSAS	Esbs	intc
-Case                        ____	SSAS	Esbs	intc
-IsAncestor                  ____	SSAS	Esbs	____
-IsGeneration                ____	SSAS	Esbs	____
-IsLeaf                      ____	SSAS	Esbs	____
-IsSibling                   ____	SSAS	Esbs	____
+<< Logical Functions >>
+IsEmpty                     todo	SSAS	Esbs	intc
+Case                        todo	SSAS	Esbs	intc
+IsAncestor                  todo	SSAS	Esbs	____
+IsGeneration                todo	SSAS	Esbs	____
+IsLeaf                      Eucl	SSAS	Esbs	____
+IsSibling                   todo	SSAS	Esbs	____
 Contains                    ____	____	Esbs	____
 Is                          ____	____	Esbs	____
 IsAccType                   ____	____	Esbs	____
@@ -40,23 +21,23 @@ IsLevel                     ____	____	Esbs	____
 IsUda                       ____	____	Esbs	____
 IsValid                     ____	____	Esbs	____
 
-<< Member Functions >>                            				
-ClosingPeriod               doing	SSAS	Esbs	intc
-CurrentMember               ____	SSAS	Esbs	intc
-FirstChild                  ____	SSAS	Esbs	intc
-FirstSibling                ____	SSAS	Esbs	intc
-Lag                         ____	SSAS	Esbs	intc
-LastChild                   ____	SSAS	Esbs	intc
-LastSibling                 ____	SSAS	Esbs	intc
-Lead                        ____	SSAS	Esbs	intc
-OpeningPeriod               ____	SSAS	Esbs	intc
-ParallelPeriod              ____	SSAS	Esbs	intc
+<< Member Functions >>
+ClosingPeriod               Eucl	SSAS	Esbs	intc
+CurrentMember               Eucl	SSAS	Esbs	intc
+FirstChild                  todo	SSAS	Esbs	intc
+FirstSibling                todo	SSAS	Esbs	intc
+Lag                         todo	SSAS	Esbs	intc
+LastChild                   todo	SSAS	Esbs	intc
+LastSibling                 todo	SSAS	Esbs	intc
+Lead                        todo	SSAS	Esbs	intc
+OpeningPeriod               Eucl	SSAS	Esbs	intc
+ParallelPeriod              todo	SSAS	Esbs	intc
 Parent                      Eucl	SSAS	Esbs	intc
-PrevMember                  ____	SSAS	Esbs	intc
-NextMember                  ____	SSAS	Esbs	intc
-Ancestor                    ____	SSAS	Esbs	____
-Cousin                      ____	SSAS	Esbs	____
-DefaultMember               ____	SSAS	Esbs	____
+PrevMember                  todo	SSAS	Esbs	intc
+NextMember                  todo	SSAS	Esbs	intc
+Ancestor                    todo	SSAS	Esbs	____
+Cousin                      todo	SSAS	Esbs	____
+DefaultMember               todo	SSAS	Esbs	____
 CurrentAxisMember           ____	____	Esbs	____
 DataMember                  ____	SSAS	____	____
 DateToMember                ____	____	Esbs	____
@@ -69,28 +50,28 @@ StrToMember                 ____	SSAS	____	____
 UnknownMember               ____	SSAS	____	____
 ValidMeasure                ____	SSAS	____	____
 
-<< Numeric Functions >>                           				
-CoalesceEmpty               ____	SSAS	Esbs	intc
+<< Numeric Functions >>
+CoalesceEmpty               todo	SSAS	Esbs	intc
 Count (Set)                 Eucl	SSAS	____	____
-IIf                         ____	SSAS	Esbs	____
-LookupCube                  ____	SSAS	____	____
-Sum                         ____	SSAS	Esbs	intc
+IIf                         Eucl	SSAS	Esbs	____
+LookupCube/Tunnel           Eucl	SSAS	____	____
+Sum                         todo	SSAS	Esbs	intc
 Avg                         Eucl	SSAS	Esbs	intc
-Max                         ____	SSAS	Esbs	intc
-Min                         ____	SSAS	Esbs	intc
-Aggregate                   ____	SSAS	Esbs	intc
-Median                      ____	SSAS	Esbs	intc
-Rank                        ____	SSAS	Esbs	intc
-Abs                         ____	____	Esbs	intc
-Correlation                 ____	SSAS	____	intc
-Covariance                  ____	SSAS	____	intc
-LinRegIntercept             ____	SSAS	____	intc
-LinRegR2                    ____	SSAS	____	intc
-LinRegSlope                 ____	SSAS	____	intc
-LinRegVariance              ____	SSAS	____	intc
-Stdev                       ____	SSAS	____	intc
-Var                         ____	SSAS	____	intc
-Ordinal                     ____	SSAS	Esbs	____
+Max                         todo	SSAS	Esbs	intc
+Min                         todo	SSAS	Esbs	intc
+Aggregate                   todo	SSAS	Esbs	intc
+Median                      todo	SSAS	Esbs	intc
+Rank                        todo	SSAS	Esbs	intc
+Abs                         todo	____	Esbs	intc
+Correlation                 todo	SSAS	____	intc
+Covariance                  todo	SSAS	____	intc
+LinRegIntercept             todo	SSAS	____	intc
+LinRegR2                    todo	SSAS	____	intc
+LinRegSlope                 todo	SSAS	____	intc
+LinRegVariance              todo	SSAS	____	intc
+Stdev                       todo	SSAS	____	intc
+Var                         todo	SSAS	____	intc
+Ordinal                     todo	SSAS	Esbs	____
 CalculationCurrentPass      ____	SSAS	____	____
 CalculationPassValue        ____	SSAS	____	____
 CellValue                   ____	____	Esbs	____
@@ -132,41 +113,41 @@ Variance                    ____	SSAS	____	____
 VarianceP                   ____	SSAS	____	____
 VarP                        ____	SSAS	____	____
 
-<< Set Functions >>                               				
-BottomPercent               ____	SSAS	____	intc
+<< Set Functions >>
+BottomPercent               todo	SSAS	____	intc
 Children                    Eucl	SSAS	____	intc
-CrossJoin                   ____	SSAS	Esbs	intc
-Descendants                 ____	SSAS	____	intc
-Except                      ____	SSAS	Esbs	intc
-Filter                      ____	SSAS	____	intc
-Intersect                   ____	SSAS	Esbs	intc
-LateralMembers              ____	____	____	____
-Members                     ____	____	____	intc
-Order                       ____	SSAS	____	intc
-Tail                        ____	SSAS	Esbs	____
-TopCount                    ____	SSAS	____	intc
-TopPercent                  ____	SSAS	____	intc
-Union                       ____	SSAS	Esbs	intc
-Ytd                         ____	SSAS	____	intc
-Qtd                         ____	SSAS	____	intc
-Distinct                    ____	SSAS	Esbs	intc
-DrilldownLevel              ____	SSAS	____	intc
-DrilldownLevelBottom        ____	SSAS	____	intc
-DrillDownLevelTop           ____	SSAS	____	intc
-DrillDownMember             ____	SSAS	____	intc
-DrillDownMemberBottom       ____	SSAS	____	intc
-DrillDownMemberTop          ____	SSAS	____	intc
-DrillupLevel                ____	SSAS	____	intc
-DrillupMember               ____	SSAS	____	intc
-Ancestors                   ____	SSAS	____	intc
-BottomCount                 ____	SSAS	Esbs	intc
-BottomSum                   ____	SSAS	Esbs	intc
-TopSum                      ____	SSAS	Esbs	intc
-Extract                     ____	SSAS	Esbs	intc
-PeriodsToDate               ____	SSAS	Esbs	intc
-Generate                    ____	SSAS	Esbs	____
-Head                        ____	SSAS	Esbs	____
-Subset                      ____	SSAS	Esbs	____
+CrossJoin                   todo	SSAS	Esbs	intc
+Descendants                 todo	SSAS	____	intc
+Except                      todo	SSAS	Esbs	intc
+Filter                      todo	SSAS	____	intc
+Intersect                   todo	SSAS	Esbs	intc
+LateralMembers              todo	____	____	____
+Members                     todo	____	____	intc
+Order                       todo	SSAS	____	intc
+Tail                        todo	SSAS	Esbs	____
+TopCount                    todo	SSAS	____	intc
+TopPercent                  todo	SSAS	____	intc
+Union                       todo	SSAS	Esbs	intc
+Ytd                         todo	SSAS	____	intc
+Qtd                         todo	SSAS	____	intc
+Distinct                    todo	SSAS	Esbs	intc
+DrilldownLevel              todo	SSAS	____	intc
+DrilldownLevelBottom        todo	SSAS	____	intc
+DrillDownLevelTop           todo	SSAS	____	intc
+DrillDownMember             todo	SSAS	____	intc
+DrillDownMemberBottom       todo	SSAS	____	intc
+DrillDownMemberTop          todo	SSAS	____	intc
+DrillupLevel                todo	SSAS	____	intc
+DrillupMember               todo	SSAS	____	intc
+Ancestors                   todo	SSAS	____	intc
+BottomCount                 todo	SSAS	Esbs	intc
+BottomSum                   todo	SSAS	Esbs	intc
+TopSum                      todo	SSAS	Esbs	intc
+Extract                     todo	SSAS	Esbs	intc
+PeriodsToDate               todo	SSAS	Esbs	intc
+Generate                    todo	SSAS	Esbs	____
+Head                        todo	SSAS	Esbs	____
+Subset                      todo	SSAS	Esbs	____
 AddCalculatedMembers        ____	SSAS	____	____
 AllMembers                  ____	SSAS	____	____
 Ascendants                  ____	SSAS	____	____
@@ -188,8 +169,8 @@ Unorder                     ____	SSAS	____	____
 VisualTotals                ____	SSAS	____	____
 Wtd                         ____	SSAS	____	intc
 
-<< String Functions >>                            				
-Name                        ____	SSAS	____	intc
+<< String Functions >>
+Name                        Eucl	SSAS	____	intc
 CalculationPassValue        ____	SSAS	____	____
 CoalesceEmpty               ____	SSAS	____	____
 Concat                      ____	____	Esbs	____
@@ -210,11 +191,11 @@ UniqueName                  ____	SSAS	____	____
 Upper                       ____	____	Esbs	____
 UserName                    ____	SSAS	____	____
 
-<< Subcube Functions >>                           				
+<< Subcube Functions >>
 Leaves                      ____	SSAS	____	____
 This                        ____	SSAS	____	____
 
-<< Tuple Functions >>                             				
+<< Tuple Functions >>
 Current                     ____	SSAS	____	____
 CurrentTuple                ____	____	Esbs	____
 Item                        ____	____	Esbs	____
@@ -222,5 +203,25 @@ Item (Tuple)                ____	SSAS	____	____
 Root                        ____	SSAS	____	____
 StrToTuple                  ____	SSAS	____	____
 
-<< Other Functions >>                             				
+<< Date Functions >>
+DateRoll                    ____	____	Esbs	____
+GetFirstDate                ____	____	Esbs	____
+GetFirstDay                 ____	____	Esbs	____
+GetLastDate                 ____	____	Esbs	____
+GetLastDay                  ____	____	Esbs	____
+GetNextDay                  ____	____	Esbs	____
+JulianDate                  ____	____	Esbs	____
+TodateEx                    ____	____	Esbs	____
+Today                       ____	____	Esbs	____
+UnixDate                    ____	____	Esbs	____
+
+<< Hierarchy Functions >>
+Dimension                   ____	SSAS	____	____
+Dimensions                  ____	SSAS	____	____
+Hierarchy                   ____	SSAS	____	____
+
+<< Array Functions >>
+SetToArray                  ____	SSAS	____	____
+
+<< Other Functions >>
 Error                       ____	SSAS	____	____

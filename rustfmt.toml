@@ -1,0 +1,20 @@
+# Rust edition
+edition = "2021"
+
+# Maximum line width (characters per line)
+max_width = 100
+
+# Use hard tabs (true) or spaces (false) for indentation
+hard_tabs = false
+
+# Number of spaces per tab character
+tab_spaces = 4
+
+# Aggressively format chains and parameters to fit lines
+use_small_heuristics = "Max"
+
+# Line ending style (Unix/Linux: LF, Windows: CRLF)
+newline_style = "Unix"
+
+# Preserve leading pipes in match arms for comment alignment
+match_arm_leading_pipes = "Preserve"

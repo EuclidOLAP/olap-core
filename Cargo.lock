@@ -738,6 +738,7 @@ dependencies = [
  "logos-codegen",
  "logos-derive",
  "nom",
+ "once_cell",
  "prost",
  "tokio",
  "tonic",

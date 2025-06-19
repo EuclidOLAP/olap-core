@@ -1,26 +1,20 @@
 syntax = "proto3";
 
-// 包名，定义了该 gRPC 服务所在的命名空间
-// Package name, defines the namespace of the gRPC service
+// Package namespace for Euclid OLAP gRPC services
 package euclidolap;
 
-// 定义OLAP服务
-// Definition of the OLAP service
+// OLAP service definition
 service OlapApi {
-  // 执行OLAP操作的RPC方法，接受OLAPRequest并返回OLAPResponse
-  // RPC method for executing OLAP operation, accepts OLAPRequest and returns OLAPResponse
+  // Executes an OLAP operation and returns results
   rpc ExecuteOperation(OLAPRequest) returns (OLAPResponse);
 }
 
-// OLAP请求消息
-// OLAP request message
+// Request message for OLAP operations
 message OLAPRequest {
-  // 操作类型，如查询、计算等
-  // The type of operation, such as query, calculation, etc.
+  // Type of OLAP operation (e.g., "query", "calculation")
   string operation_type = 1;
 
-  // OLAP操作的语句，如MDX表达式
-  // The OLAP operation statement, such as MDX expression
+  // Operation statement (e.g., MDX query expression)
   string statement = 2;
 }
 

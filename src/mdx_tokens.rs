@@ -100,6 +100,8 @@ pub enum Token {
 
     #[regex("(?i)Parent")]
     Parent,
+    #[regex("(?i)CurrentMember")]
+    CurrentMember,
 
     #[regex("(?i)Children")]
     Children,
@@ -108,9 +110,50 @@ pub enum Token {
     Avg,
     #[regex("(?i)Count")]
     Count,
+    #[regex("(?i)Tunnel")]
+    Tunnel,
 
     #[regex("(?i)ClosingPeriod")]
     ClosingPeriod,
+
+    #[regex("(?i)OpeningPeriod")]
+    OpeningPeriod,
+
+    #[regex("(?i)Level")]
+    Level,
+
+    #[regex("(?i)Levels")]
+    Levels,
+
+    #[regex("(?i)IIf")]
+    IIf,
+
+    #[regex("(?i)Not")]
+    Not,
+
+    #[regex("(?i)Or")]
+    Or,
+    #[regex("(?i)And")]
+    And,
+
+    #[token("<")] // Less Than
+    LT,
+    #[token("<=")] // Less Than or Equal To
+    LE,
+    #[token("=")] // Equal To
+    EQ,
+    #[token("<>")] // Not Equal To
+    NE,
+    #[token(">")] // Greater Than
+    GT,
+    #[token(">=")] // Greater Than or Equal To
+    GE,
+
+    #[regex("(?i)IsLeaf")]
+    IsLeaf,
+
+    #[regex("(?i)Name")]
+    Name,
 }
 
 impl fmt::Display for Token {
