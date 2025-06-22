@@ -94,500 +94,734 @@ extern {
   }
 }
 
-                    // AstSelectionStatement
-                    pub SelectionMDX: mdx_ast::AstSelectionStatement = {
-                      "select" <axes:Axes> "from" <cube:Segments> (";")? => {
-                        mdx_ast::AstSelectionStatement {
-                          formula_objs: vec![],
-                          axes,
-                          cube,
-                          basic_slice: None,
-                        }
-                      },
-                      "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
-                        mdx_ast::AstSelectionStatement {
-                          formula_objs: vec![],
-                          axes,
-                          cube,
-                          basic_slice: Some(tuple),
-                        }
-                      },
-                      "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> (";")? => {
-                        mdx_ast::AstSelectionStatement {
-                          formula_objs: cfos,
-                          axes,
-                          cube,
-                          basic_slice: None,
-                        }
-                      },
-                      "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
-                        mdx_ast::AstSelectionStatement {
-                          formula_objs: cfos,
-                          axes,
-                          cube,
-                          basic_slice: Some(tuple),
-                        }
-                      },
-                    }
+// #########################################################################################################
+// #############################################  new grammar  #############################################
+// #########################################################################################################
 
-                    // multi-dimensional object segment
-                    Seg: mdx_ast::AstSeg = {
-                      "&" <int:"int"> => {
-                        mdx_ast::AstSeg::Gid(int)
-                      },
-                      "&" <int:"int"> <bra_str:"BracketedString"> => {
-                        mdx_ast::AstSeg::GidStr(int, bra_str)
-                      },
-                      <bra_str:"BracketedString"> => {
-                        mdx_ast::AstSeg::Str(bra_str)
-                      },
-                      <mfn: MemberFunction> => {
-                        mdx_ast::AstSeg::MemberFunction(mfn)
-                      },
-                      <setfn: SetFnSpec> => {
-                        mdx_ast::AstSeg::SetFunction(setfn)
-                      },
-                      <exp_fn: ExpFnSpec> => {
-                        mdx_ast::AstSeg::ExpFn(exp_fn)
-                      },
-                      <lv_fn: LevelFunction> => {
-                        mdx_ast::AstSeg::LevelFn(lv_fn)
-                      },
-                    }
+pub EuclidMdxStatement: () = {
+  <_mdx_ps: MdxPrimarySliced> (";")? => {},
+  <_cus_objs: WithCustomObjects> <_mdx_ps: MdxPrimarySliced> (";")? => {},
+}
 
-                    Segments: Vec<mdx_ast::AstSeg> = {
-                      <seg:Seg> => {
-                        let mut list = Vec::with_capacity(6);
-                        list.push(seg);
-                        list
-                      },
-                      <segs:Segments> "." <seg:Seg> => {
-                        let mut list = segs;
-                        list.push(seg);
-                        list
-                      }
-                    }
+MdxPrimarySliced: () = {
+  <_mdx_pri: MdxPrimary> => {},
+  <_mdx_pri: MdxPrimary> <_slicing: WhereSlicing> => {},
+}
 
-                    SegmentsWrap: mdx_ast::AstSegments = {
-                      <segs:Segments> => {
-                        mdx_ast::AstSegments{segs}
-                      }
-                    }
+WithCustomObjects: () = {
+  "with" <cus_obj: CustomMdxObject> => {},
+  <cus_objs: WithCustomObjects> (",")? <cus_obj: CustomMdxObject> => {},
+}
 
-                    Tuple: Vec<mdx_ast::AstSegments> = {
-                      <sw:SegmentsWrap> => {
-                        vec![sw]
-                      },
-                      <tuple:Tuple> "," <sw:SegmentsWrap> => {
-                        let mut list = tuple;
-                        list.push(sw);
-                        list
-                      }
-                    }
+SegsObj: () = {
+  <seg: Seg___EUCMDXSPEC> => {},
+  <segs_obj: SegsObj> "." <seg: Seg___EUCMDXSPEC> => {},
+}
 
-                    TupleWrap: mdx_ast::AstTuple = {
-                      "(" <tuple:Tuple> ")" => {
-                        mdx_ast::AstTuple::SegsList(tuple)
-                      }
-                    }
+MemberFunc: () = {
+  // #############
+  // ##  Parent ##
+  // #############
+  "Parent" => {},
+  "Parent" "(" ")" => {},
+  "Parent" "(" <segs_mbr: SegsObj> ")" => {},
+  // ###################
+  // ## CurrentMember ##
+  // ###################
+  "CurrentMember" => {},
+  "CurrentMember" "(" <segs_dim_role: SegsObj> ")" => {},
+  // ###################
+  // ## OpeningPeriod ##
+  // ###################
+  "OpeningPeriod" => {},
+  "OpeningPeriod" "(" ")" => {},
+  "OpeningPeriod" "(" <level_segs: SegsObj> ")" => {},
+  "OpeningPeriod" "(" <level_segs: SegsObj> "," <member_segs: SegsObj> ")" => {},
+  // ###################
+  // ## ClosingPeriod ##
+  // ###################
+  "ClosingPeriod" => {},
+  "ClosingPeriod" "(" ")" => {},
+  "ClosingPeriod" "(" <level_segs: SegsObj> ")" => {},
+  "ClosingPeriod" "(" <level_segs: SegsObj> "," <member_segs: SegsObj> ")" => {},
+}
 
-                    TupleWrap_2: mdx_ast::AstTuple = {
-                      "(" <sw:SegmentsWrap> "," <tuple:Tuple> ")" => {
-                        let mut list = tuple; // Vec<mdx_ast::AstSegments>
-                        list.insert(0, sw); // mdx_ast::AstSegments
-                        mdx_ast::AstTuple::SegsList(list)
-                      }
-                    }
+LevelFunc: () = {
+  // ###########
+  // ## Level ##
+  // ###########
+  "Level" => {},
+  "Level" "(" ")" => {},
+  "Level" "(" <segs_mem_role: SegsObj> ")" => {},
+  // ############
+  // ## Levels ##
+  // ############
+  "Levels" "(" <exp_lv_num: Expression___EUCMDXSPEC> ")" => {},
+  "Levels" "(" <segs_dim_role: SegsObj> "," <exp_lv_num: Expression___EUCMDXSPEC> ")" => {},
+}
 
-                    Set: Vec<mdx_ast::AstTuple> = {
-                      <ast_tp:TupleWrap> => {
-                        vec![ast_tp]
-                      },
-                      <set:Set> "," <ast_tp:TupleWrap> => {
-                        let mut list = set;
-                        list.push(ast_tp);
-                        list
-                      }
-                    }
+Expression___EUCMDXSPEC: () = {
+  <term: Term___EUCMDXSPEC> => {},
+  <exp: Expression___EUCMDXSPEC> "+" <term: Term___EUCMDXSPEC> => {},
+  <exp: Expression___EUCMDXSPEC> "-" <term: Term___EUCMDXSPEC> => {},
+}
 
-                    SetWrap: mdx_ast::AstSet = {
-                      "{" <tuples:Set> "}" => {
-                        mdx_ast::AstSet::Tuples(tuples)
-                      }
-                    }
+Term___EUCMDXSPEC: () = {
+  <factory: Factory___EUCMDXSPEC> => {},
+  <term: Term___EUCMDXSPEC> "*" <factory: Factory___EUCMDXSPEC> => {},
+  <term: Term___EUCMDXSPEC> "/" <factory: Factory___EUCMDXSPEC> => {},
+}
 
-                    // COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
-                    Axis: mdx_ast::AstAxis = {
-                      <ast_set:SetWrap> "on" <axpos:AxisPos> => {
-                        mdx_ast::AstAxis::SetDefinition {
-                          ast_set,
-                          pos: axpos,
-                        }
-                      }
-                    }
+Factory___EUCMDXSPEC: () = {
+  <dec_val: "double"> => {},
+  <int_val: "int"> => {},
+  <str: "QuotedString"> => {},
+  <segs_obj: SegsObj> => {},
+  <bracket_tuple: RoundBracketTuple_2> => {},
+  "(" <exp: Expression___EUCMDXSPEC> ")" => {},
+}
 
-                    AxisPos: u64 = {
-                      <axpos:"int"> => axpos,
-                      "Columns"     => 0,
-                      "Rows"        => 1,
-                      "Pages"       => 2,
-                      "Chapters"    => 3,
-                      "Sections"    => 4,
-                    }
+RoundBracketTuple: () = {
+  "(" <segs_objs: SegsObjects> ")" => {},
+}
 
-                    Axes: Vec<mdx_ast::AstAxis> = {
-                      <axis:Axis> => {
-                        vec![axis]
-                      },
-                      <axes:Axes> "," <axis:Axis> => {
-                        let mut list = axes;
-                        list.push(axis);
-                        list
-                      }
-                    }
+SegsObjects: () = {
+  <segs_obj: SegsObj> => {},
+  <segs_objs: SegsObjects> "," <segs_obj: SegsObj> => {},
+}
 
-                    CustomFormulaObjects: Vec<AstFormulaObject> = {
-                      <fm:FormulaMember> => {
-                        vec![fm]
-                      },
-                      <fs:FormulaSet> => {
-                        vec![fs]
-                      },
-                      <cfos:CustomFormulaObjects> (",")? <fm:FormulaMember> => {
-                        let mut list = cfos;
-                        list.push(fm);
-                        list
-                      },
-                      <cfos:CustomFormulaObjects> (",")? <fs:FormulaSet> => {
-                        let mut list = cfos;
-                        list.push(fs);
-                        list
-                      }
-                    }
+SetFunc: () = {
+  // ################
+  // ##  Children  ##
+  // ################
+  "Children" => {},
+  "Children" "(" ")" => {},
+  "Children" "(" <segs_mem: SegsObj> ")" => {},
+}
 
-                    FormulaMember: AstFormulaObject = {
-                      "member" <sw:SegmentsWrap> "as" <exp:Expression> => {
-                        CustomFormulaMember(sw, exp)
-                      }
-                    }
+Seg___EUCMDXSPEC: () = {
+  "&" <int: "int"> => {},
+  "&" <int: "int"> <bra_str: "BracketedString"> => {},
+  <bra_str: "BracketedString"> => {},
+  <m_fn: MemberFunc> => {},
+  <lv_fn: LevelFunc> => {},
+  <set_fn: SetFunc> => {},
+  <exp_fn: ExpFunc> => {},
+}
 
-                    FormulaSet: AstFormulaObject = {
-                      "set" <_sw:SegmentsWrap> "as" => {
-                        // CustomFormulaSet
-                        todo!("<<< MDX Grammar Exception >>> CustomFormulaSet not implemented yet.")
-                      }
-                    }
+Tuples: () = {
+  <rb_tuple: RoundBracketTuple> => {},
+  <segs_obj: SegsObj> => {},
+  <tuples: Tuples> "," <rb_tuple: RoundBracketTuple> => {},
+  <tuples: Tuples> "," <segs_obj: SegsObj> => {},
+}
 
-                    Expression: AstExpression = {
-                      <term:Term> => {
-                        AstExpression {
-                          terms: vec![(' ', term)],
-                        }
-                      },
-                      <exp:Expression> "+" <term:Term> => {
-                        let mut e = exp;
-                        e.terms.push(('+', term));
-                        e
-                      },
-                      <exp:Expression> "-" <term:Term> => {
-                        let mut e = exp;
-                        e.terms.push(('-', term));
-                        e
-                      }
-                    }
+CurlyBraceSet: () = {
+  "{" <tuples: Tuples> "}" => {},
+}
 
-                    Term: AstTerm = {
-                      <factory:Factory> => {
-                        AstTerm {
-                          factories: vec![(' ', factory)],
-                        }
-                      },
-                      <term:Term> "*" <factory:Factory> => {
-                        let mut t = term;
-                        t.factories.push(('*', factory));
-                        t
-                      },
-                      <term:Term> "/" <factory:Factory> => {
-                        let mut t = term;
-                        t.factories.push(('/', factory));
-                        t
-                      }
-                    }
+ExpFunc: () = {
+  // ############
+  // ##  Name  ##
+  // ############
+  "Name" => {},
+  "Name" "(" ")" => {},
+  "Name" "(" <segs_obj: SegsObj> ")" => {},
+  
+  // #############
+  // ##  Count  ##
+  // #############
+  "Count" => {},
+  "Count" "(" ")" => {},
+  "Count" "(" <brace_set: CurlyBraceSet> ")" => {},
+  "Count" "(" <segs_set: SegsObj> ")" => {},
 
-                    Factory: AstFactory = {
-                      <value:"double"> => {
-                        FactoryNum(value)
-                      },
-                      <int_val:"int"> => {
-                        let double_val: f64 = int_val as f64;
-                        FactoryNum(double_val)
-                      },
-                      <str:"QuotedString"> => {
-                        FactoryStr(str)
-                      },
-                      <segs_wrap:SegmentsWrap> => {
-                        FactorySegs(segs_wrap)
-                      },
-                      <tuple_wrap:TupleWrap_2> => {
-                        FactoryTuple(tuple_wrap)
-                      },
-                      "(" <exp:Expression> ")" => {
-                        FactoryExp(exp)
-                      },
-                    }
+  // ###########
+  // ##  Avg  ##
+  // ###########
+  "Avg" => {},
+  "Avg" "(" ")" => {},
+  "Avg" "(" <brace_set: CurlyBraceSet> ")" => {},
+  "Avg" "(" <segs_set: SegsObj> ")" => {},
+  
+  // ###########
+  // ##  IIf  ##
+  // ###########
+  "IIf" "(" <bool_exp: BoolExp> "," <exp_t: Expression___EUCMDXSPEC> "," <exp_f: Expression___EUCMDXSPEC> ")" => {},
+  
+  // ##############
+  // ##  Tunnel  ##
+  // ##############
+  "Tunnel" "(" <cube_segs: SegsObj> "," <tunnel_exp: Expression___EUCMDXSPEC> ")" => {},
+  "Tunnel" "(" <tunnel_exp: Expression___EUCMDXSPEC> ")" => {},
+  
+}
 
-                    LevelFunction: AstLevelFunction = {
-                      <lv: LvFnLevel> => {
-                        AstLevelFunction::Level(lv)
-                      },
-                      <lvs: LvFnLevels> => {
-                        AstLevelFunction::Levels(lvs)
-                      },
-                    }
+BoolExp: () = {
+  <bt: BoolTerm___EUCMDXSPEC> => {},
+  "Not" <bt: BoolTerm___EUCMDXSPEC> => {},
+  <bool_exp: BoolExp> "Or" <bt: BoolTerm___EUCMDXSPEC> => {},
+}
 
-                    LvFnLevel: AstLevelFnLevel = {
-                      "Level" => {
-                        AstLevelFnLevel::NoParam
-                      },
-                      "Level" "(" ")" => {
-                        AstLevelFnLevel::NoParam
-                      },
-                      "Level" "(" <segments: SegmentsWrap> ")" => {
-                        AstLevelFnLevel::OneParam(segments)
-                      },
-                    }
+BoolTerm___EUCMDXSPEC: () = {
+  <bf: BoolFac> => {},
+  <bt: BoolTerm___EUCMDXSPEC> "And" <bf: BoolFac> => {},
+}
 
-                    LvFnLevels: AstLevelFnLevels = {
-                      "Levels" "(" <idx_exp: Expression> ")" => {
-                        AstLevelFnLevels::new(None, idx_exp)
-                      },
-                      "Levels" "(" <dim_segs: SegmentsWrap> "," <idx_exp: Expression> ")" => {
-                        AstLevelFnLevels::new(Some(dim_segs), idx_exp)
-                      },
-                    }
+BoolFac: () = {
+  <exp_left: Expression___EUCMDXSPEC> "<"  <exp_right: Expression___EUCMDXSPEC> => {},
+  <exp_left: Expression___EUCMDXSPEC> "<=" <exp_right: Expression___EUCMDXSPEC> => {},
+  <exp_left: Expression___EUCMDXSPEC> "="  <exp_right: Expression___EUCMDXSPEC> => {},
+  <exp_left: Expression___EUCMDXSPEC> "<>" <exp_right: Expression___EUCMDXSPEC> => {},
+  <exp_left: Expression___EUCMDXSPEC> ">"  <exp_right: Expression___EUCMDXSPEC> => {},
+  <exp_left: Expression___EUCMDXSPEC> ">=" <exp_right: Expression___EUCMDXSPEC> => {},
+  "(" <bool_exp: BoolExp> ")" => {},
+  <bool_fn: BoolFunc> => {},
+}
 
-                    MemberFunction: AstMemberFunction = {
-                      <parent: MemberFnParent> => {
-                        AstMemberFunction::Parent(parent)
-                      },
-                      <cp: MemberFnClosingPeriod> => {
-                        AstMemberFunction::ClosingPeriod(cp)
-                      },
-                      <op: MemberFnOpeningPeriod> => {
-                        AstMemberFunction::OpeningPeriod(op)
-                      },
-                      <cur_mbr: MemberFnCurrentMember> => {
-                        AstMemberFunction::CurrentMember(cur_mbr)
-                      },
-                    }
+BoolFunc: () = {
+  // ##############
+  // ##  IsLeaf  ##
+  // ##############
+  "IsLeaf" "(" <member_segs: SegsObj> ")" => {},
+}
 
-                    MemberFnParent: AstMemberFnParent = {
-                      "Parent" => {
-                        AstMemberFnParent::NoParam
-                      },
-                      "Parent" "(" ")" => {
-                        AstMemberFnParent::NoParam
-                      },
-                      "Parent" "(" <segments: SegmentsWrap> ")" => {
-                        AstMemberFnParent::HasParam(segments)
-                      },
-                    }
+CustomMdxObject: () = {
+  "member" <frml_member: SegsObj> "as" <exp: Expression___EUCMDXSPEC> => {},
+  "set" <cus_set: SegsObj> "as" <segs_set: SegsObj> => {},
+  "set" <cus_set: SegsObj> "as" <brace_set: CurlyBraceSet> => {},
+}
 
-                    MemberFnClosingPeriod: AstMemberFnClosingPeriod = {
-                      "ClosingPeriod" => {
-                        AstMemberFnClosingPeriod::NoParam
-                      },
-                      "ClosingPeriod" "(" ")" => {
-                        AstMemberFnClosingPeriod::NoParam
-                      },
-                      "ClosingPeriod" "(" <level_segs: SegmentsWrap> ")" => {
-                        AstMemberFnClosingPeriod::OneParam(level_segs)
-                      },
-                      "ClosingPeriod" "(" <level_segs: SegmentsWrap> "," <member_segs: SegmentsWrap> ")" => {
-                        AstMemberFnClosingPeriod::TwoParams(level_segs, member_segs)
-                      },
-                    }
+RoundBracketTuple_2: () = {
+  "(" <segs_obj: SegsObj> "," <segs_objs: SegsObjects> ")" => {},
+}
 
-                    MemberFnOpeningPeriod: AstMemberFnOpeningPeriod = {
-                      "OpeningPeriod" => {
-                        AstMemberFnOpeningPeriod::NoParam
-                      },
-                      "OpeningPeriod" "(" ")" => {
-                        AstMemberFnOpeningPeriod::NoParam
-                      },
-                      "OpeningPeriod" "(" <level_segs: SegmentsWrap> ")" => {
-                        AstMemberFnOpeningPeriod::OneParam(level_segs)
-                      },
-                      "OpeningPeriod" "(" <level_segs: SegmentsWrap> "," <member_segs: SegmentsWrap> ")" => {
-                        AstMemberFnOpeningPeriod::TwoParams(level_segs, member_segs)
-                      },
-                    }
+MdxPrimary: () = {
+  "select" <axes: Axes___EUCMDXSPEC> "from" <segs_cube: SegsObj> => {},
+}
 
-                    MemberFnCurrentMember: AstMemberFnCurrentMember = {
-                      "CurrentMember" => {
-                        AstMemberFnCurrentMember::NoParam
-                      },
-                      "CurrentMember" "(" ")" => {
-                        AstMemberFnCurrentMember::NoParam
-                      },
-                      "CurrentMember" "(" <segments: SegmentsWrap> ")" => {
-                        AstMemberFnCurrentMember::InnerParam(segments)
-                      },
-                    }
+Axes___EUCMDXSPEC: () = {
+  <axis: Axis___EUCMDXSPEC> => {},
+  <axes: Axes___EUCMDXSPEC> "," <axis: Axis___EUCMDXSPEC> => {},
+}
 
-                    SetFnSpec: AstSetFunction = {
-                      <chir: SetFnChildrenSpec> => {
-                        AstSetFunction::Children(chir)
-                      }
-                    }
+// COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
+Axis___EUCMDXSPEC: () = {
+  <cb_set: CurlyBraceSet> "on" <ax_pos: AxisPosition> => {},
+  <segs_set: SegsObj> "on" <ax_pos: AxisPosition> => {},
+}
 
-                    SetFnChildrenSpec: AstSetFnChildren = {
-                      "Children" => {
-                        AstSetFnChildren::NoParam
-                      },
-                      "Children" "(" ")" => {
-                        AstSetFnChildren::NoParam
-                      },
-                      "Children" "(" <segments: SegmentsWrap> ")" => {
-                        AstSetFnChildren::InnerParam(segments)
-                      },
-                    }
+AxisPosition: () = {
+  <ax_pos: "int"> => {},
+  "Columns"       => {},
+  "Rows"          => {},
+  "Pages"         => {},
+  "Chapters"      => {},
+  "Sections"      => {},
+}
 
-                    ExpFnSpec: AstExpFunction = {
-                      <avg: ExpFnAvgSpec> => {
-                        AstExpFunction::Avg(avg)
-                      },
-                      <count: ExpFnCountSpec> => {
-                        AstExpFunction::Count(count)
-                      },
-                      <iif: ExpFnIIfSpec> => {
-                        AstExpFunction::IIf(iif)
-                      },
-                      <lookup_cube: ExpFnLookupCubeSpec> => {
-                        AstExpFunction::LookupCube(lookup_cube)
-                      },
-                      <name: ExpFnNameSpec> => {
-                        AstExpFunction::Name(name)
-                      },
-                    }
+WhereSlicing: () = {
+  "where" <rb_tuple: RoundBracketTuple> => {},
+}
 
-                    ExpFnNameSpec: AstExpFnName = {
-                      "Name" => {
-                        AstExpFnName::NoParam
-                      },
-                      "Name" "(" ")" => {
-                        AstExpFnName::NoParam
-                      },
-                      "Name" "(" <olap_obj_segs: SegmentsWrap> ")" => {
-                        AstExpFnName::InnerParam(olap_obj_segs)
-                      },
-                    }
+// #########################################################################################################
+// #############################################  old grammar  #############################################
+// #########################################################################################################
 
-                    ExpFnCountSpec: AstExpFnCount = {
-                      "Count" => {
-                        AstExpFnCount::NoParam
-                      },
-                      "Count" "(" ")" => {
-                        AstExpFnCount::NoParam
-                      },
-                      "Count" "(" <set: SetWrap> ")" => {
-                        AstExpFnCount::InnerParam(set)
-                      },
-                    }
+// AstSelectionStatement
+pub SelectionMDX: mdx_ast::AstSelectionStatement = {
+  "select" <axes:Axes> "from" <cube:Segments> (";")? => {
+    mdx_ast::AstSelectionStatement {
+      formula_objs: vec![],
+      axes,
+      cube,
+      basic_slice: None,
+    }
+  },
+  "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
+    mdx_ast::AstSelectionStatement {
+      formula_objs: vec![],
+      axes,
+      cube,
+      basic_slice: Some(tuple),
+    }
+  },
+  "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> (";")? => {
+    mdx_ast::AstSelectionStatement {
+      formula_objs: cfos,
+      axes,
+      cube,
+      basic_slice: None,
+    }
+  },
+  "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
+    mdx_ast::AstSelectionStatement {
+      formula_objs: cfos,
+      axes,
+      cube,
+      basic_slice: Some(tuple),
+    }
+  },
+}
 
-                    ExpFnAvgSpec: AstExpFnAvg = {
-                      "Avg" => {
-                        AstExpFnAvg::NoParam
-                      },
-                      "Avg" "(" ")" => {
-                        AstExpFnAvg::NoParam
-                      },
-                      "Avg" "(" <set: SetWrap> ")" => {
-                        AstExpFnAvg::InnerParam(set)
-                      },
-                    }
+CustomFormulaObjects: Vec<AstFormulaObject> = {
+  <fm:FormulaMember> => {
+    vec![fm]
+  },
+  <fs:FormulaSet> => {
+    vec![fs]
+  },
+  <cfos:CustomFormulaObjects> (",")? <fm:FormulaMember> => {
+    let mut list = cfos;
+    list.push(fm);
+    list
+  },
+  <cfos:CustomFormulaObjects> (",")? <fs:FormulaSet> => {
+    let mut list = cfos;
+    list.push(fs);
+    list
+  }
+}
 
-                    ExpFnIIfSpec: AstExpFnIIf = {
-                      "IIf" "(" <bool_exp: BoolExpression> "," <exp_t: Expression> "," <exp_f: Expression> ")" => {
-                        AstExpFnIIf {
-                          bool_exp,
-                          exp_t,
-                          exp_f,
-                        }
-                      }
-                    }
+FormulaMember: AstFormulaObject = {
+  "member" <sw:SegmentsWrap> "as" <exp:Expression> => {
+    CustomFormulaMember(sw, exp)
+  }
+}
 
-                    ExpFnLookupCubeSpec: AstExpFnLookupCube = {
-                        "Tunnel" "(" <cube_segs: SegmentsWrap> "," <exp_on_another_cube: Expression> ")" => {
-                          AstExpFnLookupCube::new(Some(cube_segs), exp_on_another_cube)
-                        },
-                        "Tunnel" "(" <exp_on_another_cube: Expression> ")" => {
-                          AstExpFnLookupCube::new(None, exp_on_another_cube)
-                        },
-                    }
+FormulaSet: AstFormulaObject = {
+  "set" <_sw:SegmentsWrap> "as" => {
+    // CustomFormulaSet
+    todo!("<<< MDX Grammar Exception >>> CustomFormulaSet not implemented yet.")
+  }
+}
 
-                    BoolExpression: AstBoolExp = {
-                      <bt: BoolTerm> => {
-                        AstBoolExp::BoolTerm(bt)
-                      },
-                      "Not" <bt: BoolTerm> => {
-                        AstBoolExp::NotBoolTerm(bt)
-                      },
-                      <bool_exp: BoolExpression> "Or" <bt: BoolTerm> => {
-                        AstBoolExp::BoolExpOrBoolTerm(Box::new(bool_exp), bt)
-                      }
-                    }
+// multi-dimensional object segment
+Seg: mdx_ast::AstSeg = {
+  "&" <int:"int"> => {
+    mdx_ast::AstSeg::Gid(int)
+  },
+  "&" <int:"int"> <bra_str:"BracketedString"> => {
+    mdx_ast::AstSeg::GidStr(int, bra_str)
+  },
+  <bra_str:"BracketedString"> => {
+    mdx_ast::AstSeg::Str(bra_str)
+  },
+  <mfn: MemberFunction> => {
+    mdx_ast::AstSeg::MemberFunction(mfn)
+  },
+  <setfn: SetFnSpec> => {
+    mdx_ast::AstSeg::SetFunction(setfn)
+  },
+  <exp_fn: ExpFnSpec> => {
+    mdx_ast::AstSeg::ExpFn(exp_fn)
+  },
+  <lv_fn: LevelFunction> => {
+    mdx_ast::AstSeg::LevelFn(lv_fn)
+  },
+}
 
-                    BoolTerm: AstBoolTerm = {
-                      <bf: BoolFactory> => {
-                        AstBoolTerm::BoolFactory(bf)
-                      },
-                      <bt: BoolTerm> "And" <bf: BoolFactory> => {
-                        AstBoolTerm::BoolTermAndBoolFactory(Box::new(bt), bf)
-                      }
-                    }
+Segments: Vec<mdx_ast::AstSeg> = {
+  <seg:Seg> => {
+    let mut list = Vec::with_capacity(6);
+    list.push(seg);
+    list
+  },
+  <segs:Segments> "." <seg:Seg> => {
+    let mut list = segs;
+    list.push(seg);
+    list
+  }
+}
 
-                    BoolFactory: AstBoolFactory = {
-                      <exp_left: Expression> "<" <exp_right: Expression> => {
-                        AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<"), exp_right)
-                      },
-                      <exp_left: Expression> "<=" <exp_right: Expression> => {
-                        AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<="), exp_right)
-                      },
-                      <exp_left: Expression> "=" <exp_right: Expression> => {
-                        AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("="), exp_right)
-                      },
-                      <exp_left: Expression> "<>" <exp_right: Expression> => {
-                        AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<>"), exp_right)
-                      },
-                      <exp_left: Expression> ">" <exp_right: Expression> => {
-                        AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">"), exp_right)
-                      },
-                      <exp_left: Expression> ">=" <exp_right: Expression> => {
-                        AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">="), exp_right)
-                      },
-                      "(" <bool_exp: BoolExpression> ")" => {
-                        AstBoolFactory::BoolExp(Box::new(bool_exp))
-                      },
-                      <bool_fn: BoolFunction> => {
-                        AstBoolFactory::BoolFn(bool_fn)
-                      }
-                    }
+SegmentsWrap: mdx_ast::AstSegments = {
+  <segs:Segments> => {
+    mdx_ast::AstSegments{segs}
+  }
+}
 
-                    BoolFunction: AstBoolFunction = {
-                      <is_leaf: BoolFnIsLeaf> => {
-                        AstBoolFunction::IsLeaf(is_leaf)
-                      }
-                    }
+MemberFunction: AstMemberFunction = {
+  <parent: MemberFnParent> => {
+    AstMemberFunction::Parent(parent)
+  },
+  <cp: MemberFnClosingPeriod> => {
+    AstMemberFunction::ClosingPeriod(cp)
+  },
+  <op: MemberFnOpeningPeriod> => {
+    AstMemberFunction::OpeningPeriod(op)
+  },
+  <cur_mbr: MemberFnCurrentMember> => {
+    AstMemberFunction::CurrentMember(cur_mbr)
+  },
+}
 
-                    BoolFnIsLeaf: AstBoolFnIsLeaf = {
-                      // "IsLeaf" => {
-                      //   AstBoolFnIsLeaf::new(None)
-                      // },
-                      // "IsLeaf" "(" ")" => {
-                      //   AstBoolFnIsLeaf::new(None)
-                      // },
-                      "IsLeaf" "(" <member_segs: SegmentsWrap> ")" => {
-                        AstBoolFnIsLeaf::new(member_segs)
-                      },
-                    }
+MemberFnParent: AstMemberFnParent = {
+  "Parent" => {
+    AstMemberFnParent::NoParam
+  },
+  "Parent" "(" ")" => {
+    AstMemberFnParent::NoParam
+  },
+  "Parent" "(" <segments: SegmentsWrap> ")" => {
+    AstMemberFnParent::HasParam(segments)
+  },
+}
+
+MemberFnClosingPeriod: AstMemberFnClosingPeriod = {
+  "ClosingPeriod" => {
+    AstMemberFnClosingPeriod::NoParam
+  },
+  "ClosingPeriod" "(" ")" => {
+    AstMemberFnClosingPeriod::NoParam
+  },
+  "ClosingPeriod" "(" <level_segs: SegmentsWrap> ")" => {
+    AstMemberFnClosingPeriod::OneParam(level_segs)
+  },
+  "ClosingPeriod" "(" <level_segs: SegmentsWrap> "," <member_segs: SegmentsWrap> ")" => {
+    AstMemberFnClosingPeriod::TwoParams(level_segs, member_segs)
+  },
+}
+
+MemberFnOpeningPeriod: AstMemberFnOpeningPeriod = {
+  "OpeningPeriod" => {
+    AstMemberFnOpeningPeriod::NoParam
+  },
+  "OpeningPeriod" "(" ")" => {
+    AstMemberFnOpeningPeriod::NoParam
+  },
+  "OpeningPeriod" "(" <level_segs: SegmentsWrap> ")" => {
+    AstMemberFnOpeningPeriod::OneParam(level_segs)
+  },
+  "OpeningPeriod" "(" <level_segs: SegmentsWrap> "," <member_segs: SegmentsWrap> ")" => {
+    AstMemberFnOpeningPeriod::TwoParams(level_segs, member_segs)
+  },
+}
+
+MemberFnCurrentMember: AstMemberFnCurrentMember = {
+  "CurrentMember" => {
+    AstMemberFnCurrentMember::NoParam
+  },
+  "CurrentMember" "(" ")" => {
+    AstMemberFnCurrentMember::NoParam
+  },
+  "CurrentMember" "(" <segments: SegmentsWrap> ")" => {
+    AstMemberFnCurrentMember::InnerParam(segments)
+  },
+}
+
+LevelFunction: AstLevelFunction = {
+  <lv: LvFnLevel> => {
+    AstLevelFunction::Level(lv)
+  },
+  <lvs: LvFnLevels> => {
+    AstLevelFunction::Levels(lvs)
+  },
+}
+
+LvFnLevel: AstLevelFnLevel = {
+  "Level" => {
+    AstLevelFnLevel::NoParam
+  },
+  "Level" "(" ")" => {
+    AstLevelFnLevel::NoParam
+  },
+  "Level" "(" <segments: SegmentsWrap> ")" => {
+    AstLevelFnLevel::OneParam(segments)
+  },
+}
+
+LvFnLevels: AstLevelFnLevels = {
+  "Levels" "(" <idx_exp: Expression> ")" => {
+    AstLevelFnLevels::new(None, idx_exp)
+  },
+  "Levels" "(" <dim_segs: SegmentsWrap> "," <idx_exp: Expression> ")" => {
+    AstLevelFnLevels::new(Some(dim_segs), idx_exp)
+  },
+}
+
+Expression: AstExpression = {
+  <term:Term> => {
+    AstExpression {
+      terms: vec![(' ', term)],
+    }
+  },
+  <exp:Expression> "+" <term:Term> => {
+    let mut e = exp;
+    e.terms.push(('+', term));
+    e
+  },
+  <exp:Expression> "-" <term:Term> => {
+    let mut e = exp;
+    e.terms.push(('-', term));
+    e
+  }
+}
+
+Term: AstTerm = {
+  <factory:Factory> => {
+    AstTerm {
+      factories: vec![(' ', factory)],
+    }
+  },
+  <term:Term> "*" <factory:Factory> => {
+    let mut t = term;
+    t.factories.push(('*', factory));
+    t
+  },
+  <term:Term> "/" <factory:Factory> => {
+    let mut t = term;
+    t.factories.push(('/', factory));
+    t
+  }
+}
+
+Factory: AstFactory = {
+  <value:"double"> => {
+    FactoryNum(value)
+  },
+  <int_val:"int"> => {
+    let double_val: f64 = int_val as f64;
+    FactoryNum(double_val)
+  },
+  <str:"QuotedString"> => {
+    FactoryStr(str)
+  },
+  <segs_wrap:SegmentsWrap> => {
+    FactorySegs(segs_wrap)
+  },
+  <tuple_wrap:TupleWrap_2> => {
+    FactoryTuple(tuple_wrap)
+  },
+  "(" <exp:Expression> ")" => {
+    FactoryExp(exp)
+  },
+}
+
+Tuple: Vec<mdx_ast::AstSegments> = {
+  <sw:SegmentsWrap> => {
+    vec![sw]
+  },
+  <tuple:Tuple> "," <sw:SegmentsWrap> => {
+    let mut list = tuple;
+    list.push(sw);
+    list
+  }
+}
+
+TupleWrap: mdx_ast::AstTuple = {
+  "(" <tuple:Tuple> ")" => {
+    mdx_ast::AstTuple::SegsList(tuple)
+  }
+}
+
+SetFnSpec: AstSetFunction = {
+  <chir: SetFnChildrenSpec> => {
+    AstSetFunction::Children(chir)
+  }
+}
+
+SetFnChildrenSpec: AstSetFnChildren = {
+  "Children" => {
+    AstSetFnChildren::NoParam
+  },
+  "Children" "(" ")" => {
+    AstSetFnChildren::NoParam
+  },
+  "Children" "(" <segments: SegmentsWrap> ")" => {
+    AstSetFnChildren::InnerParam(segments)
+  },
+}
+
+ExpFnSpec: AstExpFunction = {
+  <avg: ExpFnAvgSpec> => {
+    AstExpFunction::Avg(avg)
+  },
+  <count: ExpFnCountSpec> => {
+    AstExpFunction::Count(count)
+  },
+  <iif: ExpFnIIfSpec> => {
+    AstExpFunction::IIf(iif)
+  },
+  <lookup_cube: ExpFnLookupCubeSpec> => {
+    AstExpFunction::LookupCube(lookup_cube)
+  },
+  <name: ExpFnNameSpec> => {
+    AstExpFunction::Name(name)
+  },
+}
+
+ExpFnNameSpec: AstExpFnName = {
+  "Name" => {
+    AstExpFnName::NoParam
+  },
+  "Name" "(" ")" => {
+    AstExpFnName::NoParam
+  },
+  "Name" "(" <olap_obj_segs: SegmentsWrap> ")" => {
+    AstExpFnName::InnerParam(olap_obj_segs)
+  },
+}
+
+ExpFnCountSpec: AstExpFnCount = {
+  "Count" => {
+    AstExpFnCount::NoParam
+  },
+  "Count" "(" ")" => {
+    AstExpFnCount::NoParam
+  },
+  "Count" "(" <set: SetWrap> ")" => {
+    AstExpFnCount::InnerParam(set)
+  },
+}
+
+ExpFnAvgSpec: AstExpFnAvg = {
+  "Avg" => {
+    AstExpFnAvg::NoParam
+  },
+  "Avg" "(" ")" => {
+    AstExpFnAvg::NoParam
+  },
+  "Avg" "(" <set: SetWrap> ")" => {
+    AstExpFnAvg::InnerParam(set)
+  },
+}
+
+ExpFnIIfSpec: AstExpFnIIf = {
+  "IIf" "(" <bool_exp: BoolExpression> "," <exp_t: Expression> "," <exp_f: Expression> ")" => {
+    AstExpFnIIf {
+      bool_exp,
+      exp_t,
+      exp_f,
+    }
+  }
+}
+
+ExpFnLookupCubeSpec: AstExpFnLookupCube = {
+    "Tunnel" "(" <cube_segs: SegmentsWrap> "," <exp_on_another_cube: Expression> ")" => {
+      AstExpFnLookupCube::new(Some(cube_segs), exp_on_another_cube)
+    },
+    "Tunnel" "(" <exp_on_another_cube: Expression> ")" => {
+      AstExpFnLookupCube::new(None, exp_on_another_cube)
+    },
+}
+
+Set: Vec<mdx_ast::AstTuple> = {
+  <ast_tp:TupleWrap> => {
+    vec![ast_tp]
+  },
+  <set:Set> "," <ast_tp:TupleWrap> => {
+    let mut list = set;
+    list.push(ast_tp);
+    list
+  }
+}
+
+SetWrap: mdx_ast::AstSet = {
+  "{" <tuples:Set> "}" => {
+    mdx_ast::AstSet::Tuples(tuples)
+  }
+}
+
+BoolExpression: AstBoolExp = {
+  <bt: BoolTerm> => {
+    AstBoolExp::BoolTerm(bt)
+  },
+  "Not" <bt: BoolTerm> => {
+    AstBoolExp::NotBoolTerm(bt)
+  },
+  <bool_exp: BoolExpression> "Or" <bt: BoolTerm> => {
+    AstBoolExp::BoolExpOrBoolTerm(Box::new(bool_exp), bt)
+  }
+}
+
+BoolTerm: AstBoolTerm = {
+  <bf: BoolFactory> => {
+    AstBoolTerm::BoolFactory(bf)
+  },
+  <bt: BoolTerm> "And" <bf: BoolFactory> => {
+    AstBoolTerm::BoolTermAndBoolFactory(Box::new(bt), bf)
+  }
+}
+
+BoolFactory: AstBoolFactory = {
+  <exp_left: Expression> "<" <exp_right: Expression> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<"), exp_right)
+  },
+  <exp_left: Expression> "<=" <exp_right: Expression> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<="), exp_right)
+  },
+  <exp_left: Expression> "=" <exp_right: Expression> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("="), exp_right)
+  },
+  <exp_left: Expression> "<>" <exp_right: Expression> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<>"), exp_right)
+  },
+  <exp_left: Expression> ">" <exp_right: Expression> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">"), exp_right)
+  },
+  <exp_left: Expression> ">=" <exp_right: Expression> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">="), exp_right)
+  },
+  "(" <bool_exp: BoolExpression> ")" => {
+    AstBoolFactory::BoolExp(Box::new(bool_exp))
+  },
+  <bool_fn: BoolFunction> => {
+    AstBoolFactory::BoolFn(bool_fn)
+  }
+}
+
+BoolFunction: AstBoolFunction = {
+  <is_leaf: BoolFnIsLeaf> => {
+    AstBoolFunction::IsLeaf(is_leaf)
+  }
+}
+
+BoolFnIsLeaf: AstBoolFnIsLeaf = {
+  // "IsLeaf" => {
+  //   AstBoolFnIsLeaf::new(None)
+  // },
+  // "IsLeaf" "(" ")" => {
+  //   AstBoolFnIsLeaf::new(None)
+  // },
+  "IsLeaf" "(" <member_segs: SegmentsWrap> ")" => {
+    AstBoolFnIsLeaf::new(member_segs)
+  },
+}
+
+TupleWrap_2: mdx_ast::AstTuple = {
+  "(" <sw:SegmentsWrap> "," <tuple:Tuple> ")" => {
+    let mut list = tuple; // Vec<mdx_ast::AstSegments>
+    list.insert(0, sw); // mdx_ast::AstSegments
+    mdx_ast::AstTuple::SegsList(list)
+  }
+}
+
+// COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
+Axis: mdx_ast::AstAxis = {
+  <ast_set:SetWrap> "on" <axpos:AxisPos> => {
+    mdx_ast::AstAxis::SetDefinition {
+      ast_set,
+      pos: axpos,
+    }
+  }
+}
+
+AxisPos: u64 = {
+  <axpos:"int"> => axpos,
+  "Columns"     => 0,
+  "Rows"        => 1,
+  "Pages"       => 2,
+  "Chapters"    => 3,
+  "Sections"    => 4,
+}
+
+Axes: Vec<mdx_ast::AstAxis> = {
+  <axis:Axis> => {
+    vec![axis]
+  },
+  <axes:Axes> "," <axis:Axis> => {
+    let mut list = axes;
+    list.push(axis);
+    list
+  }
+}
