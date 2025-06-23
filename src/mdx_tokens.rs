@@ -108,6 +108,12 @@ pub enum Token {
 
     #[regex("(?i)Avg")]
     Avg,
+    #[regex("(?i)Sum")]
+    Sum,
+    #[regex("(?i)Max")]
+    Max,
+    #[regex("(?i)Min")]
+    Min,
     #[regex("(?i)Count")]
     Count,
     #[regex("(?i)Tunnel")]

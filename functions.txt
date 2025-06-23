@@ -90,10 +90,10 @@ CoalesceEmpty               ....	SSAS	Esbs	intc
 Count (Set)                 Eucl	SSAS	____	____
 IIf                         Eucl	SSAS	Esbs	____
 LookupCube/Tunnel           Eucl	SSAS	____	____
-Sum                         ....	SSAS	Esbs	intc
+Sum                         doing!	SSAS	Esbs	intc
 Avg                         Eucl	SSAS	Esbs	intc
-Max                         ....	SSAS	Esbs	intc
-Min                         ....	SSAS	Esbs	intc
+Max                         doing!	SSAS	Esbs	intc
+Min                         doing!	SSAS	Esbs	intc
 Aggregate                   ....	SSAS	Esbs	intc
 Median                      ....	SSAS	Esbs	intc
 Rank                        ....	SSAS	Esbs	intc

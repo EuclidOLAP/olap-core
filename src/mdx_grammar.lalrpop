@@ -77,6 +77,9 @@ extern {
     "Children" => Token::Children,
 
     "Avg" => Token::Avg,
+    "Sum" => Token::Sum,
+    "Max" => Token::Max,
+    "Min" => Token::Min,
     "Count" => Token::Count,
     "Tunnel" => Token::Tunnel,
     "IIf" => Token::IIf,
@@ -243,7 +246,34 @@ ExpFunc: () = {
   "Avg" "(" ")" => {},
   "Avg" "(" <brace_set: CurlyBraceSet> ")" => {},
   "Avg" "(" <segs_set: SegsObj> ")" => {},
-  
+
+  // ###########
+  // ##  Sum  ##
+  // ###########
+  "Sum" ("(" ")")? => {},
+  "Sum" "(" <brace_set: CurlyBraceSet> ")" => {},
+  "Sum" "(" <segs_set: SegsObj> ")" => {},
+  "Sum" "(" <brace_set: CurlyBraceSet> "," <exp: Expression> ")" => {},
+  "Sum" "(" <segs_set: SegsObj> "," <exp: Expression> ")" => {},
+
+  // ###########
+  // ##  Max  ##
+  // ###########
+  "Max" ("(" ")")? => {},
+  "Max" "(" <brace_set: CurlyBraceSet> ")" => {},
+  "Max" "(" <segs_set: SegsObj> ")" => {},
+  "Max" "(" <brace_set: CurlyBraceSet> "," <exp: Expression> ")" => {},
+  "Max" "(" <segs_set: SegsObj> "," <exp: Expression> ")" => {},
+
+  // ###########
+  // ##  Min  ##
+  // ###########
+  "Min" ("(" ")")? => {},
+  "Min" "(" <brace_set: CurlyBraceSet> ")" => {},
+  "Min" "(" <segs_set: SegsObj> ")" => {},
+  "Min" "(" <brace_set: CurlyBraceSet> "," <exp: Expression> ")" => {},
+  "Min" "(" <segs_set: SegsObj> "," <exp: Expression> ")" => {},
+
   // ###########
   // ##  IIf  ##
   // ###########
