@@ -19,6 +19,8 @@ use crate::mdx_ast::AstBoolFactory;
 use crate::mdx_ast::AstBoolFunction;
 use crate::mdx_ast::AstBoolFnIsLeaf;
 
+use crate::core::ast::AstMdxStatement;
+
 grammar;
 
 extern {
@@ -101,9 +103,13 @@ extern {
 // #############################################  new grammar  #############################################
 // #########################################################################################################
 
-pub EuclidMdxStatement: () = {
-  <_mdx_ps: MdxPrimarySliced> (";")? => {},
-  <_cus_objs: WithCustomObjects> <_mdx_ps: MdxPrimarySliced> (";")? => {},
+pub EuclidMdxStatement: AstMdxStatement = {
+  <_mdx_ps: MdxPrimarySliced> (";")? => {
+    AstMdxStatement{}
+  },
+  <_cus_objs: WithCustomObjects> <_mdx_ps: MdxPrimarySliced> (";")? => {
+    AstMdxStatement{}
+  },
 }
 
 MdxPrimarySliced: () = {

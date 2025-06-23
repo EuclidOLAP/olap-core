@@ -54,7 +54,7 @@ pub async fn init() {
     let formula_members = grpc_cli.get_all_formula_members().await.unwrap();
     let mut cache = FORMULA_MEMBER_CACHE.lock().unwrap();
     for fm in formula_members {
-        println!(">>>>>>>>>>>>>>>> A Formula Member >>>>>>>>>>>>>>>>>>>>>>>>>>>>\n{:#?}", fm);
+        // println!(">>>>>>>>>>>>>>>> A Formula Member >>>>>>>>>>>>>>>>>>>>>>>>>>>>\n{:#?}", fm);
         cache.insert(fm.gid, fm);
     }
 }
