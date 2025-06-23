@@ -114,8 +114,8 @@ WithCustomObjects: () = {
 }
 
 SegsObj: () = {
-  <seg: Seg___EUCMDXSPEC> => {},
-  <segs_obj: SegsObj> "." <seg: Seg___EUCMDXSPEC> => {},
+  <seg: Seg> => {},
+  <segs_obj: SegsObj> "." <seg: Seg> => {},
 }
 
 MemberFunc: () = {
@@ -156,29 +156,29 @@ LevelFunc: () = {
   // ############
   // ## Levels ##
   // ############
-  "Levels" "(" <exp_lv_num: Expression___EUCMDXSPEC> ")" => {},
-  "Levels" "(" <segs_dim_role: SegsObj> "," <exp_lv_num: Expression___EUCMDXSPEC> ")" => {},
+  "Levels" "(" <exp_lv_num: Expression> ")" => {},
+  "Levels" "(" <segs_dim_role: SegsObj> "," <exp_lv_num: Expression> ")" => {},
 }
 
-Expression___EUCMDXSPEC: () = {
-  <term: Term___EUCMDXSPEC> => {},
-  <exp: Expression___EUCMDXSPEC> "+" <term: Term___EUCMDXSPEC> => {},
-  <exp: Expression___EUCMDXSPEC> "-" <term: Term___EUCMDXSPEC> => {},
+Expression: () = {
+  <term: Term> => {},
+  <exp: Expression> "+" <term: Term> => {},
+  <exp: Expression> "-" <term: Term> => {},
 }
 
-Term___EUCMDXSPEC: () = {
-  <factory: Factory___EUCMDXSPEC> => {},
-  <term: Term___EUCMDXSPEC> "*" <factory: Factory___EUCMDXSPEC> => {},
-  <term: Term___EUCMDXSPEC> "/" <factory: Factory___EUCMDXSPEC> => {},
+Term: () = {
+  <factory: Factory> => {},
+  <term: Term> "*" <factory: Factory> => {},
+  <term: Term> "/" <factory: Factory> => {},
 }
 
-Factory___EUCMDXSPEC: () = {
+Factory: () = {
   <dec_val: "double"> => {},
   <int_val: "int"> => {},
   <str: "QuotedString"> => {},
   <segs_obj: SegsObj> => {},
   <bracket_tuple: RoundBracketTuple_2> => {},
-  "(" <exp: Expression___EUCMDXSPEC> ")" => {},
+  "(" <exp: Expression> ")" => {},
 }
 
 RoundBracketTuple: () = {
@@ -199,7 +199,7 @@ SetFunc: () = {
   "Children" "(" <segs_mem: SegsObj> ")" => {},
 }
 
-Seg___EUCMDXSPEC: () = {
+Seg: () = {
   "&" <int: "int"> => {},
   "&" <int: "int"> <bra_str: "BracketedString"> => {},
   <bra_str: "BracketedString"> => {},
@@ -247,34 +247,34 @@ ExpFunc: () = {
   // ###########
   // ##  IIf  ##
   // ###########
-  "IIf" "(" <bool_exp: BoolExp> "," <exp_t: Expression___EUCMDXSPEC> "," <exp_f: Expression___EUCMDXSPEC> ")" => {},
+  "IIf" "(" <bool_exp: BoolExp> "," <exp_t: Expression> "," <exp_f: Expression> ")" => {},
   
   // ##############
   // ##  Tunnel  ##
   // ##############
-  "Tunnel" "(" <cube_segs: SegsObj> "," <tunnel_exp: Expression___EUCMDXSPEC> ")" => {},
-  "Tunnel" "(" <tunnel_exp: Expression___EUCMDXSPEC> ")" => {},
+  "Tunnel" "(" <cube_segs: SegsObj> "," <tunnel_exp: Expression> ")" => {},
+  "Tunnel" "(" <tunnel_exp: Expression> ")" => {},
   
 }
 
 BoolExp: () = {
-  <bt: BoolTerm___EUCMDXSPEC> => {},
-  "Not" <bt: BoolTerm___EUCMDXSPEC> => {},
-  <bool_exp: BoolExp> "Or" <bt: BoolTerm___EUCMDXSPEC> => {},
+  <bt: BoolTerm> => {},
+  "Not" <bt: BoolTerm> => {},
+  <bool_exp: BoolExp> "Or" <bt: BoolTerm> => {},
 }
 
-BoolTerm___EUCMDXSPEC: () = {
+BoolTerm: () = {
   <bf: BoolFac> => {},
-  <bt: BoolTerm___EUCMDXSPEC> "And" <bf: BoolFac> => {},
+  <bt: BoolTerm> "And" <bf: BoolFac> => {},
 }
 
 BoolFac: () = {
-  <exp_left: Expression___EUCMDXSPEC> "<"  <exp_right: Expression___EUCMDXSPEC> => {},
-  <exp_left: Expression___EUCMDXSPEC> "<=" <exp_right: Expression___EUCMDXSPEC> => {},
-  <exp_left: Expression___EUCMDXSPEC> "="  <exp_right: Expression___EUCMDXSPEC> => {},
-  <exp_left: Expression___EUCMDXSPEC> "<>" <exp_right: Expression___EUCMDXSPEC> => {},
-  <exp_left: Expression___EUCMDXSPEC> ">"  <exp_right: Expression___EUCMDXSPEC> => {},
-  <exp_left: Expression___EUCMDXSPEC> ">=" <exp_right: Expression___EUCMDXSPEC> => {},
+  <exp_left: Expression> "<"  <exp_right: Expression> => {},
+  <exp_left: Expression> "<=" <exp_right: Expression> => {},
+  <exp_left: Expression> "="  <exp_right: Expression> => {},
+  <exp_left: Expression> "<>" <exp_right: Expression> => {},
+  <exp_left: Expression> ">"  <exp_right: Expression> => {},
+  <exp_left: Expression> ">=" <exp_right: Expression> => {},
   "(" <bool_exp: BoolExp> ")" => {},
   <bool_fn: BoolFunc> => {},
 }
@@ -287,7 +287,7 @@ BoolFunc: () = {
 }
 
 CustomMdxObject: () = {
-  "member" <frml_member: SegsObj> "as" <exp: Expression___EUCMDXSPEC> => {},
+  "member" <frml_member: SegsObj> "as" <exp: Expression> => {},
   "set" <cus_set: SegsObj> "as" <segs_set: SegsObj> => {},
   "set" <cus_set: SegsObj> "as" <brace_set: CurlyBraceSet> => {},
 }
@@ -297,16 +297,16 @@ RoundBracketTuple_2: () = {
 }
 
 MdxPrimary: () = {
-  "select" <axes: Axes___EUCMDXSPEC> "from" <segs_cube: SegsObj> => {},
+  "select" <axes: Axes> "from" <segs_cube: SegsObj> => {},
 }
 
-Axes___EUCMDXSPEC: () = {
-  <axis: Axis___EUCMDXSPEC> => {},
-  <axes: Axes___EUCMDXSPEC> "," <axis: Axis___EUCMDXSPEC> => {},
+Axes: () = {
+  <axis: Axis> => {},
+  <axes: Axes> "," <axis: Axis> => {},
 }
 
 // COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
-Axis___EUCMDXSPEC: () = {
+Axis: () = {
   <cb_set: CurlyBraceSet> "on" <ax_pos: AxisPosition> => {},
   <segs_set: SegsObj> "on" <ax_pos: AxisPosition> => {},
 }
@@ -330,7 +330,7 @@ WhereSlicing: () = {
 
                     // AstSelectionStatement
                     pub SelectionMDX: mdx_ast::AstSelectionStatement = {
-                      "select" <axes:Axes> "from" <cube:Segments> (";")? => {
+                      "select" <axes:Axes___OldGrammar> "from" <cube:Segments> (";")? => {
                         mdx_ast::AstSelectionStatement {
                           formula_objs: vec![],
                           axes,
@@ -338,7 +338,7 @@ WhereSlicing: () = {
                           basic_slice: None,
                         }
                       },
-                      "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
+                      "select" <axes:Axes___OldGrammar> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
                         mdx_ast::AstSelectionStatement {
                           formula_objs: vec![],
                           axes,
@@ -346,7 +346,7 @@ WhereSlicing: () = {
                           basic_slice: Some(tuple),
                         }
                       },
-                      "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> (";")? => {
+                      "with" <cfos:CustomFormulaObjects> "select" <axes:Axes___OldGrammar> "from" <cube:Segments> (";")? => {
                         mdx_ast::AstSelectionStatement {
                           formula_objs: cfos,
                           axes,
@@ -354,7 +354,7 @@ WhereSlicing: () = {
                           basic_slice: None,
                         }
                       },
-                      "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
+                      "with" <cfos:CustomFormulaObjects> "select" <axes:Axes___OldGrammar> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
                         mdx_ast::AstSelectionStatement {
                           formula_objs: cfos,
                           axes,
@@ -384,7 +384,7 @@ WhereSlicing: () = {
                     }
 
                     FormulaMember: AstFormulaObject = {
-                      "member" <sw:SegmentsWrap> "as" <exp:Expression> => {
+                      "member" <sw:SegmentsWrap> "as" <exp:Expression___OldGrammar> => {
                         CustomFormulaMember(sw, exp)
                       }
                     }
@@ -397,7 +397,7 @@ WhereSlicing: () = {
                     }
 
                     // multi-dimensional object segment
-                    Seg: mdx_ast::AstSeg = {
+                    Seg___OldGrammar: mdx_ast::AstSeg = {
                       "&" <int:"int"> => {
                         mdx_ast::AstSeg::Gid(int)
                       },
@@ -422,12 +422,12 @@ WhereSlicing: () = {
                     }
 
                     Segments: Vec<mdx_ast::AstSeg> = {
-                      <seg:Seg> => {
+                      <seg:Seg___OldGrammar> => {
                         let mut list = Vec::with_capacity(6);
                         list.push(seg);
                         list
                       },
-                      <segs:Segments> "." <seg:Seg> => {
+                      <segs:Segments> "." <seg:Seg___OldGrammar> => {
                         let mut list = segs;
                         list.push(seg);
                         list
@@ -531,51 +531,51 @@ WhereSlicing: () = {
                     }
 
                     LvFnLevels: AstLevelFnLevels = {
-                      "Levels" "(" <idx_exp: Expression> ")" => {
+                      "Levels" "(" <idx_exp: Expression___OldGrammar> ")" => {
                         AstLevelFnLevels::new(None, idx_exp)
                       },
-                      "Levels" "(" <dim_segs: SegmentsWrap> "," <idx_exp: Expression> ")" => {
+                      "Levels" "(" <dim_segs: SegmentsWrap> "," <idx_exp: Expression___OldGrammar> ")" => {
                         AstLevelFnLevels::new(Some(dim_segs), idx_exp)
                       },
                     }
 
-                    Expression: AstExpression = {
-                      <term:Term> => {
+                    Expression___OldGrammar: AstExpression = {
+                      <term:Term___OldGrammar> => {
                         AstExpression {
                           terms: vec![(' ', term)],
                         }
                       },
-                      <exp:Expression> "+" <term:Term> => {
+                      <exp:Expression___OldGrammar> "+" <term:Term___OldGrammar> => {
                         let mut e = exp;
                         e.terms.push(('+', term));
                         e
                       },
-                      <exp:Expression> "-" <term:Term> => {
+                      <exp:Expression___OldGrammar> "-" <term:Term___OldGrammar> => {
                         let mut e = exp;
                         e.terms.push(('-', term));
                         e
                       }
                     }
 
-                    Term: AstTerm = {
-                      <factory:Factory> => {
+                    Term___OldGrammar: AstTerm = {
+                      <factory:Factory___OldGrammar> => {
                         AstTerm {
                           factories: vec![(' ', factory)],
                         }
                       },
-                      <term:Term> "*" <factory:Factory> => {
+                      <term:Term___OldGrammar> "*" <factory:Factory___OldGrammar> => {
                         let mut t = term;
                         t.factories.push(('*', factory));
                         t
                       },
-                      <term:Term> "/" <factory:Factory> => {
+                      <term:Term___OldGrammar> "/" <factory:Factory___OldGrammar> => {
                         let mut t = term;
                         t.factories.push(('/', factory));
                         t
                       }
                     }
 
-                    Factory: AstFactory = {
+                    Factory___OldGrammar: AstFactory = {
                       <value:"double"> => {
                         FactoryNum(value)
                       },
@@ -592,7 +592,7 @@ WhereSlicing: () = {
                       <tuple_wrap:TupleWrap_2> => {
                         FactoryTuple(tuple_wrap)
                       },
-                      "(" <exp:Expression> ")" => {
+                      "(" <exp:Expression___OldGrammar> ")" => {
                         FactoryExp(exp)
                       },
                     }
@@ -687,7 +687,7 @@ WhereSlicing: () = {
                     }
 
                     ExpFnIIfSpec: AstExpFnIIf = {
-                      "IIf" "(" <bool_exp: BoolExpression> "," <exp_t: Expression> "," <exp_f: Expression> ")" => {
+                      "IIf" "(" <bool_exp: BoolExpression> "," <exp_t: Expression___OldGrammar> "," <exp_f: Expression___OldGrammar> ")" => {
                         AstExpFnIIf {
                           bool_exp,
                           exp_t,
@@ -697,10 +697,10 @@ WhereSlicing: () = {
                     }
 
                     ExpFnLookupCubeSpec: AstExpFnLookupCube = {
-                        "Tunnel" "(" <cube_segs: SegmentsWrap> "," <exp_on_another_cube: Expression> ")" => {
+                        "Tunnel" "(" <cube_segs: SegmentsWrap> "," <exp_on_another_cube: Expression___OldGrammar> ")" => {
                           AstExpFnLookupCube::new(Some(cube_segs), exp_on_another_cube)
                         },
-                        "Tunnel" "(" <exp_on_another_cube: Expression> ")" => {
+                        "Tunnel" "(" <exp_on_another_cube: Expression___OldGrammar> ")" => {
                           AstExpFnLookupCube::new(None, exp_on_another_cube)
                         },
                     }
@@ -723,43 +723,43 @@ WhereSlicing: () = {
                     }
 
                     BoolExpression: AstBoolExp = {
-                      <bt: BoolTerm> => {
+                      <bt: BoolTerm___OldGrammar> => {
                         AstBoolExp::BoolTerm(bt)
                       },
-                      "Not" <bt: BoolTerm> => {
+                      "Not" <bt: BoolTerm___OldGrammar> => {
                         AstBoolExp::NotBoolTerm(bt)
                       },
-                      <bool_exp: BoolExpression> "Or" <bt: BoolTerm> => {
+                      <bool_exp: BoolExpression> "Or" <bt: BoolTerm___OldGrammar> => {
                         AstBoolExp::BoolExpOrBoolTerm(Box::new(bool_exp), bt)
                       }
                     }
 
-                    BoolTerm: AstBoolTerm = {
+                    BoolTerm___OldGrammar: AstBoolTerm = {
                       <bf: BoolFactory> => {
                         AstBoolTerm::BoolFactory(bf)
                       },
-                      <bt: BoolTerm> "And" <bf: BoolFactory> => {
+                      <bt: BoolTerm___OldGrammar> "And" <bf: BoolFactory> => {
                         AstBoolTerm::BoolTermAndBoolFactory(Box::new(bt), bf)
                       }
                     }
 
                     BoolFactory: AstBoolFactory = {
-                      <exp_left: Expression> "<" <exp_right: Expression> => {
+                      <exp_left: Expression___OldGrammar> "<" <exp_right: Expression___OldGrammar> => {
                         AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<"), exp_right)
                       },
-                      <exp_left: Expression> "<=" <exp_right: Expression> => {
+                      <exp_left: Expression___OldGrammar> "<=" <exp_right: Expression___OldGrammar> => {
                         AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<="), exp_right)
                       },
-                      <exp_left: Expression> "=" <exp_right: Expression> => {
+                      <exp_left: Expression___OldGrammar> "=" <exp_right: Expression___OldGrammar> => {
                         AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("="), exp_right)
                       },
-                      <exp_left: Expression> "<>" <exp_right: Expression> => {
+                      <exp_left: Expression___OldGrammar> "<>" <exp_right: Expression___OldGrammar> => {
                         AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<>"), exp_right)
                       },
-                      <exp_left: Expression> ">" <exp_right: Expression> => {
+                      <exp_left: Expression___OldGrammar> ">" <exp_right: Expression___OldGrammar> => {
                         AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">"), exp_right)
                       },
-                      <exp_left: Expression> ">=" <exp_right: Expression> => {
+                      <exp_left: Expression___OldGrammar> ">=" <exp_right: Expression___OldGrammar> => {
                         AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">="), exp_right)
                       },
                       "(" <bool_exp: BoolExpression> ")" => {
@@ -797,7 +797,7 @@ WhereSlicing: () = {
                     }
 
                     // COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
-                    Axis: mdx_ast::AstAxis = {
+                    Axis___OldGrammar: mdx_ast::AstAxis = {
                       <ast_set:SetWrap> "on" <axpos:AxisPos> => {
                         mdx_ast::AstAxis::SetDefinition {
                           ast_set,
@@ -815,11 +815,11 @@ WhereSlicing: () = {
                       "Sections"    => 4,
                     }
 
-                    Axes: Vec<mdx_ast::AstAxis> = {
-                      <axis:Axis> => {
+                    Axes___OldGrammar: Vec<mdx_ast::AstAxis> = {
+                      <axis:Axis___OldGrammar> => {
                         vec![axis]
                       },
-                      <axes:Axes> "," <axis:Axis> => {
+                      <axes:Axes___OldGrammar> "," <axis:Axis___OldGrammar> => {
                         let mut list = axes;
                         list.push(axis);
                         list
