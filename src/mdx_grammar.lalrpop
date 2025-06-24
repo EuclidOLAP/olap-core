@@ -20,6 +20,7 @@ use crate::mdx_ast::AstBoolFunction;
 use crate::mdx_ast::AstBoolFnIsLeaf;
 
 use crate::core::ast::AstMdxStatement;
+use crate::core::ast::AstCustomObj;
 
 grammar;
 
@@ -104,22 +105,32 @@ extern {
 // #########################################################################################################
 
 pub EuclidMdxStatement: AstMdxStatement = {
-  <_mdx_ps: MdxPrimarySliced> (";")? => {
+  <mdx_ps: MdxPrimarySliced> (";")? => {
     AstMdxStatement{}
   },
-  <_cus_objs: WithCustomObjects> <_mdx_ps: MdxPrimarySliced> (";")? => {
+  <cus_objs: WithCustomObjects> <mdx_ps: MdxPrimarySliced> (";")? => {
     AstMdxStatement{}
   },
 }
 
 MdxPrimarySliced: () = {
-  <_mdx_pri: MdxPrimary> => {},
-  <_mdx_pri: MdxPrimary> <_slicing: WhereSlicing> => {},
+  <mdx_pri: MdxPrimary> => {
+
+  },
+  <mdx_pri: MdxPrimary> <slicing: WhereSlicing> => {
+
+  },
 }
 
-WithCustomObjects: () = {
-  "with" <cus_obj: CustomMdxObject> => {},
-  <cus_objs: WithCustomObjects> (",")? <cus_obj: CustomMdxObject> => {},
+WithCustomObjects: Vec<AstCustomObj> = {
+  "with" <cus_obj: CustomMdxObject> => {
+    vec![cus_obj]
+  },
+  <cus_objs: WithCustomObjects> (",")? <cus_obj: CustomMdxObject> => {
+    let mut cus_objs = cus_objs;
+    cus_objs.push(cus_obj);
+    cus_objs
+  },
 }
 
 SegsObj: () = {
@@ -322,10 +333,16 @@ BoolFunc: () = {
   "IsLeaf" "(" <member_segs: SegsObj> ")" => {},
 }
 
-CustomMdxObject: () = {
-  "member" <frml_member: SegsObj> "as" <exp: Expression> => {},
-  "set" <cus_set: SegsObj> "as" <segs_set: SegsObj> => {},
-  "set" <cus_set: SegsObj> "as" <brace_set: CurlyBraceSet> => {},
+CustomMdxObject: AstCustomObj = {
+  "member" <frml_member: SegsObj> "as" <exp: Expression> => {
+    AstCustomObj::CustomMember
+  },
+  "set" <cus_set: SegsObj> "as" <segs_set: SegsObj> => {
+    AstCustomObj::CustomSet
+  },
+  "set" <cus_set: SegsObj> "as" <brace_set: CurlyBraceSet> => {
+    AstCustomObj::CustomSet
+  },
 }
 
 RoundBracketTuple_2: () = {
