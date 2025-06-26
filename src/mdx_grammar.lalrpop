@@ -21,7 +21,7 @@ use crate::mdx_ast::AstBoolFunction;
 use crate::mdx_ast::AstBoolFnIsLeaf;
 
 use crate::core::ast::AstMdxStatement;
-use crate::core::ast::AstSeg;
+use crate::core::ast::{AstSeg, AstSegsObj};
 use crate::core::ast::AstCustomObj;
 
 grammar;
@@ -135,10 +135,16 @@ extern {
                       },
                     }
 
-                    SegsObj: () = {
-                      <seg: Seg> => {},
-                      <segs_obj: SegsObj> "." <seg: Seg> => {},
-                    }
+SegsObj: AstSegsObj = {
+  <seg: Seg> => {
+    AstSegsObj::new(seg)
+  },
+  <segs_obj: SegsObj> "." <seg: Seg> => {
+    let mut segs_obj = segs_obj;
+    segs_obj.append(seg);
+    segs_obj
+  },
+}
 
                     MemberFunc: () = {
                       // #############
