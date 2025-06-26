@@ -21,6 +21,7 @@ use crate::mdx_ast::AstBoolFunction;
 use crate::mdx_ast::AstBoolFnIsLeaf;
 
 use crate::core::ast::AstMdxStatement;
+use crate::core::ast::AstSeg;
 use crate::core::ast::AstCustomObj;
 
 grammar;
@@ -220,15 +221,29 @@ extern {
                       "Children" "(" <segs_mem: SegsObj> ")" => {},
                     }
 
-                    Seg: () = {
-                      "&" <int: "int"> => {},
-                      "&" <int: "int"> <bra_str: "BracketedString"> => {},
-                      <bra_str: "BracketedString"> => {},
-                      <m_fn: MemberFunc> => {},
-                      <lv_fn: LevelFunc> => {},
-                      <set_fn: SetFunc> => {},
-                      <exp_fn: ExpFunc> => {},
-                    }
+Seg: AstSeg = {
+  "&" <gid: "int"> => {
+    AstSeg::Gid(gid)
+  },
+  "&" <gid: "int"> <bra_str: "BracketedString"> => {
+    AstSeg::GidStr(gid, bra_str)
+  },
+  <bra_str: "BracketedString"> => {
+    AstSeg::Str(bra_str)
+  },
+  <mem_fn: MemberFunc> => {
+    AstSeg::MemberFunc(mem_fn)
+  },
+  <lv_fn: LevelFunc> => {
+    AstSeg::LevelFunc(lv_fn)
+  },
+  <set_fn: SetFunc> => {
+    AstSeg::SetFunc(set_fn)
+  },
+  <exp_fn: ExpFunc> => {
+    AstSeg::ExpFunc(exp_fn)
+  },
+}
 
                     Tuples: () = {
                       <rb_tuple: RoundBracketTuple> => {},
@@ -365,14 +380,14 @@ extern {
                       <segs_set: SegsObj> "on" <ax_pos: AxisPosition> => {},
                     }
 
-                    AxisPosition: () = {
-                      <ax_pos: "int"> => {},
-                      "Columns"       => {},
-                      "Rows"          => {},
-                      "Pages"         => {},
-                      "Chapters"      => {},
-                      "Sections"      => {},
-                    }
+AxisPosition: u64 = {
+  <ax_pos: "int"> => {ax_pos},
+  "Columns"       => {0},
+  "Rows"          => {1},
+  "Pages"         => {2},
+  "Chapters"      => {3},
+  "Sections"      => {4},
+}
 
                     WhereSlicing: () = {
                       "where" <rb_tuple: RoundBracketTuple> => {},
