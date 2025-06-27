@@ -32,3 +32,24 @@ impl AstSegsObj {
         self.segs.push(seg)
     }
 }
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstTuples {
+    ast_tuples: Vec<AstTuple>,
+}
+
+impl AstTuples {
+    pub fn new(astup: AstTuple) -> Self {
+        Self { ast_tuples: vec![astup] }
+    }
+
+    pub fn append(&mut self, astup: AstTuple) {
+        self.ast_tuples.push(astup)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstTuple {
+    RoundBracketTuple(Vec<AstSegsObj>),
+    SegsObj(AstSegsObj),
+}

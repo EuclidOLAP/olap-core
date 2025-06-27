@@ -22,6 +22,7 @@ use crate::mdx_ast::AstBoolFnIsLeaf;
 
 use crate::core::ast::AstMdxStatement;
 use crate::core::ast::{AstSeg, AstSegsObj};
+use crate::core::ast::{AstTuple, AstTuples};
 use crate::core::ast::AstCustomObj;
 
 grammar;
@@ -209,8 +210,10 @@ SegsObj: AstSegsObj = {
                       "(" <exp: Expression> ")" => {},
                     }
 
-RoundBracketTuple: Vec<AstSegsObj> = {
-  "(" <segs_objs: SegsObjects> ")" => segs_objs,
+RoundBracketTuple: AstTuple = {
+  "(" <segs_objs: SegsObjects> ")" => {
+    AstTuple::RoundBracketTuple(segs_objs)
+  },
 }
 
 SegsObjects: Vec<AstSegsObj> = {
@@ -373,11 +376,11 @@ Seg: AstSeg = {
                       },
                     }
 
-RoundBracketTuple_2: Vec<AstSegsObj> = {
+RoundBracketTuple_2: AstTuple = {
   "(" <segs_obj: SegsObj> "," <segs_objs: SegsObjects> ")" => {
     let mut segs_objs = segs_objs;
     segs_objs.insert(0, segs_obj);
-    segs_objs
+    AstTuple::RoundBracketTuple(segs_objs)
   },
 }
 
