@@ -260,12 +260,24 @@ Seg: AstSeg = {
   },
 }
 
-                    Tuples: () = {
-                      <rb_tuple: RoundBracketTuple> => {},
-                      <segs_obj: SegsObj> => {},
-                      <tuples: Tuples> "," <rb_tuple: RoundBracketTuple> => {},
-                      <tuples: Tuples> "," <segs_obj: SegsObj> => {},
-                    }
+Tuples: AstTuples = {
+  <rb_tuple: RoundBracketTuple> => {
+    AstTuples::new(rb_tuple)
+  },
+  <segs_obj: SegsObj> => {
+    AstTuples::new(AstTuple::SegsObj(segs_obj))
+  },
+  <tuples: Tuples> "," <rb_tuple: RoundBracketTuple> => {
+    let mut tuples = tuples;
+    tuples.append(rb_tuple);
+    tuples
+  },
+  <tuples: Tuples> "," <segs_obj: SegsObj> => {
+    let mut tuples = tuples;
+    tuples.append(AstTuple::SegsObj(segs_obj));
+    tuples
+  },
+}
 
                     CurlyBraceSet: () = {
                       "{" <tuples: Tuples> "}" => {},
