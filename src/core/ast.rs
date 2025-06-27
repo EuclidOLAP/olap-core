@@ -1,5 +1,27 @@
 #[derive(Clone, Debug, PartialEq)]
-pub struct AstMdxStatement {}
+pub struct AstMdxStatement {
+    cus_objs: Option<Vec<AstCustomObj>>,
+    axes: Vec<AstAxis>,
+    segs_cube: AstSegsObj,
+    where_slicing: Option<AstTuple>,
+}
+
+impl AstMdxStatement {
+    
+    pub fn new(
+        cus_objs: Option<Vec<AstCustomObj>>,
+        axes: Vec<AstAxis>,
+        segs_cube: AstSegsObj,
+        where_slicing: Option<AstTuple>,
+    ) -> Self {
+        Self {
+            cus_objs,
+            axes,
+            segs_cube,
+            where_slicing,
+        }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstCustomObj {
@@ -52,4 +74,10 @@ impl AstTuples {
 pub enum AstTuple {
     RoundBracketTuple(Vec<AstSegsObj>),
     SegsObj(AstSegsObj),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstAxis {
+    CurlyBraceSet(AstTuples, u64),
+    SegsObjSet(AstSegsObj, u64),
 }

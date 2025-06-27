@@ -24,6 +24,7 @@ use crate::core::ast::AstMdxStatement;
 use crate::core::ast::{AstSeg, AstSegsObj};
 use crate::core::ast::{AstTuple, AstTuples};
 use crate::core::ast::AstCustomObj;
+use crate::core::ast::AstAxis;
 
 grammar;
 
@@ -107,34 +108,38 @@ extern {
 // #############################################  new grammar  #############################################
 // #########################################################################################################
 
-                    pub EuclidMdxStatement: AstMdxStatement = {
-                      <mdx_ps: MdxPrimarySliced> (";")? => {
-                        AstMdxStatement{}
-                      },
-                      <cus_objs: WithCustomObjects> <mdx_ps: MdxPrimarySliced> (";")? => {
-                        AstMdxStatement{}
-                      },
-                    }
+pub EuclidMdxStatement: AstMdxStatement = {
+  <mdx_ps: MdxPrimarySliced> (";")? => {
+    let (axes, segs_cube, slicing): (Vec<AstAxis>, AstSegsObj, Option<AstTuple>) = mdx_ps;
+    AstMdxStatement::new(None, axes, segs_cube, slicing)
+  },
+  <cus_objs: WithCustomObjects> <mdx_ps: MdxPrimarySliced> (";")? => {
+    let (axes, segs_cube, slicing): (Vec<AstAxis>, AstSegsObj, Option<AstTuple>) = mdx_ps;
+    AstMdxStatement::new(Some(cus_objs), axes, segs_cube, slicing)
+  },
+}
 
-                    MdxPrimarySliced: () = {
-                      <mdx_pri: MdxPrimary> => {
+MdxPrimarySliced: (Vec<AstAxis>, AstSegsObj, Option<AstTuple>) = {
+  <mdx_pri: MdxPrimary> => {
+    let (axes, segs_cube): (Vec<AstAxis>, AstSegsObj) = mdx_pri;
+    (axes, segs_cube, None)
+  },
+  <mdx_pri: MdxPrimary> <slicing: WhereSlicing> => {
+    let (axes, segs_cube): (Vec<AstAxis>, AstSegsObj) = mdx_pri;
+    (axes, segs_cube, Some(slicing))
+  },
+}
 
-                      },
-                      <mdx_pri: MdxPrimary> <slicing: WhereSlicing> => {
-
-                      },
-                    }
-
-                    WithCustomObjects: Vec<AstCustomObj> = {
-                      "with" <cus_obj: CustomMdxObject> => {
-                        vec![cus_obj]
-                      },
-                      <cus_objs: WithCustomObjects> (",")? <cus_obj: CustomMdxObject> => {
-                        let mut cus_objs = cus_objs;
-                        cus_objs.push(cus_obj);
-                        cus_objs
-                      },
-                    }
+WithCustomObjects: Vec<AstCustomObj> = {
+  "with" <cus_obj: CustomMdxObject> => {
+    vec![cus_obj]
+  },
+  <cus_objs: WithCustomObjects> (",")? <cus_obj: CustomMdxObject> => {
+    let mut cus_objs = cus_objs;
+    cus_objs.push(cus_obj);
+    cus_objs
+  },
+}
 
 SegsObj: AstSegsObj = {
   <seg: Seg> => {
@@ -279,9 +284,9 @@ Tuples: AstTuples = {
   },
 }
 
-                    CurlyBraceSet: () = {
-                      "{" <tuples: Tuples> "}" => {},
-                    }
+CurlyBraceSet: AstTuples = {
+  "{" <tuples: Tuples> "}" => tuples,
+}
 
                     ExpFunc: () = {
                       // ############
@@ -396,20 +401,32 @@ RoundBracketTuple_2: AstTuple = {
   },
 }
 
-                    MdxPrimary: () = {
-                      "select" <axes: Axes> "from" <segs_cube: SegsObj> => {},
-                    }
+MdxPrimary: (Vec<AstAxis>, AstSegsObj) = {
+  "select" <axes: Axes> "from" <segs_cube: SegsObj> => {
+    (axes, segs_cube)
+  },
+}
 
-                    Axes: () = {
-                      <axis: Axis> => {},
-                      <axes: Axes> "," <axis: Axis> => {},
-                    }
+Axes: Vec<AstAxis> = {
+  <axis: Axis> => {
+    vec![axis]
+  },
+  <axes: Axes> "," <axis: Axis> => {
+    let mut axes = axes;
+    axes.push(axis);
+    axes
+  },
+}
 
-                    // COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
-                    Axis: () = {
-                      <cb_set: CurlyBraceSet> "on" <ax_pos: AxisPosition> => {},
-                      <segs_set: SegsObj> "on" <ax_pos: AxisPosition> => {},
-                    }
+// COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
+Axis: AstAxis = {
+  <ast_tuples: CurlyBraceSet> "on" <ax_pos: AxisPosition> => {
+    AstAxis::CurlyBraceSet(ast_tuples, ax_pos)
+  },
+  <segs_set: SegsObj> "on" <ax_pos: AxisPosition> => {
+    AstAxis::SegsObjSet(segs_set, ax_pos)
+  },
+}
 
 AxisPosition: u64 = {
   <ax_pos: "int"> => ax_pos,
@@ -420,9 +437,14 @@ AxisPosition: u64 = {
   "Sections"      => 4,
 }
 
-                    WhereSlicing: () = {
-                      "where" <rb_tuple: RoundBracketTuple> => {},
-                    }
+WhereSlicing: AstTuple = {
+  "where" <rb_tuple: RoundBracketTuple> => {
+    rb_tuple
+  },
+  "where" <segs_tup: SegsObj> => {
+    AstTuple::SegsObj(segs_tup)
+  },
+}
 
 // #########################################################################################################
 // #############################################  old grammar  #############################################
