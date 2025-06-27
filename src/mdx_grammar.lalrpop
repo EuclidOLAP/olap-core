@@ -213,10 +213,16 @@ SegsObj: AstSegsObj = {
                       "(" <segs_objs: SegsObjects> ")" => {},
                     }
 
-                    SegsObjects: () = {
-                      <segs_obj: SegsObj> => {},
-                      <segs_objs: SegsObjects> "," <segs_obj: SegsObj> => {},
-                    }
+SegsObjects: Vec<AstSegsObj> = {
+  <segs_obj: SegsObj> => {
+    vec![segs_obj]
+  },
+  <segs_objs: SegsObjects> "," <segs_obj: SegsObj> => {
+    let mut segs_objs = segs_objs;
+    segs_objs.push(segs_obj);
+    segs_objs
+  },
+}
 
                     SetFunc: () = {
                       // ################
@@ -387,12 +393,12 @@ Seg: AstSeg = {
                     }
 
 AxisPosition: u64 = {
-  <ax_pos: "int"> => {ax_pos},
-  "Columns"       => {0},
-  "Rows"          => {1},
-  "Pages"         => {2},
-  "Chapters"      => {3},
-  "Sections"      => {4},
+  <ax_pos: "int"> => ax_pos,
+  "Columns"       => 0,
+  "Rows"          => 1,
+  "Pages"         => 2,
+  "Chapters"      => 3,
+  "Sections"      => 4,
 }
 
                     WhereSlicing: () = {
