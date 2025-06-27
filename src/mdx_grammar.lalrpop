@@ -209,9 +209,9 @@ SegsObj: AstSegsObj = {
                       "(" <exp: Expression> ")" => {},
                     }
 
-                    RoundBracketTuple: () = {
-                      "(" <segs_objs: SegsObjects> ")" => {},
-                    }
+RoundBracketTuple: Vec<AstSegsObj> = {
+  "(" <segs_objs: SegsObjects> ")" => segs_objs,
+}
 
 SegsObjects: Vec<AstSegsObj> = {
   <segs_obj: SegsObj> => {
@@ -373,9 +373,13 @@ Seg: AstSeg = {
                       },
                     }
 
-                    RoundBracketTuple_2: () = {
-                      "(" <segs_obj: SegsObj> "," <segs_objs: SegsObjects> ")" => {},
-                    }
+RoundBracketTuple_2: Vec<AstSegsObj> = {
+  "(" <segs_obj: SegsObj> "," <segs_objs: SegsObjects> ")" => {
+    let mut segs_objs = segs_objs;
+    segs_objs.insert(0, segs_obj);
+    segs_objs
+  },
+}
 
                     MdxPrimary: () = {
                       "select" <axes: Axes> "from" <segs_cube: SegsObj> => {},
