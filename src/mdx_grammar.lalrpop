@@ -161,26 +161,23 @@ SegsObj: AstSegsObj = {
                       // #############
                       // ##  Parent ##
                       // #############
-                      "Parent" => {},
-                      "Parent" "(" ")" => {},
+                      "Parent" ("(" ")")? => {},
                       "Parent" "(" <segs_mbr: SegsObj> ")" => {},
                       // ###################
                       // ## CurrentMember ##
                       // ###################
-                      "CurrentMember" => {},
+                      "CurrentMember" ("(" ")")? => {},
                       "CurrentMember" "(" <segs_dim_role: SegsObj> ")" => {},
                       // ###################
                       // ## OpeningPeriod ##
                       // ###################
-                      "OpeningPeriod" => {},
-                      "OpeningPeriod" "(" ")" => {},
+                      "OpeningPeriod" ("(" ")")? => {},
                       "OpeningPeriod" "(" <level_segs: SegsObj> ")" => {},
                       "OpeningPeriod" "(" <level_segs: SegsObj> "," <member_segs: SegsObj> ")" => {},
                       // ###################
                       // ## ClosingPeriod ##
                       // ###################
-                      "ClosingPeriod" => {},
-                      "ClosingPeriod" "(" ")" => {},
+                      "ClosingPeriod" ("(" ")")? => {},
                       "ClosingPeriod" "(" <level_segs: SegsObj> ")" => {},
                       "ClosingPeriod" "(" <level_segs: SegsObj> "," <member_segs: SegsObj> ")" => {},
                     }
@@ -189,8 +186,7 @@ SegsObj: AstSegsObj = {
                       // ################
                       // ##  Children  ##
                       // ################
-                      "Children" => {},
-                      "Children" "(" ")" => {},
+                      "Children" ("(" ")")? => {},
                       "Children" "(" <segs_mem: SegsObj> ")" => {},
                     }
 
@@ -198,8 +194,7 @@ SegsObj: AstSegsObj = {
                       // ###########
                       // ## Level ##
                       // ###########
-                      "Level" => {},
-                      "Level" "(" ")" => {},
+                      "Level" ("(" ")")? => {},
                       "Level" "(" <segs_mem_role: SegsObj> ")" => {},
                       // ############
                       // ## Levels ##
@@ -334,23 +329,20 @@ CurlyBraceSet: AstTuples = {
                       // ############
                       // ##  Name  ##
                       // ############
-                      "Name" => {},
-                      "Name" "(" ")" => {},
+                      "Name" ("(" ")")? => {},
                       "Name" "(" <segs_obj: SegsObj> ")" => {},
                       
                       // #############
                       // ##  Count  ##
                       // #############
-                      "Count" => {},
-                      "Count" "(" ")" => {},
+                      "Count" ("(" ")")? => {},
                       "Count" "(" <brace_set: CurlyBraceSet> ")" => {},
                       "Count" "(" <segs_set: SegsObj> ")" => {},
 
                       // ###########
                       // ##  Avg  ##
                       // ###########
-                      "Avg" => {},
-                      "Avg" "(" ")" => {},
+                      "Avg" ("(" ")")? => {},
                       "Avg" "(" <brace_set: CurlyBraceSet> ")" => {},
                       "Avg" "(" <segs_set: SegsObj> ")" => {},
 
