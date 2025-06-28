@@ -81,3 +81,22 @@ pub enum AstAxis {
     CurlyBraceSet(AstTuples, u64),
     SegsObjSet(AstSegsObj, u64),
 }
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstExp {
+    pub terms: Vec<(char, AstTerm)>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstTerm {
+    pub factories: Vec<(char, AstFac)>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstFac {
+    Double(f64),
+    Str(String),
+    SegsObj(AstSegsObj),
+    Tuple(AstTuple),
+    Exp(AstExp),
+}

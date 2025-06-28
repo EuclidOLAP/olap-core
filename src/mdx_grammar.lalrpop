@@ -25,6 +25,7 @@ use crate::core::ast::{AstSeg, AstSegsObj};
 use crate::core::ast::{AstTuple, AstTuples};
 use crate::core::ast::AstCustomObj;
 use crate::core::ast::AstAxis;
+use crate::core::ast::{AstExp, AstTerm as AstTerm___CoreAst, AstFac};
 
 grammar;
 
@@ -194,26 +195,63 @@ SegsObj: AstSegsObj = {
                       "Levels" "(" <segs_dim_role: SegsObj> "," <exp_lv_num: Expression> ")" => {},
                     }
 
-                    Expression: () = {
-                      <term: Term> => {},
-                      <exp: Expression> "+" <term: Term> => {},
-                      <exp: Expression> "-" <term: Term> => {},
-                    }
+Expression: AstExp = {
+  <term: Term> => {
+    AstExp {
+      terms: vec![('+', term)],
+    }
+  },
+  <exp: Expression> "+" <term: Term> => {
+    let mut exp = exp;
+    exp.terms.push(('+', term));
+    exp
+  },
+  <exp: Expression> "-" <term: Term> => {
+    let mut exp = exp;
+    exp.terms.push(('-', term));
+    exp
+  },
+}
 
-                    Term: () = {
-                      <factory: Factory> => {},
-                      <term: Term> "*" <factory: Factory> => {},
-                      <term: Term> "/" <factory: Factory> => {},
-                    }
+Term: AstTerm___CoreAst = {
+  <factory: Factory> => {
+    AstTerm___CoreAst {
+      factories: vec![('*', factory)],
+    }
+  },
+  <term: Term> "*" <factory: Factory> => {
+    let mut term = term;
+    term.factories.push(('*', factory));
+    term
+  },
+  <term: Term> "/" <factory: Factory> => {
+    let mut term = term;
+    term.factories.push(('/', factory));
+    term
+  },
+}
 
-                    Factory: () = {
-                      <dec_val: "double"> => {},
-                      <int_val: "int"> => {},
-                      <str: "QuotedString"> => {},
-                      <segs_obj: SegsObj> => {},
-                      <bracket_tuple: RoundBracketTuple_2> => {},
-                      "(" <exp: Expression> ")" => {},
-                    }
+Factory: AstFac = {
+  <dec_val: "double"> => {
+    AstFac::Double(dec_val)
+  },
+  <long_val: "int"> => {
+    let double_val: f64 = long_val as f64;
+    AstFac::Double(double_val)
+  },
+  <str: "QuotedString"> => {
+    AstFac::Str(str)
+  },
+  <segs_obj: SegsObj> => {
+    AstFac::SegsObj(segs_obj)
+  },
+  <ast_tup: RoundBracketTuple_2> => {
+    AstFac::Tuple(ast_tup)
+  },
+  "(" <exp: Expression> ")" => {
+    AstFac::Exp(exp)
+  },
+}
 
 RoundBracketTuple: AstTuple = {
   "(" <segs_objs: SegsObjects> ")" => {
