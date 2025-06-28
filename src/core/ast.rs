@@ -7,19 +7,13 @@ pub struct AstMdxStatement {
 }
 
 impl AstMdxStatement {
-    
     pub fn new(
         cus_objs: Option<Vec<AstCustomObj>>,
         axes: Vec<AstAxis>,
         segs_cube: AstSegsObj,
         where_slicing: Option<AstTuple>,
     ) -> Self {
-        Self {
-            cus_objs,
-            axes,
-            segs_cube,
-            where_slicing,
-        }
+        Self { cus_objs, axes, segs_cube, where_slicing }
     }
 }
 
@@ -35,7 +29,7 @@ pub enum AstSeg {
     Gid(u64),
     GidStr(u64, String),
     Str(String),
-    MemberFunc(()),
+    MemberFunc(AstMemberRoleFunc),
     LevelFunc(()),
     SetFunc(()),
     ExpFunc(()),
@@ -100,4 +94,38 @@ pub enum AstFac {
     SegsObj(AstSegsObj),
     Tuple(AstTuple),
     Exp(AstExp),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstMemberRoleFunc {
+    Parent(AstMemRoleFnParent),
+    CurrentMember(AstMemRoleFnCurrentMember),
+    OpeningPeriod(AstMemRoleFnOpeningPeriod),
+    ClosingPeriod(AstMemRoleFnClosingPeriod),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstMemRoleFnParent {
+    Simple,
+    MemberRoleSegs(AstSegsObj),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstMemRoleFnCurrentMember {
+    Simple,
+    DimRoleSegs(AstSegsObj),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstMemRoleFnOpeningPeriod {
+    Simple,
+    LvRoleSegs(AstSegsObj),
+    LvRoleSegsMemRoleSegs(AstSegsObj, AstSegsObj),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstMemRoleFnClosingPeriod {
+    Simple,
+    LvRoleSegs(AstSegsObj),
+    LvRoleSegsMemRoleSegs(AstSegsObj, AstSegsObj),
 }

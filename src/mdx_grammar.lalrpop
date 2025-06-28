@@ -27,6 +27,9 @@ use crate::core::ast::AstCustomObj;
 use crate::core::ast::AstAxis;
 use crate::core::ast::{AstExp, AstTerm as AstTerm___CoreAst, AstFac};
 
+use crate::core::ast::AstMemberRoleFunc;
+use crate::core::ast::{AstMemRoleFnParent, AstMemRoleFnCurrentMember, AstMemRoleFnOpeningPeriod, AstMemRoleFnClosingPeriod};
+
 grammar;
 
 extern {
@@ -157,30 +160,62 @@ SegsObj: AstSegsObj = {
   },
 }
 
-                    MemberFunc: () = {
-                      // #############
-                      // ##  Parent ##
-                      // #############
-                      "Parent" ("(" ")")? => {},
-                      "Parent" "(" <segs_mbr: SegsObj> ")" => {},
-                      // ###################
-                      // ## CurrentMember ##
-                      // ###################
-                      "CurrentMember" ("(" ")")? => {},
-                      "CurrentMember" "(" <segs_dim_role: SegsObj> ")" => {},
-                      // ###################
-                      // ## OpeningPeriod ##
-                      // ###################
-                      "OpeningPeriod" ("(" ")")? => {},
-                      "OpeningPeriod" "(" <level_segs: SegsObj> ")" => {},
-                      "OpeningPeriod" "(" <level_segs: SegsObj> "," <member_segs: SegsObj> ")" => {},
-                      // ###################
-                      // ## ClosingPeriod ##
-                      // ###################
-                      "ClosingPeriod" ("(" ")")? => {},
-                      "ClosingPeriod" "(" <level_segs: SegsObj> ")" => {},
-                      "ClosingPeriod" "(" <level_segs: SegsObj> "," <member_segs: SegsObj> ")" => {},
-                    }
+MemberFunc: AstMemberRoleFunc = {
+  <mrfn: MemRoleFn_Parent> => {
+    AstMemberRoleFunc::Parent(mrfn)
+  },
+  <mrfn: MemRoleFn_CurrentMember> => {
+    AstMemberRoleFunc::CurrentMember(mrfn)
+  },
+  <mrfn: MemRoleFn_OpeningPeriod> => {
+    AstMemberRoleFunc::OpeningPeriod(mrfn)
+  },
+  <mrfn: MemRoleFn_ClosingPeriod> => {
+    AstMemberRoleFunc::ClosingPeriod(mrfn)
+  },
+}
+
+MemRoleFn_Parent: AstMemRoleFnParent = {
+  "Parent" ("(" ")")? => {
+    AstMemRoleFnParent::Simple
+  },
+  "Parent" "(" <segs_mbr: SegsObj> ")" => {
+    AstMemRoleFnParent::MemberRoleSegs(segs_mbr)
+  },
+}
+
+MemRoleFn_CurrentMember: AstMemRoleFnCurrentMember = {
+  "CurrentMember" ("(" ")")? => {
+    AstMemRoleFnCurrentMember::Simple
+  },
+  "CurrentMember" "(" <segs_dim_role: SegsObj> ")" => {
+    AstMemRoleFnCurrentMember::DimRoleSegs(segs_dim_role)
+  },
+}
+
+MemRoleFn_OpeningPeriod: AstMemRoleFnOpeningPeriod = {
+  "OpeningPeriod" ("(" ")")? => {
+    AstMemRoleFnOpeningPeriod::Simple
+  },
+  "OpeningPeriod" "(" <level_segs: SegsObj> ")" => {
+    AstMemRoleFnOpeningPeriod::LvRoleSegs(level_segs)
+  },
+  "OpeningPeriod" "(" <level_segs: SegsObj> "," <member_segs: SegsObj> ")" => {
+    AstMemRoleFnOpeningPeriod::LvRoleSegsMemRoleSegs(level_segs, member_segs)
+  },
+}
+
+MemRoleFn_ClosingPeriod: AstMemRoleFnClosingPeriod = {
+  "ClosingPeriod" ("(" ")")? => {
+    AstMemRoleFnClosingPeriod::Simple
+  },
+  "ClosingPeriod" "(" <level_segs: SegsObj> ")" => {
+    AstMemRoleFnClosingPeriod::LvRoleSegs(level_segs)
+  },
+  "ClosingPeriod" "(" <level_segs: SegsObj> "," <member_segs: SegsObj> ")" => {
+    AstMemRoleFnClosingPeriod::LvRoleSegsMemRoleSegs(level_segs, member_segs)
+  },
+}
 
                     SetFunc: () = {
                       // ################
