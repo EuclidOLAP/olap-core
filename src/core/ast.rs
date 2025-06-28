@@ -25,8 +25,9 @@ impl AstMdxStatement {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstCustomObj {
-    CustomSet,
-    CustomMember,
+    CustomMember(AstSegsObj, AstExp),
+    CustomSetBySegsObj(AstSegsObj, AstSegsObj),
+    CustomSetByTuples(AstSegsObj, AstTuples),
 }
 
 #[derive(Clone, Debug, PartialEq)]

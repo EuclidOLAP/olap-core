@@ -106,7 +106,11 @@ extern {
 }
 
 // #########################################################################################################
+// #########################################################################################################
+// #########################################################################################################
 // #############################################  new grammar  #############################################
+// #########################################################################################################
+// #########################################################################################################
 // #########################################################################################################
 
 pub EuclidMdxStatement: AstMdxStatement = {
@@ -179,6 +183,15 @@ SegsObj: AstSegsObj = {
                       "ClosingPeriod" "(" ")" => {},
                       "ClosingPeriod" "(" <level_segs: SegsObj> ")" => {},
                       "ClosingPeriod" "(" <level_segs: SegsObj> "," <member_segs: SegsObj> ")" => {},
+                    }
+
+                    SetFunc: () = {
+                      // ################
+                      // ##  Children  ##
+                      // ################
+                      "Children" => {},
+                      "Children" "(" ")" => {},
+                      "Children" "(" <segs_mem: SegsObj> ")" => {},
                     }
 
                     LevelFunc: () = {
@@ -269,15 +282,6 @@ SegsObjects: Vec<AstSegsObj> = {
     segs_objs
   },
 }
-
-                    SetFunc: () = {
-                      // ################
-                      // ##  Children  ##
-                      // ################
-                      "Children" => {},
-                      "Children" "(" ")" => {},
-                      "Children" "(" <segs_mem: SegsObj> ")" => {},
-                    }
 
 Seg: AstSeg = {
   "&" <gid: "int"> => {
@@ -419,17 +423,17 @@ CurlyBraceSet: AstTuples = {
                       "IsLeaf" "(" <member_segs: SegsObj> ")" => {},
                     }
 
-                    CustomMdxObject: AstCustomObj = {
-                      "member" <frml_member: SegsObj> "as" <exp: Expression> => {
-                        AstCustomObj::CustomMember
-                      },
-                      "set" <cus_set: SegsObj> "as" <segs_set: SegsObj> => {
-                        AstCustomObj::CustomSet
-                      },
-                      "set" <cus_set: SegsObj> "as" <brace_set: CurlyBraceSet> => {
-                        AstCustomObj::CustomSet
-                      },
-                    }
+CustomMdxObject: AstCustomObj = {
+  "member" <frml_member: SegsObj> "as" <exp: Expression> => {
+    AstCustomObj::CustomMember(frml_member, exp)
+  },
+  "set" <cus_set: SegsObj> "as" <segs_set: SegsObj> => {
+    AstCustomObj::CustomSetBySegsObj(cus_set, segs_set)
+  },
+  "set" <cus_set: SegsObj> "as" <ast_tups: CurlyBraceSet> => {
+    AstCustomObj::CustomSetByTuples(cus_set, ast_tups)
+  },
+}
 
 RoundBracketTuple_2: AstTuple = {
   "(" <segs_obj: SegsObj> "," <segs_objs: SegsObjects> ")" => {
@@ -485,7 +489,11 @@ WhereSlicing: AstTuple = {
 }
 
 // #########################################################################################################
+// #########################################################################################################
+// #########################################################################################################
 // #############################################  old grammar  #############################################
+// #########################################################################################################
+// #########################################################################################################
 // #########################################################################################################
 
 // AstSelectionStatement
