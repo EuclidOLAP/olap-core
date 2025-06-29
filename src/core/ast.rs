@@ -32,7 +32,7 @@ pub enum AstSeg {
     MemberFunc(AstMemberRoleFunc),
     LevelFunc(AstLevelRoleFunc),
     SetFunc(AstSetFunc),
-    ExpFunc(()),
+    ExpFunc(AstExpFunc),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -97,6 +97,11 @@ pub enum AstFac {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct AstBoolExp {
+
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum AstMemberRoleFunc {
     Parent(AstMemRoleFnParent),
     CurrentMember(AstMemRoleFnCurrentMember),
@@ -157,4 +162,92 @@ pub enum AstLevelFnLevel {
 pub enum AstLevelFnLevels {
     LvNumExp(AstExp),
     DimRoleSegsLvNumExp(AstSegsObj, AstExp),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstExpFunc {
+    Name(AstExpFnName),
+    Count(AstExpFnCount),
+    Avg(AstExpFnAvg),
+    Sum(AstExpFnSum),
+    Max(AstExpFnMax),
+    Min(AstExpFnMin),
+    IIf(AstExpFnIIf),
+    Tunnel(AstExpFnTunnel),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstExpFnName {
+
+    Simple,
+    OlapObjSegs(AstSegsObj),
+
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstExpFnCount {
+
+    Simple,
+    CurlyBraceSet(AstTuples),
+    SetSegs(AstSegsObj),
+
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstExpFnAvg {
+
+    Simple,
+    CurlyBraceSet(AstTuples),
+    SetSegs(AstSegsObj),
+    CurlyBraceSetExp(AstTuples, AstExp),
+    SetSegsExp(AstSegsObj, AstExp),
+
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstExpFnSum {
+
+    Simple,
+    CurlyBraceSet(AstTuples),
+    SetSegs(AstSegsObj),
+    CurlyBraceSetExp(AstTuples, AstExp),
+    SetSegsExp(AstSegsObj, AstExp),
+
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstExpFnMax {
+
+    Simple,
+    CurlyBraceSet(AstTuples),
+    SetSegs(AstSegsObj),
+    CurlyBraceSetExp(AstTuples, AstExp),
+    SetSegsExp(AstSegsObj, AstExp),
+
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstExpFnMin {
+
+    Simple,
+    CurlyBraceSet(AstTuples),
+    SetSegs(AstSegsObj),
+    CurlyBraceSetExp(AstTuples, AstExp),
+    SetSegsExp(AstSegsObj, AstExp),
+
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstExpFnIIf {
+
+    Default(AstBoolExp, AstExp, AstExp),
+
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstExpFnTunnel {
+
+    CubeSegsTunnelExp(AstSegsObj, AstExp),
+    TunnelExp(AstExp),
+
 }
