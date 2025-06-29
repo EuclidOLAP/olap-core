@@ -42,6 +42,12 @@ use crate::core::ast::{AstExpFnCount as AstExpFnCount___CoreAst, AstExpFnAvg as 
 use crate::core::ast::{AstExpFnIIf as AstExpFnIIf___CoreAst, AstExpFnTunnel};
 
 use crate::core::ast::AstBoolExp as AstBoolExp___CoreAst;
+use crate::core::ast::AstBoolTerm as AstBoolTerm___CoreAst;
+use crate::core::ast::AstBoolFac;
+use crate::core::ast::AstBoolPrimary;
+
+use crate::core::ast::AstBoolFunc;
+use crate::core::ast::AstBoolFnIsLeaf as AstBoolFnIsLeaf___CoreAst;
 
 grammar;
 
@@ -523,40 +529,79 @@ ExpFn_Tunnel: AstExpFnTunnel = {
   },
 }
 
-                    BoolExp: AstBoolExp___CoreAst = {
-                      <bt: BoolTerm> => {
-                        todo!("<<< MDX Grammar Exception >>> BoolExp not implemented yet.")
-                      },
-                      "Not" <bt: BoolTerm> => {
-                        todo!("<<< MDX Grammar Exception >>> BoolExp not implemented yet.")
-                      },
-                      <bool_exp: BoolExp> "Or" <bt: BoolTerm> => {
-                        todo!("<<< MDX Grammar Exception >>> BoolExp not implemented yet.")
-                      },
-                    }
+BoolExp: AstBoolExp___CoreAst = {
+  <bt: BoolTerm> => {
+    AstBoolExp___CoreAst {
+      terms: vec![bt],
+    }
+  },
+  <bool_exp: BoolExp> "Or" <bt: BoolTerm> => {
+    let mut bool_exp = bool_exp;
+    bool_exp.terms.push(bt);
+    bool_exp
+  },
+}
 
-                    BoolTerm: () = {
-                      <bf: BoolFac> => {},
-                      <bt: BoolTerm> "And" <bf: BoolFac> => {},
-                    }
+BoolTerm: AstBoolTerm___CoreAst = {
+  <bf: BoolFac> => {
+    AstBoolTerm___CoreAst {
+      factors: vec![bf],
+    }
+  },
+  <bt: BoolTerm> "And" <bf: BoolFac> => {
+    let mut bt = bt;
+    bt.factors.push(bf);
+    bt
+  },
+}
 
-                    BoolFac: () = {
-                      <exp_left: Expression> "<"  <exp_right: Expression> => {},
-                      <exp_left: Expression> "<=" <exp_right: Expression> => {},
-                      <exp_left: Expression> "="  <exp_right: Expression> => {},
-                      <exp_left: Expression> "<>" <exp_right: Expression> => {},
-                      <exp_left: Expression> ">"  <exp_right: Expression> => {},
-                      <exp_left: Expression> ">=" <exp_right: Expression> => {},
-                      "(" <bool_exp: BoolExp> ")" => {},
-                      <bool_fn: BoolFunc> => {},
-                    }
+BoolFac: AstBoolFac = {
+  <bool_pry: BoolPrimary> => {
+    AstBoolFac::BoolPrimary(bool_pry)
+  },
+  "Not" <bool_pry: BoolPrimary> => {
+    AstBoolFac::NotBoolPrimary(bool_pry)
+  },
+}
 
-                    BoolFunc: () = {
-                      // ##############
-                      // ##  IsLeaf  ##
-                      // ##############
-                      "IsLeaf" "(" <member_segs: SegsObj> ")" => {},
-                    }
+BoolPrimary: AstBoolPrimary = {
+  <exp_left: Expression> "<"  <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesAnother(exp_left, String::from("<"), exp_right)
+  },
+  <exp_left: Expression> "<=" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesAnother(exp_left, String::from("<="), exp_right)
+  },
+  <exp_left: Expression> "="  <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesAnother(exp_left, String::from("="), exp_right)
+  },
+  <exp_left: Expression> "<>" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesAnother(exp_left, String::from("<>"), exp_right)
+  },
+  <exp_left: Expression> ">"  <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesAnother(exp_left, String::from(">"), exp_right)
+  },
+  <exp_left: Expression> ">=" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesAnother(exp_left, String::from(">="), exp_right)
+  },
+  "(" <bool_exp: BoolExp> ")" => {
+    AstBoolPrimary::BoolExp(bool_exp)
+  },
+  <bool_fn: BoolFunc> => {
+    AstBoolPrimary::BoolFunc(bool_fn)
+  },
+}
+
+BoolFunc: AstBoolFunc = {
+  <tf_fn: BoolFn_IsLeaf> => {
+    AstBoolFunc::IsLeaf(tf_fn)
+  },
+}
+
+BoolFn_IsLeaf: AstBoolFnIsLeaf___CoreAst = {
+  "IsLeaf" "(" <member_segs: SegsObj> ")" => {
+    AstBoolFnIsLeaf___CoreAst::MemberRoleSegs(member_segs)
+  },
+}
 
 CustomMdxObject: AstCustomObj = {
   "member" <frml_member: SegsObj> "as" <exp: Expression> => {

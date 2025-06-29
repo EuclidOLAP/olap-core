@@ -97,9 +97,6 @@ pub enum AstFac {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct AstBoolExp {}
-
-#[derive(Clone, Debug, PartialEq)]
 pub enum AstMemberRoleFunc {
     Parent(AstMemRoleFnParent),
     CurrentMember(AstMemRoleFnCurrentMember),
@@ -232,4 +229,37 @@ pub enum AstExpFnIIf {
 pub enum AstExpFnTunnel {
     CubeSegsTunnelExp(AstSegsObj, AstExp),
     TunnelExp(AstExp),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstBoolExp {
+    pub terms: Vec<AstBoolTerm>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstBoolTerm {
+    pub factors: Vec<AstBoolFac>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstBoolFac {
+    BoolPrimary(AstBoolPrimary),
+    NotBoolPrimary(AstBoolPrimary),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstBoolPrimary {
+    ExpComparesAnother(AstExp, String, AstExp),
+    BoolExp(AstBoolExp),
+    BoolFunc(AstBoolFunc),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstBoolFunc {
+    IsLeaf(AstBoolFnIsLeaf),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstBoolFnIsLeaf {
+    MemberRoleSegs(AstSegsObj),
 }
