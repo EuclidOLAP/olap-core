@@ -30,6 +30,12 @@ use crate::core::ast::{AstExp, AstTerm as AstTerm___CoreAst, AstFac};
 use crate::core::ast::AstMemberRoleFunc;
 use crate::core::ast::{AstMemRoleFnParent, AstMemRoleFnCurrentMember, AstMemRoleFnOpeningPeriod, AstMemRoleFnClosingPeriod};
 
+use crate::core::ast::AstSetFunc;
+use crate::core::ast::AstSetFnChildren as AstSetFnChildren___CoreAst;
+
+use crate::core::ast::AstLevelRoleFunc;
+use crate::core::ast::{AstLevelFnLevel as AstLevelFnLevel___CoreAst, AstLevelFnLevels as AstLevelFnLevels___CoreAst};
+
 grammar;
 
 extern {
@@ -217,26 +223,47 @@ MemRoleFn_ClosingPeriod: AstMemRoleFnClosingPeriod = {
   },
 }
 
-                    SetFunc: () = {
-                      // ################
-                      // ##  Children  ##
-                      // ################
-                      "Children" ("(" ")")? => {},
-                      "Children" "(" <segs_mem: SegsObj> ")" => {},
-                    }
+SetFunc: AstSetFunc = {
+  <setfn: SetFn_Children> => {
+    AstSetFunc::Children(setfn)
+  },
+}
 
-                    LevelFunc: () = {
-                      // ###########
-                      // ## Level ##
-                      // ###########
-                      "Level" ("(" ")")? => {},
-                      "Level" "(" <segs_mem_role: SegsObj> ")" => {},
-                      // ############
-                      // ## Levels ##
-                      // ############
-                      "Levels" "(" <exp_lv_num: Expression> ")" => {},
-                      "Levels" "(" <segs_dim_role: SegsObj> "," <exp_lv_num: Expression> ")" => {},
-                    }
+SetFn_Children: AstSetFnChildren___CoreAst = {
+  "Children" ("(" ")")? => {
+    AstSetFnChildren___CoreAst::Simple
+  },
+  "Children" "(" <segs_mem: SegsObj> ")" => {
+    AstSetFnChildren___CoreAst::MemberRoleSegs(segs_mem)
+  },
+}
+
+LevelFunc: AstLevelRoleFunc = {
+  <lvfn: LvFn_Level> => {
+    AstLevelRoleFunc::Level(lvfn)
+  },
+  <lvfn: LvFn_Levels> => {
+    AstLevelRoleFunc::Levels(lvfn)
+  },
+}
+
+LvFn_Level: AstLevelFnLevel___CoreAst = {
+  "Level" ("(" ")")? => {
+    AstLevelFnLevel___CoreAst::Simple
+  },
+  "Level" "(" <segs_mem_role: SegsObj> ")" => {
+    AstLevelFnLevel___CoreAst::MemberRoleSegs(segs_mem_role)
+  },
+}
+
+LvFn_Levels: AstLevelFnLevels___CoreAst = {
+  "Levels" "(" <exp_lv_num: Expression> ")" => {
+    AstLevelFnLevels___CoreAst::LvNumExp(exp_lv_num)
+  },
+  "Levels" "(" <segs_dim_role: SegsObj> "," <exp_lv_num: Expression> ")" => {
+    AstLevelFnLevels___CoreAst::DimRoleSegsLvNumExp(segs_dim_role, exp_lv_num)
+  },
+}
 
 Expression: AstExp = {
   <term: Term> => {

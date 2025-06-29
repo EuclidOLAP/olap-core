@@ -30,8 +30,8 @@ pub enum AstSeg {
     GidStr(u64, String),
     Str(String),
     MemberFunc(AstMemberRoleFunc),
-    LevelFunc(()),
-    SetFunc(()),
+    LevelFunc(AstLevelRoleFunc),
+    SetFunc(AstSetFunc),
     ExpFunc(()),
 }
 
@@ -128,4 +128,33 @@ pub enum AstMemRoleFnClosingPeriod {
     Simple,
     LvRoleSegs(AstSegsObj),
     LvRoleSegsMemRoleSegs(AstSegsObj, AstSegsObj),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstSetFunc {
+    Children(AstSetFnChildren),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstSetFnChildren {
+    Simple,
+    MemberRoleSegs(AstSegsObj),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstLevelRoleFunc {
+    Level(AstLevelFnLevel),
+    Levels(AstLevelFnLevels),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstLevelFnLevel {
+    Simple,
+    MemberRoleSegs(AstSegsObj),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstLevelFnLevels {
+    LvNumExp(AstExp),
+    DimRoleSegsLvNumExp(AstSegsObj, AstExp),
 }
