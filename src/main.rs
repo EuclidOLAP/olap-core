@@ -1,5 +1,5 @@
-mod core;
 mod agg_service_client;
+mod core;
 mod mdd;
 mod meta_cache;
 mod olapmeta_grpc_client;
@@ -22,8 +22,8 @@ use tonic::{transport::Server, Request, Response, Status};
 
 use lalrpop_util::lalrpop_mod;
 
-use crate::mdx_grammar::SelectionMDXParser;
 use crate::mdx_grammar::EuclidMdxStatementParser;
+use crate::mdx_grammar::SelectionMDXParser;
 
 use crate::mdx_lexer::Lexer as MdxLexer;
 
@@ -97,7 +97,8 @@ async fn handle_stat(optype: String, statement: String) -> (u64, Vec<CellValue>)
             // println!(">>>>>>>> MDX Statement >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
             // println!("{}", statement);
             // println!(">>>>>>>> <<<<<<<<<<<<< >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-            let ast_selstat = EuclidMdxStatementParser::new().parse(MdxLexer::new(&statement)).unwrap();
+            let ast_selstat =
+                EuclidMdxStatementParser::new().parse(MdxLexer::new(&statement)).unwrap();
             println!("[Cyrex] EuclidMdxStatementParser >>>>>> {:?}", ast_selstat);
             let ast_selstat = SelectionMDXParser::new().parse(MdxLexer::new(&statement)).unwrap();
 

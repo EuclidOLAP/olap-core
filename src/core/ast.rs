@@ -97,9 +97,7 @@ pub enum AstFac {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct AstBoolExp {
-
-}
+pub struct AstBoolExp {}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstMemberRoleFunc {
@@ -178,76 +176,60 @@ pub enum AstExpFunc {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFnName {
-
     Simple,
     OlapObjSegs(AstSegsObj),
-
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFnCount {
-
     Simple,
     CurlyBraceSet(AstTuples),
     SetSegs(AstSegsObj),
-
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFnAvg {
-
     Simple,
     CurlyBraceSet(AstTuples),
     SetSegs(AstSegsObj),
     CurlyBraceSetExp(AstTuples, AstExp),
     SetSegsExp(AstSegsObj, AstExp),
-
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFnSum {
-
     Simple,
     CurlyBraceSet(AstTuples),
     SetSegs(AstSegsObj),
     CurlyBraceSetExp(AstTuples, AstExp),
     SetSegsExp(AstSegsObj, AstExp),
-
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFnMax {
-
     Simple,
     CurlyBraceSet(AstTuples),
     SetSegs(AstSegsObj),
     CurlyBraceSetExp(AstTuples, AstExp),
     SetSegsExp(AstSegsObj, AstExp),
-
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFnMin {
-
     Simple,
     CurlyBraceSet(AstTuples),
     SetSegs(AstSegsObj),
     CurlyBraceSetExp(AstTuples, AstExp),
     SetSegsExp(AstSegsObj, AstExp),
-
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFnIIf {
-
     Default(AstBoolExp, AstExp, AstExp),
-
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFnTunnel {
-
     CubeSegsTunnelExp(AstSegsObj, AstExp),
     TunnelExp(AstExp),
-
 }

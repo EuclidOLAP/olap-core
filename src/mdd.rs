@@ -474,7 +474,9 @@ impl MultiDimensionalEntityLocator for DimensionRole {
             AstSegForOlaGrammar::Gid(gid) | AstSegForOlaGrammar::GidStr(gid, _) => {
                 self.locate_entity_by_gid(*gid, slice_tuple, context).await
             }
-            AstSegForOlaGrammar::Str(seg) => self.locate_entity_by_seg(seg, slice_tuple, context).await,
+            AstSegForOlaGrammar::Str(seg) => {
+                self.locate_entity_by_seg(seg, slice_tuple, context).await
+            }
             AstSegForOlaGrammar::LevelFn(level_fn) => MultiDimensionalEntity::LevelRole(
                 level_fn
                     .get_level_role(

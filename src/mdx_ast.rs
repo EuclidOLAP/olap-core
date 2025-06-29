@@ -1063,11 +1063,16 @@ impl ToCellValue for AstExpFunction {
                     let exp = eval_fn.exp.clone();
 
                     let mdx_with_str = meta_cache::mdx_formula_members_fragment(&the_cube);
-                    let tunnel_mdx = format!("with\n{}\nSelect {{ ( &0 ) }} on rows\nfrom &{}", mdx_with_str, the_cube.gid);
-                    let tunnel_ast = SelectionMDXParser::new().parse(MdxLexer::new(&tunnel_mdx)).unwrap();
+                    let tunnel_mdx = format!(
+                        "with\n{}\nSelect {{ ( &0 ) }} on rows\nfrom &{}",
+                        mdx_with_str, the_cube.gid
+                    );
+                    let tunnel_ast =
+                        SelectionMDXParser::new().parse(MdxLexer::new(&tunnel_mdx)).unwrap();
                     let mut tunnel_context = tunnel_ast.gen_md_context().await;
 
-                    exp.val(&tunnel_context.query_slice_tuple.clone(), &mut tunnel_context, None).await
+                    exp.val(&tunnel_context.query_slice_tuple.clone(), &mut tunnel_context, None)
+                        .await
                 }
             }
         })
