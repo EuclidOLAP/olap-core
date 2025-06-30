@@ -97,9 +97,11 @@ async fn handle_stat(optype: String, statement: String) -> (u64, Vec<CellValue>)
             // println!(">>>>>>>> MDX Statement >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
             // println!("{}", statement);
             // println!(">>>>>>>> <<<<<<<<<<<<< >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+
             let ast_selstat =
                 EuclidMdxStatementParser::new().parse(MdxLexer::new(&statement)).unwrap();
             println!("[Cyrex] EuclidMdxStatementParser >>>>>> {:?}", ast_selstat);
+
             let ast_selstat = SelectionMDXParser::new().parse(MdxLexer::new(&statement)).unwrap();
 
             exe_md_query(ast_selstat).await
