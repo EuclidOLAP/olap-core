@@ -1,0 +1,1175 @@
+use crate::mdx_tokens::{Token, LexicalError};
+
+use crate::mdx_ast;
+use crate::mdx_ast::AstSegForOlaGrammar;
+use crate::mdx_ast::AstFormulaObject;
+use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember};
+use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
+use crate::mdx_ast::AstFactory::{FactoryNum, FactoryStr, FactorySegs,FactoryTuple,FactoryExp};
+use crate::mdx_ast::{AstLevelFunction, AstLevelFnLevel, AstLevelFnLevels};
+use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent, AstMemberFnClosingPeriod, AstMemberFnOpeningPeriod};
+use crate::mdx_ast::{AstMemberFnCurrentMember};
+use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
+use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
+use crate::mdx_ast::{AstExpFnName};
+use crate::mdx_ast::{AstExpFnLookupCube};
+use crate::mdx_ast::AstExpFnIIf;
+use crate::mdx_ast::AstBoolExp;
+use crate::mdx_ast::AstBoolTerm;
+use crate::mdx_ast::AstBoolFactory;
+use crate::mdx_ast::AstBoolFunction;
+use crate::mdx_ast::AstBoolFnIsLeaf;
+
+use crate::core::ast::AstMdxStatement;
+use crate::core::ast::{AstSeg, AstSegsObj};
+use crate::core::ast::{AstTuple, AstTuples};
+use crate::core::ast::AstCustomObj;
+use crate::core::ast::AstAxis;
+use crate::core::ast::{AstExp, AstTerm as AstTerm___CoreAst, AstFac};
+
+use crate::core::ast::AstMemberRoleFunc;
+use crate::core::ast::{AstMemRoleFnParent, AstMemRoleFnCurrentMember, AstMemRoleFnOpeningPeriod, AstMemRoleFnClosingPeriod};
+
+use crate::core::ast::AstSetFunc;
+use crate::core::ast::AstSetFnChildren as AstSetFnChildren___CoreAst;
+
+use crate::core::ast::AstLevelRoleFunc;
+use crate::core::ast::{AstLevelFnLevel as AstLevelFnLevel___CoreAst, AstLevelFnLevels as AstLevelFnLevels___CoreAst};
+
+use crate::core::ast::AstExpFunc;
+use crate::core::ast::AstExpFnName as AstExpFnName___CoreAst;
+use crate::core::ast::{AstExpFnCount as AstExpFnCount___CoreAst, AstExpFnAvg as AstExpFnAvg___CoreAst, AstExpFnSum, AstExpFnMax, AstExpFnMin};
+use crate::core::ast::{AstExpFnIIf as AstExpFnIIf___CoreAst, AstExpFnTunnel};
+
+use crate::core::ast::AstBoolExp as AstBoolExp___CoreAst;
+use crate::core::ast::AstBoolTerm as AstBoolTerm___CoreAst;
+use crate::core::ast::AstBoolFac;
+use crate::core::ast::AstBoolPrimary;
+
+use crate::core::ast::AstBoolFunc;
+use crate::core::ast::AstBoolFnIsLeaf as AstBoolFnIsLeaf___CoreAst;
+
+grammar;
+
+extern {
+  type Location = usize;
+  type Error = LexicalError;
+
+  enum Token {
+    "with" => Token::With,
+    "member" => Token::Member,
+    "set" => Token::Set,
+    "as" => Token::As,
+
+    "select" => Token::Select,
+    "on" => Token::On,
+    "from" => Token::From,
+    "where" => Token::Where,
+    "BracketedString" => Token::BracketedString(<String>),
+    "QuotedString" => Token::QuotedString(<String>),
+
+    "Columns" => Token::Columns,
+    "Rows" => Token::Rows,
+    "Pages" => Token::Pages,
+    "Chapters" => Token::Chapters,
+    "Sections" => Token::Sections,
+
+    "+" => Token::Plus,
+    "-" => Token::Minus,
+    "*" => Token::Multiplied,
+    "/" => Token::Divided,
+
+    "," => Token::Comma,
+    "&" => Token::Ampersand,
+    "." => Token::Dot,
+    "int" => Token::Integer(<u64>),
+    "double" => Token::Double(<f64>),
+
+    "(" => Token::RoundBracketLeft,
+    ")" => Token::RoundBracketRight,
+    "{" => Token::CurlyBraceLeft,
+    "}" => Token::CurlyBraceRight,
+
+    "<" => Token::LT,
+    "<=" => Token::LE,
+    "=" => Token::EQ,
+    "<>" => Token::NE,
+    ">" => Token::GT,
+    ">=" => Token::GE,
+
+    ";" => Token::Semicolon,
+
+    "Parent" => Token::Parent,
+    "CurrentMember" => Token::CurrentMember,
+    "ClosingPeriod" => Token::ClosingPeriod,
+    "OpeningPeriod" => Token::OpeningPeriod,
+
+    "Children" => Token::Children,
+
+    "Avg" => Token::Avg,
+    "Sum" => Token::Sum,
+    "Max" => Token::Max,
+    "Min" => Token::Min,
+    "Count" => Token::Count,
+    "Tunnel" => Token::Tunnel,
+    "IIf" => Token::IIf,
+
+    "Name" => Token::Name,
+
+    "Level" => Token::Level,
+    "Levels" => Token::Levels,
+
+    "Not" => Token::Not,
+    "Or" => Token::Or,
+    "And" => Token::And,
+
+    "IsLeaf" => Token::IsLeaf,
+  }
+}
+
+// #########################################################################################################
+// #########################################################################################################
+// #########################################################################################################
+// #############################################  old grammar  #############################################
+// #########################################################################################################
+// #########################################################################################################
+// #########################################################################################################
+
+// AstSelectionStatement
+pub SelectionMDX: mdx_ast::AstSelectionStatement = {
+  "select" <axes:Axes___OldGrammar> "from" <cube:Segments> (";")? => {
+    mdx_ast::AstSelectionStatement {
+      formula_objs: vec![],
+      axes,
+      cube,
+      basic_slice: None,
+    }
+  },
+  "select" <axes:Axes___OldGrammar> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
+    mdx_ast::AstSelectionStatement {
+      formula_objs: vec![],
+      axes,
+      cube,
+      basic_slice: Some(tuple),
+    }
+  },
+  "with" <cfos:CustomFormulaObjects> "select" <axes:Axes___OldGrammar> "from" <cube:Segments> (";")? => {
+    mdx_ast::AstSelectionStatement {
+      formula_objs: cfos,
+      axes,
+      cube,
+      basic_slice: None,
+    }
+  },
+  "with" <cfos:CustomFormulaObjects> "select" <axes:Axes___OldGrammar> "from" <cube:Segments> "where" <tuple:TupleWrap> (";")? => {
+    mdx_ast::AstSelectionStatement {
+      formula_objs: cfos,
+      axes,
+      cube,
+      basic_slice: Some(tuple),
+    }
+  },
+}
+
+CustomFormulaObjects: Vec<AstFormulaObject> = {
+  <fm:FormulaMember> => {
+    vec![fm]
+  },
+  <fs:FormulaSet> => {
+    vec![fs]
+  },
+  <cfos:CustomFormulaObjects> (",")? <fm:FormulaMember> => {
+    let mut list = cfos;
+    list.push(fm);
+    list
+  },
+  <cfos:CustomFormulaObjects> (",")? <fs:FormulaSet> => {
+    let mut list = cfos;
+    list.push(fs);
+    list
+  }
+}
+
+FormulaMember: AstFormulaObject = {
+  "member" <sw:SegmentsWrap> "as" <exp:Expression___OldGrammar> => {
+    CustomFormulaMember(sw, exp)
+  }
+}
+
+FormulaSet: AstFormulaObject = {
+  "set" <_sw:SegmentsWrap> "as" => {
+    // CustomFormulaSet
+    todo!("<<< MDX Grammar Exception >>> CustomFormulaSet not implemented yet.")
+  }
+}
+
+// multi-dimensional object segment
+Seg___OldGrammar: AstSegForOlaGrammar = {
+  "&" <int:"int"> => {
+    AstSegForOlaGrammar::Gid(int)
+  },
+  "&" <int:"int"> <bra_str:"BracketedString"> => {
+    AstSegForOlaGrammar::GidStr(int, bra_str)
+  },
+  <bra_str:"BracketedString"> => {
+    AstSegForOlaGrammar::Str(bra_str)
+  },
+  <mfn: MemberFunction> => {
+    AstSegForOlaGrammar::MemberFunction(mfn)
+  },
+  <setfn: SetFnSpec> => {
+    AstSegForOlaGrammar::SetFunction(setfn)
+  },
+  <exp_fn: ExpFnSpec> => {
+    AstSegForOlaGrammar::ExpFn(exp_fn)
+  },
+  <lv_fn: LevelFunction> => {
+    AstSegForOlaGrammar::LevelFn(lv_fn)
+  },
+}
+
+Segments: Vec<AstSegForOlaGrammar> = {
+  <seg:Seg___OldGrammar> => {
+    let mut list = Vec::with_capacity(6);
+    list.push(seg);
+    list
+  },
+  <segs:Segments> "." <seg:Seg___OldGrammar> => {
+    let mut list = segs;
+    list.push(seg);
+    list
+  }
+}
+
+SegmentsWrap: mdx_ast::AstSegments = {
+  <segs:Segments> => {
+    mdx_ast::AstSegments{segs}
+  }
+}
+
+MemberFunction: AstMemberFunction = {
+  <parent: MemberFnParent> => {
+    AstMemberFunction::Parent(parent)
+  },
+  <cp: MemberFnClosingPeriod> => {
+    AstMemberFunction::ClosingPeriod(cp)
+  },
+  <op: MemberFnOpeningPeriod> => {
+    AstMemberFunction::OpeningPeriod(op)
+  },
+  <cur_mbr: MemberFnCurrentMember> => {
+    AstMemberFunction::CurrentMember(cur_mbr)
+  },
+}
+
+MemberFnParent: AstMemberFnParent = {
+  "Parent" => {
+    AstMemberFnParent::NoParam
+  },
+  "Parent" "(" ")" => {
+    AstMemberFnParent::NoParam
+  },
+  "Parent" "(" <segments: SegmentsWrap> ")" => {
+    AstMemberFnParent::HasParam(segments)
+  },
+}
+
+MemberFnClosingPeriod: AstMemberFnClosingPeriod = {
+  "ClosingPeriod" => {
+    AstMemberFnClosingPeriod::NoParam
+  },
+  "ClosingPeriod" "(" ")" => {
+    AstMemberFnClosingPeriod::NoParam
+  },
+  "ClosingPeriod" "(" <level_segs: SegmentsWrap> ")" => {
+    AstMemberFnClosingPeriod::OneParam(level_segs)
+  },
+  "ClosingPeriod" "(" <level_segs: SegmentsWrap> "," <member_segs: SegmentsWrap> ")" => {
+    AstMemberFnClosingPeriod::TwoParams(level_segs, member_segs)
+  },
+}
+
+MemberFnOpeningPeriod: AstMemberFnOpeningPeriod = {
+  "OpeningPeriod" => {
+    AstMemberFnOpeningPeriod::NoParam
+  },
+  "OpeningPeriod" "(" ")" => {
+    AstMemberFnOpeningPeriod::NoParam
+  },
+  "OpeningPeriod" "(" <level_segs: SegmentsWrap> ")" => {
+    AstMemberFnOpeningPeriod::OneParam(level_segs)
+  },
+  "OpeningPeriod" "(" <level_segs: SegmentsWrap> "," <member_segs: SegmentsWrap> ")" => {
+    AstMemberFnOpeningPeriod::TwoParams(level_segs, member_segs)
+  },
+}
+
+MemberFnCurrentMember: AstMemberFnCurrentMember = {
+  "CurrentMember" => {
+    AstMemberFnCurrentMember::NoParam
+  },
+  "CurrentMember" "(" ")" => {
+    AstMemberFnCurrentMember::NoParam
+  },
+  "CurrentMember" "(" <segments: SegmentsWrap> ")" => {
+    AstMemberFnCurrentMember::InnerParam(segments)
+  },
+}
+
+LevelFunction: AstLevelFunction = {
+  <lv: LvFnLevel> => {
+    AstLevelFunction::Level(lv)
+  },
+  <lvs: LvFnLevels> => {
+    AstLevelFunction::Levels(lvs)
+  },
+}
+
+LvFnLevel: AstLevelFnLevel = {
+  "Level" => {
+    AstLevelFnLevel::NoParam
+  },
+  "Level" "(" ")" => {
+    AstLevelFnLevel::NoParam
+  },
+  "Level" "(" <segments: SegmentsWrap> ")" => {
+    AstLevelFnLevel::OneParam(segments)
+  },
+}
+
+LvFnLevels: AstLevelFnLevels = {
+  "Levels" "(" <idx_exp: Expression___OldGrammar> ")" => {
+    AstLevelFnLevels::new(None, idx_exp)
+  },
+  "Levels" "(" <dim_segs: SegmentsWrap> "," <idx_exp: Expression___OldGrammar> ")" => {
+    AstLevelFnLevels::new(Some(dim_segs), idx_exp)
+  },
+}
+
+Expression___OldGrammar: AstExpression = {
+  <term:Term___OldGrammar> => {
+    AstExpression {
+      terms: vec![(' ', term)],
+    }
+  },
+  <exp:Expression___OldGrammar> "+" <term:Term___OldGrammar> => {
+    let mut e = exp;
+    e.terms.push(('+', term));
+    e
+  },
+  <exp:Expression___OldGrammar> "-" <term:Term___OldGrammar> => {
+    let mut e = exp;
+    e.terms.push(('-', term));
+    e
+  }
+}
+
+Term___OldGrammar: AstTerm = {
+  <factory:Factory___OldGrammar> => {
+    AstTerm {
+      factories: vec![(' ', factory)],
+    }
+  },
+  <term:Term___OldGrammar> "*" <factory:Factory___OldGrammar> => {
+    let mut t = term;
+    t.factories.push(('*', factory));
+    t
+  },
+  <term:Term___OldGrammar> "/" <factory:Factory___OldGrammar> => {
+    let mut t = term;
+    t.factories.push(('/', factory));
+    t
+  }
+}
+
+Factory___OldGrammar: AstFactory = {
+  <value:"double"> => {
+    FactoryNum(value)
+  },
+  <int_val:"int"> => {
+    let double_val: f64 = int_val as f64;
+    FactoryNum(double_val)
+  },
+  <str:"QuotedString"> => {
+    FactoryStr(str)
+  },
+  <segs_wrap:SegmentsWrap> => {
+    FactorySegs(segs_wrap)
+  },
+  <tuple_wrap:TupleWrap_2> => {
+    FactoryTuple(tuple_wrap)
+  },
+  "(" <exp:Expression___OldGrammar> ")" => {
+    FactoryExp(exp)
+  },
+}
+
+Tuple: Vec<mdx_ast::AstSegments> = {
+  <sw:SegmentsWrap> => {
+    vec![sw]
+  },
+  <tuple:Tuple> "," <sw:SegmentsWrap> => {
+    let mut list = tuple;
+    list.push(sw);
+    list
+  }
+}
+
+TupleWrap: mdx_ast::AstTuple = {
+  "(" <tuple:Tuple> ")" => {
+    mdx_ast::AstTuple::SegsList(tuple)
+  }
+}
+
+SetFnSpec: AstSetFunction = {
+  <chir: SetFnChildrenSpec> => {
+    AstSetFunction::Children(chir)
+  }
+}
+
+SetFnChildrenSpec: AstSetFnChildren = {
+  "Children" => {
+    AstSetFnChildren::NoParam
+  },
+  "Children" "(" ")" => {
+    AstSetFnChildren::NoParam
+  },
+  "Children" "(" <segments: SegmentsWrap> ")" => {
+    AstSetFnChildren::InnerParam(segments)
+  },
+}
+
+ExpFnSpec: AstExpFunction = {
+  <avg: ExpFnAvgSpec> => {
+    AstExpFunction::Avg(avg)
+  },
+  <count: ExpFnCountSpec> => {
+    AstExpFunction::Count(count)
+  },
+  <iif: ExpFnIIfSpec> => {
+    AstExpFunction::IIf(iif)
+  },
+  <lookup_cube: ExpFnLookupCubeSpec> => {
+    AstExpFunction::LookupCube(lookup_cube)
+  },
+  <name: ExpFnNameSpec> => {
+    AstExpFunction::Name(name)
+  },
+}
+
+ExpFnNameSpec: AstExpFnName = {
+  "Name" => {
+    AstExpFnName::NoParam
+  },
+  "Name" "(" ")" => {
+    AstExpFnName::NoParam
+  },
+  "Name" "(" <olap_obj_segs: SegmentsWrap> ")" => {
+    AstExpFnName::InnerParam(olap_obj_segs)
+  },
+}
+
+ExpFnCountSpec: AstExpFnCount = {
+  "Count" => {
+    AstExpFnCount::NoParam
+  },
+  "Count" "(" ")" => {
+    AstExpFnCount::NoParam
+  },
+  "Count" "(" <set: SetWrap> ")" => {
+    AstExpFnCount::InnerParam(set)
+  },
+}
+
+ExpFnAvgSpec: AstExpFnAvg = {
+  "Avg" => {
+    AstExpFnAvg::NoParam
+  },
+  "Avg" "(" ")" => {
+    AstExpFnAvg::NoParam
+  },
+  "Avg" "(" <set: SetWrap> ")" => {
+    AstExpFnAvg::InnerParam(set)
+  },
+}
+
+ExpFnIIfSpec: AstExpFnIIf = {
+  "IIf" "(" <bool_exp: BoolExpression> "," <exp_t: Expression___OldGrammar> "," <exp_f: Expression___OldGrammar> ")" => {
+    AstExpFnIIf {
+      bool_exp,
+      exp_t,
+      exp_f,
+    }
+  }
+}
+
+ExpFnLookupCubeSpec: AstExpFnLookupCube = {
+    "Tunnel" "(" <cube_segs: SegmentsWrap> "," <exp_on_another_cube: Expression___OldGrammar> ")" => {
+      AstExpFnLookupCube::new(Some(cube_segs), exp_on_another_cube)
+    },
+    "Tunnel" "(" <exp_on_another_cube: Expression___OldGrammar> ")" => {
+      AstExpFnLookupCube::new(None, exp_on_another_cube)
+    },
+}
+
+Set: Vec<mdx_ast::AstTuple> = {
+  <ast_tp:TupleWrap> => {
+    vec![ast_tp]
+  },
+  <set:Set> "," <ast_tp:TupleWrap> => {
+    let mut list = set;
+    list.push(ast_tp);
+    list
+  }
+}
+
+SetWrap: mdx_ast::AstSet = {
+  "{" <tuples:Set> "}" => {
+    mdx_ast::AstSet::Tuples(tuples)
+  }
+}
+
+BoolExpression: AstBoolExp = {
+  <bt: BoolTerm___OldGrammar> => {
+    AstBoolExp::BoolTerm(bt)
+  },
+  "Not" <bt: BoolTerm___OldGrammar> => {
+    AstBoolExp::NotBoolTerm(bt)
+  },
+  <bool_exp: BoolExpression> "Or" <bt: BoolTerm___OldGrammar> => {
+    AstBoolExp::BoolExpOrBoolTerm(Box::new(bool_exp), bt)
+  }
+}
+
+BoolTerm___OldGrammar: AstBoolTerm = {
+  <bf: BoolFactory> => {
+    AstBoolTerm::BoolFactory(bf)
+  },
+  <bt: BoolTerm___OldGrammar> "And" <bf: BoolFactory> => {
+    AstBoolTerm::BoolTermAndBoolFactory(Box::new(bt), bf)
+  }
+}
+
+BoolFactory: AstBoolFactory = {
+  <exp_left: Expression___OldGrammar> "<" <exp_right: Expression___OldGrammar> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<"), exp_right)
+  },
+  <exp_left: Expression___OldGrammar> "<=" <exp_right: Expression___OldGrammar> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<="), exp_right)
+  },
+  <exp_left: Expression___OldGrammar> "=" <exp_right: Expression___OldGrammar> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("="), exp_right)
+  },
+  <exp_left: Expression___OldGrammar> "<>" <exp_right: Expression___OldGrammar> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<>"), exp_right)
+  },
+  <exp_left: Expression___OldGrammar> ">" <exp_right: Expression___OldGrammar> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">"), exp_right)
+  },
+  <exp_left: Expression___OldGrammar> ">=" <exp_right: Expression___OldGrammar> => {
+    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">="), exp_right)
+  },
+  "(" <bool_exp: BoolExpression> ")" => {
+    AstBoolFactory::BoolExp(Box::new(bool_exp))
+  },
+  <bool_fn: BoolFunction> => {
+    AstBoolFactory::BoolFn(bool_fn)
+  }
+}
+
+BoolFunction: AstBoolFunction = {
+  <is_leaf: BoolFnIsLeaf> => {
+    AstBoolFunction::IsLeaf(is_leaf)
+  }
+}
+
+BoolFnIsLeaf: AstBoolFnIsLeaf = {
+  // "IsLeaf" => {
+  //   AstBoolFnIsLeaf::new(None)
+  // },
+  // "IsLeaf" "(" ")" => {
+  //   AstBoolFnIsLeaf::new(None)
+  // },
+  "IsLeaf" "(" <member_segs: SegmentsWrap> ")" => {
+    AstBoolFnIsLeaf::new(member_segs)
+  },
+}
+
+TupleWrap_2: mdx_ast::AstTuple = {
+  "(" <sw:SegmentsWrap> "," <tuple:Tuple> ")" => {
+    let mut list = tuple; // Vec<mdx_ast::AstSegments>
+    list.insert(0, sw); // mdx_ast::AstSegments
+    mdx_ast::AstTuple::SegsList(list)
+  }
+}
+
+// COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
+Axis___OldGrammar: mdx_ast::AstAxis = {
+  <ast_set:SetWrap> "on" <axpos:AxisPos> => {
+    mdx_ast::AstAxis::SetDefinition {
+      ast_set,
+      pos: axpos,
+    }
+  }
+}
+
+AxisPos: u64 = {
+  <axpos:"int"> => axpos,
+  "Columns"     => 0,
+  "Rows"        => 1,
+  "Pages"       => 2,
+  "Chapters"    => 3,
+  "Sections"    => 4,
+}
+
+Axes___OldGrammar: Vec<mdx_ast::AstAxis> = {
+  <axis:Axis___OldGrammar> => {
+    vec![axis]
+  },
+  <axes:Axes___OldGrammar> "," <axis:Axis___OldGrammar> => {
+    let mut list = axes;
+    list.push(axis);
+    list
+  }
+}
+
+// #########################################################################################################
+// #########################################################################################################
+// #########################################################################################################
+// #############################################  new grammar  #############################################
+// #########################################################################################################
+// #########################################################################################################
+// #########################################################################################################
+
+                    pub EuclidMdxStatement: AstMdxStatement = {
+                      <mdx_ps: MdxPrimarySliced> (";")? => {
+                        let (axes, segs_cube, slicing): (Vec<AstAxis>, AstSegsObj, Option<AstTuple>) = mdx_ps;
+                        AstMdxStatement::new(None, axes, segs_cube, slicing)
+                      },
+                      <cus_objs: WithCustomObjects> <mdx_ps: MdxPrimarySliced> (";")? => {
+                        let (axes, segs_cube, slicing): (Vec<AstAxis>, AstSegsObj, Option<AstTuple>) = mdx_ps;
+                        AstMdxStatement::new(Some(cus_objs), axes, segs_cube, slicing)
+                      },
+                    }
+
+                    MdxPrimarySliced: (Vec<AstAxis>, AstSegsObj, Option<AstTuple>) = {
+                      <mdx_pri: MdxPrimary> => {
+                        let (axes, segs_cube): (Vec<AstAxis>, AstSegsObj) = mdx_pri;
+                        (axes, segs_cube, None)
+                      },
+                      <mdx_pri: MdxPrimary> <slicing: WhereSlicing> => {
+                        let (axes, segs_cube): (Vec<AstAxis>, AstSegsObj) = mdx_pri;
+                        (axes, segs_cube, Some(slicing))
+                      },
+                    }
+
+                    WithCustomObjects: Vec<AstCustomObj> = {
+                      "with" <cus_obj: CustomMdxObject> => {
+                        vec![cus_obj]
+                      },
+                      <cus_objs: WithCustomObjects> (",")? <cus_obj: CustomMdxObject> => {
+                        let mut cus_objs = cus_objs;
+                        cus_objs.push(cus_obj);
+                        cus_objs
+                      },
+                    }
+
+                    SegsObj: AstSegsObj = {
+                      <seg: Seg> => {
+                        AstSegsObj::new(seg)
+                      },
+                      <segs_obj: SegsObj> "." <seg: Seg> => {
+                        let mut segs_obj = segs_obj;
+                        segs_obj.append(seg);
+                        segs_obj
+                      },
+                    }
+
+                    MemberFunc: AstMemberRoleFunc = {
+                      <mrfn: MemRoleFn_Parent> => {
+                        AstMemberRoleFunc::Parent(mrfn)
+                      },
+                      <mrfn: MemRoleFn_CurrentMember> => {
+                        AstMemberRoleFunc::CurrentMember(mrfn)
+                      },
+                      <mrfn: MemRoleFn_OpeningPeriod> => {
+                        AstMemberRoleFunc::OpeningPeriod(mrfn)
+                      },
+                      <mrfn: MemRoleFn_ClosingPeriod> => {
+                        AstMemberRoleFunc::ClosingPeriod(mrfn)
+                      },
+                    }
+
+                    MemRoleFn_Parent: AstMemRoleFnParent = {
+                      "Parent" ("(" ")")? => {
+                        AstMemRoleFnParent::Simple
+                      },
+                      "Parent" "(" <segs_mbr: SegsObj> ")" => {
+                        AstMemRoleFnParent::MemberRoleSegs(segs_mbr)
+                      },
+                    }
+
+                    MemRoleFn_CurrentMember: AstMemRoleFnCurrentMember = {
+                      "CurrentMember" ("(" ")")? => {
+                        AstMemRoleFnCurrentMember::Simple
+                      },
+                      "CurrentMember" "(" <segs_dim_role: SegsObj> ")" => {
+                        AstMemRoleFnCurrentMember::DimRoleSegs(segs_dim_role)
+                      },
+                    }
+
+                    MemRoleFn_OpeningPeriod: AstMemRoleFnOpeningPeriod = {
+                      "OpeningPeriod" ("(" ")")? => {
+                        AstMemRoleFnOpeningPeriod::Simple
+                      },
+                      "OpeningPeriod" "(" <level_segs: SegsObj> ")" => {
+                        AstMemRoleFnOpeningPeriod::LvRoleSegs(level_segs)
+                      },
+                      "OpeningPeriod" "(" <level_segs: SegsObj> "," <member_segs: SegsObj> ")" => {
+                        AstMemRoleFnOpeningPeriod::LvRoleSegsMemRoleSegs(level_segs, member_segs)
+                      },
+                    }
+
+                    MemRoleFn_ClosingPeriod: AstMemRoleFnClosingPeriod = {
+                      "ClosingPeriod" ("(" ")")? => {
+                        AstMemRoleFnClosingPeriod::Simple
+                      },
+                      "ClosingPeriod" "(" <level_segs: SegsObj> ")" => {
+                        AstMemRoleFnClosingPeriod::LvRoleSegs(level_segs)
+                      },
+                      "ClosingPeriod" "(" <level_segs: SegsObj> "," <member_segs: SegsObj> ")" => {
+                        AstMemRoleFnClosingPeriod::LvRoleSegsMemRoleSegs(level_segs, member_segs)
+                      },
+                    }
+
+                    SetFunc: AstSetFunc = {
+                      <setfn: SetFn_Children> => {
+                        AstSetFunc::Children(setfn)
+                      },
+                    }
+
+                    SetFn_Children: AstSetFnChildren___CoreAst = {
+                      "Children" ("(" ")")? => {
+                        AstSetFnChildren___CoreAst::Simple
+                      },
+                      "Children" "(" <segs_mem: SegsObj> ")" => {
+                        AstSetFnChildren___CoreAst::MemberRoleSegs(segs_mem)
+                      },
+                    }
+
+                    LevelFunc: AstLevelRoleFunc = {
+                      <lvfn: LvFn_Level> => {
+                        AstLevelRoleFunc::Level(lvfn)
+                      },
+                      <lvfn: LvFn_Levels> => {
+                        AstLevelRoleFunc::Levels(lvfn)
+                      },
+                    }
+
+                    LvFn_Level: AstLevelFnLevel___CoreAst = {
+                      "Level" ("(" ")")? => {
+                        AstLevelFnLevel___CoreAst::Simple
+                      },
+                      "Level" "(" <segs_mem_role: SegsObj> ")" => {
+                        AstLevelFnLevel___CoreAst::MemberRoleSegs(segs_mem_role)
+                      },
+                    }
+
+                    LvFn_Levels: AstLevelFnLevels___CoreAst = {
+                      "Levels" "(" <exp_lv_num: Expression> ")" => {
+                        AstLevelFnLevels___CoreAst::LvNumExp(exp_lv_num)
+                      },
+                      "Levels" "(" <segs_dim_role: SegsObj> "," <exp_lv_num: Expression> ")" => {
+                        AstLevelFnLevels___CoreAst::DimRoleSegsLvNumExp(segs_dim_role, exp_lv_num)
+                      },
+                    }
+
+                    Expression: AstExp = {
+                      <term: Term> => {
+                        AstExp {
+                          terms: vec![('+', term)],
+                        }
+                      },
+                      <exp: Expression> "+" <term: Term> => {
+                        let mut exp = exp;
+                        exp.terms.push(('+', term));
+                        exp
+                      },
+                      <exp: Expression> "-" <term: Term> => {
+                        let mut exp = exp;
+                        exp.terms.push(('-', term));
+                        exp
+                      },
+                    }
+
+                    Term: AstTerm___CoreAst = {
+                      <factory: Factory> => {
+                        AstTerm___CoreAst {
+                          factories: vec![('*', factory)],
+                        }
+                      },
+                      <term: Term> "*" <factory: Factory> => {
+                        let mut term = term;
+                        term.factories.push(('*', factory));
+                        term
+                      },
+                      <term: Term> "/" <factory: Factory> => {
+                        let mut term = term;
+                        term.factories.push(('/', factory));
+                        term
+                      },
+                    }
+
+                    Factory: AstFac = {
+                      <dec_val: "double"> => {
+                        AstFac::Double(dec_val)
+                      },
+                      <long_val: "int"> => {
+                        let double_val: f64 = long_val as f64;
+                        AstFac::Double(double_val)
+                      },
+                      <str: "QuotedString"> => {
+                        AstFac::Str(str)
+                      },
+                      <segs_obj: SegsObj> => {
+                        AstFac::SegsObj(segs_obj)
+                      },
+                      <ast_tup: RoundBracketTuple_2> => {
+                        AstFac::Tuple(ast_tup)
+                      },
+                      "(" <exp: Expression> ")" => {
+                        AstFac::Exp(exp)
+                      },
+                    }
+
+                    RoundBracketTuple: AstTuple = {
+                      "(" <segs_objs: SegsObjects> ")" => {
+                        AstTuple::RoundBracketTuple(segs_objs)
+                      },
+                    }
+
+                    SegsObjects: Vec<AstSegsObj> = {
+                      <segs_obj: SegsObj> => {
+                        vec![segs_obj]
+                      },
+                      <segs_objs: SegsObjects> "," <segs_obj: SegsObj> => {
+                        let mut segs_objs = segs_objs;
+                        segs_objs.push(segs_obj);
+                        segs_objs
+                      },
+                    }
+
+                    Seg: AstSeg = {
+                      "&" <gid: "int"> => {
+                        AstSeg::Gid(gid)
+                      },
+                      "&" <gid: "int"> <bra_str: "BracketedString"> => {
+                        AstSeg::GidStr(gid, bra_str)
+                      },
+                      <bra_str: "BracketedString"> => {
+                        AstSeg::Str(bra_str)
+                      },
+                      <mem_fn: MemberFunc> => {
+                        AstSeg::MemberFunc(mem_fn)
+                      },
+                      <lv_fn: LevelFunc> => {
+                        AstSeg::LevelFunc(lv_fn)
+                      },
+                      <set_fn: SetFunc> => {
+                        AstSeg::SetFunc(set_fn)
+                      },
+                      <exp_fn: ExpFunc> => {
+                        AstSeg::ExpFunc(exp_fn)
+                      },
+                    }
+
+                    Tuples: AstTuples = {
+                      <rb_tuple: RoundBracketTuple> => {
+                        AstTuples::new(rb_tuple)
+                      },
+                      <segs_obj: SegsObj> => {
+                        AstTuples::new(AstTuple::SegsObj(segs_obj))
+                      },
+                      <tuples: Tuples> "," <rb_tuple: RoundBracketTuple> => {
+                        let mut tuples = tuples;
+                        tuples.append(rb_tuple);
+                        tuples
+                      },
+                      <tuples: Tuples> "," <segs_obj: SegsObj> => {
+                        let mut tuples = tuples;
+                        tuples.append(AstTuple::SegsObj(segs_obj));
+                        tuples
+                      },
+                    }
+
+                    CurlyBraceSet: AstTuples = {
+                      "{" <tuples: Tuples> "}" => tuples,
+                    }
+
+                    ExpFunc: AstExpFunc = {
+                      <exp_fn: ExpFn_Name> => {
+                        AstExpFunc::Name(exp_fn)
+                      },
+                      <exp_fn: ExpFn_Count> => {
+                        AstExpFunc::Count(exp_fn)
+                      },
+                      <exp_fn: ExpFn_Avg> => {
+                        AstExpFunc::Avg(exp_fn)
+                      },
+                      <exp_fn: ExpFn_Sum> => {
+                        AstExpFunc::Sum(exp_fn)
+                      },
+                      <exp_fn: ExpFn_Max> => {
+                        AstExpFunc::Max(exp_fn)
+                      },
+                      <exp_fn: ExpFn_Min> => {
+                        AstExpFunc::Min(exp_fn)
+                      },
+                      <exp_fn: ExpFn_IIf> => {
+                        AstExpFunc::IIf(exp_fn)
+                      },
+                      <exp_fn: ExpFn_Tunnel> => {
+                        AstExpFunc::Tunnel(exp_fn)
+                      },
+                    }
+
+                    ExpFn_Name: AstExpFnName___CoreAst = {
+                      "Name" ("(" ")")? => {
+                        AstExpFnName___CoreAst::Simple
+                      },
+                      "Name" "(" <segs_obj: SegsObj> ")" => {
+                        AstExpFnName___CoreAst::OlapObjSegs(segs_obj)
+                      },
+                    }
+
+                    ExpFn_Count: AstExpFnCount___CoreAst = {
+                      "Count" ("(" ")")? => {
+                        AstExpFnCount___CoreAst::Simple
+                      },
+                      "Count" "(" <brace_set: CurlyBraceSet> ")" => {
+                        AstExpFnCount___CoreAst::CurlyBraceSet(brace_set)
+                      },
+                      "Count" "(" <segs_set: SegsObj> ")" => {
+                        AstExpFnCount___CoreAst::SetSegs(segs_set)
+                      },
+                    }
+
+                    ExpFn_Avg: AstExpFnAvg___CoreAst = {
+                      "Avg" ("(" ")")? => {
+                        AstExpFnAvg___CoreAst::Simple
+                      },
+                      "Avg" "(" <brace_set: CurlyBraceSet> ")" => {
+                        AstExpFnAvg___CoreAst::CurlyBraceSet(brace_set)
+                      },
+                      "Avg" "(" <segs_set: SegsObj> ")" => {
+                        AstExpFnAvg___CoreAst::SetSegs(segs_set)
+                      },
+                    }
+
+                    ExpFn_Sum: AstExpFnSum = {
+                      "Sum" ("(" ")")? => {
+                        AstExpFnSum::Simple
+                      },
+                      "Sum" "(" <brace_set: CurlyBraceSet> ")" => {
+                        AstExpFnSum::CurlyBraceSet(brace_set)
+                      },
+                      "Sum" "(" <segs_set: SegsObj> ")" => {
+                        AstExpFnSum::SetSegs(segs_set)
+                      },
+                      "Sum" "(" <brace_set: CurlyBraceSet> "," <exp: Expression> ")" => {
+                        AstExpFnSum::CurlyBraceSetExp(brace_set, exp)
+                      },
+                      "Sum" "(" <segs_set: SegsObj> "," <exp: Expression> ")" => {
+                        AstExpFnSum::SetSegsExp(segs_set, exp)
+                      },
+                    }
+
+                    ExpFn_Max: AstExpFnMax = {
+                      "Max" ("(" ")")? => {
+                        AstExpFnMax::Simple
+                      },
+                      "Max" "(" <brace_set: CurlyBraceSet> ")" => {
+                        AstExpFnMax::CurlyBraceSet(brace_set)
+                      },
+                      "Max" "(" <segs_set: SegsObj> ")" => {
+                        AstExpFnMax::SetSegs(segs_set)
+                      },
+                      "Max" "(" <brace_set: CurlyBraceSet> "," <exp: Expression> ")" => {
+                        AstExpFnMax::CurlyBraceSetExp(brace_set, exp)
+                      },
+                      "Max" "(" <segs_set: SegsObj> "," <exp: Expression> ")" => {
+                        AstExpFnMax::SetSegsExp(segs_set, exp)
+                      },
+                    }
+
+                    ExpFn_Min: AstExpFnMin = {
+                      "Min" ("(" ")")? => {
+                        AstExpFnMin::Simple
+                      },
+                      "Min" "(" <brace_set: CurlyBraceSet> ")" => {
+                        AstExpFnMin::CurlyBraceSet(brace_set)
+                      },
+                      "Min" "(" <segs_set: SegsObj> ")" => {
+                        AstExpFnMin::SetSegs(segs_set)
+                      },
+                      "Min" "(" <brace_set: CurlyBraceSet> "," <exp: Expression> ")" => {
+                        AstExpFnMin::CurlyBraceSetExp(brace_set, exp)
+                      },
+                      "Min" "(" <segs_set: SegsObj> "," <exp: Expression> ")" => {
+                        AstExpFnMin::SetSegsExp(segs_set, exp)
+                      },
+                    }
+
+                    ExpFn_IIf: AstExpFnIIf___CoreAst = {
+                      "IIf" "(" <bool_exp: BoolExp> "," <exp_t: Expression> "," <exp_f: Expression> ")" => {
+                        AstExpFnIIf___CoreAst::Default(bool_exp, exp_t, exp_f)
+                      },
+                    }
+
+                    ExpFn_Tunnel: AstExpFnTunnel = {
+                      "Tunnel" "(" <cube_segs: SegsObj> "," <tunnel_exp: Expression> ")" => {
+                        AstExpFnTunnel::CubeSegsTunnelExp(cube_segs, tunnel_exp)
+                      },
+                      "Tunnel" "(" <tunnel_exp: Expression> ")" => {
+                        AstExpFnTunnel::TunnelExp(tunnel_exp)
+                      },
+                    }
+
+                    BoolExp: AstBoolExp___CoreAst = {
+                      <bt: BoolTerm> => {
+                        AstBoolExp___CoreAst {
+                          terms: vec![bt],
+                        }
+                      },
+                      <bool_exp: BoolExp> "Or" <bt: BoolTerm> => {
+                        let mut bool_exp = bool_exp;
+                        bool_exp.terms.push(bt);
+                        bool_exp
+                      },
+                    }
+
+                    BoolTerm: AstBoolTerm___CoreAst = {
+                      <bf: BoolFac> => {
+                        AstBoolTerm___CoreAst {
+                          factors: vec![bf],
+                        }
+                      },
+                      <bt: BoolTerm> "And" <bf: BoolFac> => {
+                        let mut bt = bt;
+                        bt.factors.push(bf);
+                        bt
+                      },
+                    }
+
+                    BoolFac: AstBoolFac = {
+                      <bool_pry: BoolPrimary> => {
+                        AstBoolFac::BoolPrimary(bool_pry)
+                      },
+                      "Not" <bool_pry: BoolPrimary> => {
+                        AstBoolFac::NotBoolPrimary(bool_pry)
+                      },
+                    }
+
+                    BoolPrimary: AstBoolPrimary = {
+                      <exp_left: Expression> "<"  <exp_right: Expression> => {
+                        AstBoolPrimary::ExpComparesAnother(exp_left, String::from("<"), exp_right)
+                      },
+                      <exp_left: Expression> "<=" <exp_right: Expression> => {
+                        AstBoolPrimary::ExpComparesAnother(exp_left, String::from("<="), exp_right)
+                      },
+                      <exp_left: Expression> "="  <exp_right: Expression> => {
+                        AstBoolPrimary::ExpComparesAnother(exp_left, String::from("="), exp_right)
+                      },
+                      <exp_left: Expression> "<>" <exp_right: Expression> => {
+                        AstBoolPrimary::ExpComparesAnother(exp_left, String::from("<>"), exp_right)
+                      },
+                      <exp_left: Expression> ">"  <exp_right: Expression> => {
+                        AstBoolPrimary::ExpComparesAnother(exp_left, String::from(">"), exp_right)
+                      },
+                      <exp_left: Expression> ">=" <exp_right: Expression> => {
+                        AstBoolPrimary::ExpComparesAnother(exp_left, String::from(">="), exp_right)
+                      },
+                      "(" <bool_exp: BoolExp> ")" => {
+                        AstBoolPrimary::BoolExp(bool_exp)
+                      },
+                      <bool_fn: BoolFunc> => {
+                        AstBoolPrimary::BoolFunc(bool_fn)
+                      },
+                    }
+
+                    BoolFunc: AstBoolFunc = {
+                      <tf_fn: BoolFn_IsLeaf> => {
+                        AstBoolFunc::IsLeaf(tf_fn)
+                      },
+                    }
+
+                    BoolFn_IsLeaf: AstBoolFnIsLeaf___CoreAst = {
+                      "IsLeaf" "(" <member_segs: SegsObj> ")" => {
+                        AstBoolFnIsLeaf___CoreAst::MemberRoleSegs(member_segs)
+                      },
+                    }
+
+                    CustomMdxObject: AstCustomObj = {
+                      "member" <frml_member: SegsObj> "as" <exp: Expression> => {
+                        AstCustomObj::CustomMember(frml_member, exp)
+                      },
+                      "set" <cus_set: SegsObj> "as" <segs_set: SegsObj> => {
+                        AstCustomObj::CustomSetBySegsObj(cus_set, segs_set)
+                      },
+                      "set" <cus_set: SegsObj> "as" <ast_tups: CurlyBraceSet> => {
+                        AstCustomObj::CustomSetByTuples(cus_set, ast_tups)
+                      },
+                    }
+
+                    RoundBracketTuple_2: AstTuple = {
+                      "(" <segs_obj: SegsObj> "," <segs_objs: SegsObjects> ")" => {
+                        let mut segs_objs = segs_objs;
+                        segs_objs.insert(0, segs_obj);
+                        AstTuple::RoundBracketTuple(segs_objs)
+                      },
+                    }
+
+                    MdxPrimary: (Vec<AstAxis>, AstSegsObj) = {
+                      "select" <axes: Axes> "from" <segs_cube: SegsObj> => {
+                        (axes, segs_cube)
+                      },
+                    }
+
+                    Axes: Vec<AstAxis> = {
+                      <axis: Axis> => {
+                        vec![axis]
+                      },
+                      <axes: Axes> "," <axis: Axis> => {
+                        let mut axes = axes;
+                        axes.push(axis);
+                        axes
+                      },
+                    }
+
+                    // COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
+                    Axis: AstAxis = {
+                      <ast_tuples: CurlyBraceSet> "on" <ax_pos: AxisPosition> => {
+                        AstAxis::CurlyBraceSet(ast_tuples, ax_pos)
+                      },
+                      <segs_set: SegsObj> "on" <ax_pos: AxisPosition> => {
+                        AstAxis::SegsObjSet(segs_set, ax_pos)
+                      },
+                    }
+
+                    AxisPosition: u64 = {
+                      <ax_pos: "int"> => ax_pos,
+                      "Columns"       => 0,
+                      "Rows"          => 1,
+                      "Pages"         => 2,
+                      "Chapters"      => 3,
+                      "Sections"      => 4,
+                    }
+
+                    WhereSlicing: AstTuple = {
+                      "where" <rb_tuple: RoundBracketTuple> => {
+                        rb_tuple
+                      },
+                      "where" <segs_tup: SegsObj> => {
+                        AstTuple::SegsObj(segs_tup)
+                      },
+                    }
