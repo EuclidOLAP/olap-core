@@ -1,5 +1,5 @@
 mod agg_service_client;
-mod core;
+// mod core;
 mod mdd;
 mod meta_cache;
 mod olapmeta_grpc_client;
