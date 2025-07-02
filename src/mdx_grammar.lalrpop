@@ -209,6 +209,11 @@ extern {
           }
         }
 
+// Segs_Obj: AstSegsObj = {
+//   <seg: Seg> => {},
+//   <segs: Segs_Obj> "." <seg: Seg> => {},
+// }
+
         MemberFunction: AstMemberFunction = {
           <parent: MemberFnParent> => {
             AstMemberFunction::Parent(parent)
@@ -455,6 +460,33 @@ extern {
           },
         }
 
+// Exp_Func_Sum: AstExpFuncSum = {
+//   "Sum" ("(" ")")? => {},
+//   "Sum" "(" <exp: Expression> ")" => {},
+//   "Sum" "(" <segs_set: Segs_Obj> ")" => {},
+//   "Sum" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {},
+//   "Sum" "(" <cb_set: Curly_Brace_Set> ")" => {},
+//   "Sum" "(" <cb_set: Curly_Brace_Set> "," <exp: Expression> ")" => {},
+// }
+
+// Exp_Func_Max: AstExpFuncMax = {
+//   "Max" ("(" ")")? => {},
+//   "Max" "(" <exp: Expression> ")" => {},
+//   "Max" "(" <segs_set: Segs_Obj> ")" => {},
+//   "Max" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {},
+//   "Max" "(" <cb_set: Curly_Brace_Set> ")" => {},
+//   "Max" "(" <cb_set: Curly_Brace_Set> "," <exp: Expression> ")" => {},
+// }
+
+// Exp_Func_Min: AstExpFuncMin = {
+//   "Min" ("(" ")")? => {},
+//   "Min" "(" <exp: Expression> ")" => {},
+//   "Min" "(" <segs_set: Segs_Obj> ")" => {},
+//   "Min" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {},
+//   "Min" "(" <cb_set: Curly_Brace_Set> ")" => {},
+//   "Min" "(" <cb_set: Curly_Brace_Set> "," <exp: Expression> ")" => {},
+// }
+
         ExpFnIIfSpec: AstExpFnIIf = {
           "IIf" "(" <bool_exp: BoolExpression> "," <exp_t: Expression> "," <exp_f: Expression> ")" => {
             AstExpFnIIf {
@@ -490,6 +522,17 @@ extern {
             mdx_ast::AstSet::Tuples(tuples)
           }
         }
+
+// Tuples: Vec<AstTuple> = {
+//   <tuple: Tuple> => {},
+//   <tuples: Tuples> "," <tuple: Tuple> => {},
+// }
+
+// Curly_Brace_Set: AstCurlyBraceSet = {
+//   "{" <tuple_list: Tuples> "}" => {
+
+//   },
+// }
 
         BoolExpression: AstBoolExp = {
           <bt: BoolTerm> => {
