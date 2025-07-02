@@ -422,6 +422,15 @@ extern {
           <name: ExpFnNameSpec> => {
             AstExpFunction::Name(name)
           },
+          // <exp_fn: Exp_Func_Sum> => {
+          //   AstExpFunction::Sum(exp_fn)
+          // },
+          // <exp_fn: Exp_Func_Max> => {
+          //   AstExpFunction::Max(exp_fn)
+          // },
+          // <exp_fn: Exp_Func_Min> => {
+          //   AstExpFunction::Min(exp_fn)
+          // },
         }
 
         ExpFnNameSpec: AstExpFnName = {
@@ -462,7 +471,7 @@ extern {
 
 // Exp_Func_Sum: AstExpFuncSum = {
 //   "Sum" ("(" ")")? => {},
-//   "Sum" "(" <exp: Expression> ")" => {},
+//   // "Sum" "(" <exp: Expression> ")" => {},
 //   "Sum" "(" <segs_set: Segs_Obj> ")" => {},
 //   "Sum" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {},
 //   "Sum" "(" <cb_set: Curly_Brace_Set> ")" => {},
@@ -471,7 +480,7 @@ extern {
 
 // Exp_Func_Max: AstExpFuncMax = {
 //   "Max" ("(" ")")? => {},
-//   "Max" "(" <exp: Expression> ")" => {},
+//   // "Max" "(" <exp: Expression> ")" => {},
 //   "Max" "(" <segs_set: Segs_Obj> ")" => {},
 //   "Max" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {},
 //   "Max" "(" <cb_set: Curly_Brace_Set> ")" => {},
@@ -480,7 +489,7 @@ extern {
 
 // Exp_Func_Min: AstExpFuncMin = {
 //   "Min" ("(" ")")? => {},
-//   "Min" "(" <exp: Expression> ")" => {},
+//   // "Min" "(" <exp: Expression> ")" => {},
 //   "Min" "(" <segs_set: Segs_Obj> ")" => {},
 //   "Min" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {},
 //   "Min" "(" <cb_set: Curly_Brace_Set> ")" => {},
