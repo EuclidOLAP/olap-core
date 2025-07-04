@@ -261,8 +261,8 @@ impl MultiDimensionalEntityLocator for Set {
     async fn locate_entity(
         &self,
         segs: &AstSegments,
-        _slice_tuple: &Tuple,
-        _context: &mut MultiDimensionalContext,
+        slice_tuple: &Tuple,
+        context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         let seg_list = &segs.segs;
 
@@ -285,6 +285,27 @@ impl MultiDimensionalEntityLocator for Set {
                     let set_copy = self.clone();
                     let count_fn = AstExpFnCount::OuterParam(set_copy);
                     return MultiDimensionalEntity::ExpFn(AstExpFunction::Count(count_fn));
+                }
+                AstExpFunction::Sum(exp_fn_sum) => {
+                    if seg_list.len() > 1 {
+                        panic!("Avg function can only have one segment. hsbt2839rr");
+                    }
+                    let value = exp_fn_sum.val(slice_tuple, context, Some(MultiDimensionalEntity::SetWrap(self.clone()))).await;
+                    MultiDimensionalEntity::CellValue(value)
+                }
+                AstExpFunction::Max(exp_fn_max) => {
+                    if seg_list.len() > 1 {
+                        panic!("Avg function can only have one segment. hsbt2839tt");
+                    }
+                    let value = exp_fn_max.val(slice_tuple, context, Some(MultiDimensionalEntity::SetWrap(self.clone()))).await;
+                    MultiDimensionalEntity::CellValue(value)
+                }
+                AstExpFunction::Min(exp_fn_min) => {
+                    if seg_list.len() > 1 {
+                        panic!("Avg function can only have one segment. hsbt2839yy");
+                    }
+                    let value = exp_fn_min.val(slice_tuple, context, Some(MultiDimensionalEntity::SetWrap(self.clone()))).await;
+                    MultiDimensionalEntity::CellValue(value)
                 }
                 _ => {
                     todo!("[bhsHC957] Set::locate_entity() Unsupported ExpFn function.")
