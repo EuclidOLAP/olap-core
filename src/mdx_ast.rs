@@ -8,6 +8,8 @@ use crate::mdx_lexer::Lexer as MdxLexer;
 use futures::future::BoxFuture;
 // use std::pin::Pin;
 
+use crate::exmdx::exp_func::{AstExpFuncSum, AstExpFuncMax, AstExpFuncMin};
+
 use crate::mdd;
 use crate::mdd::CellValue;
 use crate::mdd::MultiDimensionalContext;
@@ -1023,6 +1025,9 @@ pub enum AstExpFunction {
     IIf(AstExpFnIIf),
     LookupCube(AstExpFnLookupCube),
     Name(AstExpFnName),
+    Sum(AstExpFuncSum),
+    Max(AstExpFuncMax),
+    Min(AstExpFuncMin),
 }
 
 impl ToCellValue for AstExpFunction {
@@ -1073,6 +1078,15 @@ impl ToCellValue for AstExpFunction {
 
                     exp.val(&tunnel_context.query_slice_tuple.clone(), &mut tunnel_context, None)
                         .await
+                }
+                AstExpFunction::Sum(exp_fn_sum) => {
+                    exp_fn_sum.val(slice_tuple, context, outer_param).await
+                }
+                AstExpFunction::Max(exp_fn_max) => {
+                    exp_fn_max.val(slice_tuple, context, outer_param).await
+                }
+                AstExpFunction::Min(exp_fn_min) => {
+                    exp_fn_min.val(slice_tuple, context, outer_param).await
                 }
             }
         })
