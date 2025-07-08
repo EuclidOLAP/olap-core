@@ -95,7 +95,10 @@ impl Materializable for AstSegForOlaGrammar {
                     let exp_val = exp_fn.val(slice_tuple, context, None).await;
                     MultiDimensionalEntity::CellValue(exp_val)
                 }
-                _ => panic!("The entity is not a Gid or a Str variant. 1"),
+                AstSegForOlaGrammar::SetFunction(set_fn) => {
+                    let set = set_fn.get_set(None, slice_tuple, context).await;
+                    MultiDimensionalEntity::SetWrap(set)
+                }
             }
         })
     }
@@ -175,6 +178,10 @@ impl Materializable for AstSegments {
                         let tail_segs = AstSegments { segs: (self.segs[1..]).to_vec() };
                         cube.locate_entity(&tail_segs, slice_tuple, context).await
                     }
+                }
+                MultiDimensionalEntity::SetWrap(set) => {
+                    let tail_segs = AstSegments { segs: (self.segs[1..]).to_vec() };
+                    set.locate_entity(&tail_segs, slice_tuple, context).await
                 }
                 _ => {
                     panic!("In method AstSegments::materialize(): head_entity is not a DimensionRoleWrap!");
@@ -1005,14 +1012,16 @@ impl AstSetFunction {
     pub async fn get_set(
         &self,
         left_unique_param: Option<MultiDimensionalEntity>,
+        slice_tuple: &Tuple,
         context: &mut MultiDimensionalContext,
     ) -> Set {
         match self {
             AstSetFunction::Children(AstSetFnChildren::NoParam) => {
                 AstSetFnChildren::do_get_set(left_unique_param, context).await
             }
-            AstSetFunction::Children(AstSetFnChildren::InnerParam(_segs)) => {
-                todo!("AstSetFunction::get_set()")
+            AstSetFunction::Children(AstSetFnChildren::InnerParam(segs)) => {
+                let mem_role = segs.materialize(slice_tuple, context).await;
+                AstSetFnChildren::do_get_set(Some(mem_role), context).await
             }
         }
     }
