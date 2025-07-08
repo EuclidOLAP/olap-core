@@ -6,7 +6,7 @@ use crate::meta_cache;
 use crate::mdx_ast::AstExpFnAvg;
 use crate::mdx_ast::AstExpFnCount;
 use crate::mdx_ast::AstExpFunction;
-use crate::mdx_ast::{AstExpression, AstFormulaObject, AstSegForOlaGrammar, AstSegments};
+use crate::mdx_ast::{AstExpression, AstFormulaObject, AstSeg, AstSegments};
 
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
@@ -285,7 +285,7 @@ impl MultiDimensionalEntityLocator for Set {
         let seg = seg_list.iter().next().unwrap();
 
         match seg {
-            AstSegForOlaGrammar::ExpFn(exp_fn) => match exp_fn {
+            AstSeg::ExpFn(exp_fn) => match exp_fn {
                 AstExpFunction::Avg(_) => {
                     if seg_list.len() > 1 {
                         panic!("Avg function can only have one segment. hsbt2839");
@@ -423,7 +423,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
 
         let seg = seg_list.first().unwrap();
         match seg {
-            AstSegForOlaGrammar::MemberFunction(member_fn) => {
+            AstSeg::MemberFunction(member_fn) => {
                 member_fn
                     .get_member(
                         Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
@@ -432,7 +432,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
                     )
                     .await
             }
-            AstSegForOlaGrammar::SetFunction(set_fn) => {
+            AstSeg::SetFunction(set_fn) => {
                 let set = set_fn
                     .get_set(Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())), slice_tuple, context)
                     .await;
@@ -445,7 +445,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
                     set.locate_entity(&tail_segs, slice_tuple, context).await
                 }
             }
-            AstSegForOlaGrammar::LevelFn(level_fn) => {
+            AstSeg::LevelFn(level_fn) => {
                 if seg_list.len() > 1 {
                     todo!("[bhso9957] MemberRole::locate_entity() LevelFn not implemented yet.");
                 }
@@ -458,7 +458,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
                     .await;
                 MultiDimensionalEntity::LevelRole(lv_role)
             }
-            AstSegForOlaGrammar::ExpFn(exp_fn) => {
+            AstSeg::ExpFn(exp_fn) => {
                 if seg_list.len() > 1 {
                     todo!("[bhso9957] MemberRole::locate_entity() LevelFn not implemented yet.");
                 }
@@ -526,13 +526,13 @@ impl MultiDimensionalEntityLocator for DimensionRole {
 
         let seg = seg_list.iter().next().unwrap();
         let entity = match seg {
-            AstSegForOlaGrammar::Gid(gid) | AstSegForOlaGrammar::GidStr(gid, _) => {
+            AstSeg::Gid(gid) | AstSeg::GidStr(gid, _) => {
                 self.locate_entity_by_gid(*gid, slice_tuple, context).await
             }
-            AstSegForOlaGrammar::Str(seg) => {
+            AstSeg::Str(seg) => {
                 self.locate_entity_by_seg(seg, slice_tuple, context).await
             }
-            AstSegForOlaGrammar::LevelFn(level_fn) => MultiDimensionalEntity::LevelRole(
+            AstSeg::LevelFn(level_fn) => MultiDimensionalEntity::LevelRole(
                 level_fn
                     .get_level_role(
                         Some(MultiDimensionalEntity::DimensionRoleWrap(self.clone())),
@@ -541,7 +541,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
                     )
                     .await,
             ),
-            AstSegForOlaGrammar::MemberFunction(member_fn) => {
+            AstSeg::MemberFunction(member_fn) => {
                 member_fn
                     .get_member(
                         Some(MultiDimensionalEntity::DimensionRoleWrap(self.clone())),
@@ -655,7 +655,7 @@ impl MultiDimensionalEntityLocator for Cube {
 
         let seg = segs.segs.first().unwrap();
 
-        if let AstSegForOlaGrammar::ExpFn(AstExpFunction::LookupCube(look_up_fn)) = seg {
+        if let AstSeg::ExpFn(AstExpFunction::LookupCube(look_up_fn)) = seg {
             let mut look_up_fn = look_up_fn.clone();
             look_up_fn.set_cube(self.clone());
             MultiDimensionalEntity::ExpFn(AstExpFunction::LookupCube(look_up_fn))

@@ -52,7 +52,7 @@ pub trait ToBoolValue {
 // pub struct AstCube {}
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstSegForOlaGrammar {
+pub enum AstSeg {
     Gid(u64),
     Str(String),
     GidStr(u64, String),
@@ -62,17 +62,17 @@ pub enum AstSegForOlaGrammar {
     LevelFn(AstLevelFunction),
 }
 
-impl AstSegForOlaGrammar {
+impl AstSeg {
     pub fn get_gid(&self) -> Option<u64> {
         match self {
-            AstSegForOlaGrammar::Gid(gid) => Some(*gid),
-            AstSegForOlaGrammar::GidStr(gid, _) => Some(*gid),
+            AstSeg::Gid(gid) => Some(*gid),
+            AstSeg::GidStr(gid, _) => Some(*gid),
             _ => None,
         }
     }
 }
 
-impl Materializable for AstSegForOlaGrammar {
+impl Materializable for AstSeg {
     fn materialize<'a>(
         &'a self,
         slice_tuple: &'a Tuple,
@@ -80,22 +80,22 @@ impl Materializable for AstSegForOlaGrammar {
     ) -> BoxFuture<'a, MultiDimensionalEntity> {
         Box::pin(async move {
             match self {
-                AstSegForOlaGrammar::Gid(gid) => context.find_entity_by_gid(*gid).await,
-                AstSegForOlaGrammar::Str(seg_str) => context.find_entity_by_str(seg_str).await,
-                AstSegForOlaGrammar::GidStr(gid, _) => context.find_entity_by_gid(*gid).await,
+                AstSeg::Gid(gid) => context.find_entity_by_gid(*gid).await,
+                AstSeg::Str(seg_str) => context.find_entity_by_str(seg_str).await,
+                AstSeg::GidStr(gid, _) => context.find_entity_by_gid(*gid).await,
                 // MemberFunction(AstMemberFunction),
-                AstSegForOlaGrammar::MemberFunction(member_fn) => {
+                AstSeg::MemberFunction(member_fn) => {
                     member_fn.get_member(None, slice_tuple, context).await
                 }
-                AstSegForOlaGrammar::LevelFn(lv_fn) => {
+                AstSeg::LevelFn(lv_fn) => {
                     let lv_role = lv_fn.get_level_role(None, slice_tuple, context).await;
                     MultiDimensionalEntity::LevelRole(lv_role)
                 }
-                AstSegForOlaGrammar::ExpFn(exp_fn) => {
+                AstSeg::ExpFn(exp_fn) => {
                     let exp_val = exp_fn.val(slice_tuple, context, None).await;
                     MultiDimensionalEntity::CellValue(exp_val)
                 }
-                AstSegForOlaGrammar::SetFunction(set_fn) => {
+                AstSeg::SetFunction(set_fn) => {
                     let set = set_fn.get_set(None, slice_tuple, context).await;
                     MultiDimensionalEntity::SetWrap(set)
                 }
@@ -106,7 +106,7 @@ impl Materializable for AstSegForOlaGrammar {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct AstSegments {
-    pub segs: Vec<AstSegForOlaGrammar>,
+    pub segs: Vec<AstSeg>,
 }
 
 impl AstSegments {
@@ -328,7 +328,7 @@ impl AstAxis {
 pub struct AstSelectionStatement {
     pub formula_objs: Vec<AstFormulaObject>,
     pub axes: Vec<AstAxis>,
-    pub cube: Vec<AstSegForOlaGrammar>,
+    pub cube: Vec<AstSeg>,
     pub basic_slice: Option<AstTuple>,
 }
 
@@ -353,13 +353,13 @@ impl AstSelectionStatement {
         };
 
         match ast_seg {
-            AstSegForOlaGrammar::Gid(gid) => {
+            AstSeg::Gid(gid) => {
                 cube = self.fetch_cube_by_gid(&mut grpc_cli, *gid).await;
             }
-            AstSegForOlaGrammar::Str(seg_str) => {
+            AstSeg::Str(seg_str) => {
                 cube = self.fetch_cube_by_name(&mut grpc_cli, &seg_str).await;
             }
-            AstSegForOlaGrammar::GidStr(gid, _) => {
+            AstSeg::GidStr(gid, _) => {
                 cube = self.fetch_cube_by_gid(&mut grpc_cli, *gid).await;
             }
             _ => panic!("The entity is not a Gid or a Str variant. 2"),
