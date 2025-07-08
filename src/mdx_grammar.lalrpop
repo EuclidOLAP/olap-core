@@ -1,7 +1,7 @@
 use crate::mdx_tokens::{Token, LexicalError};
 
 use crate::mdx_ast;
-use crate::mdx_ast::AstSegForOlaGrammar;
+use crate::mdx_ast::AstSeg;
 use crate::mdx_ast::AstFormulaObject;
 use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember};
 use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
@@ -168,31 +168,31 @@ FormulaSet: AstFormulaObject = {
 }
 
 // multi-dimensional object segment
-Seg: AstSegForOlaGrammar = {
+Seg: AstSeg = {
   "&" <int:"int"> => {
-    AstSegForOlaGrammar::Gid(int)
+    AstSeg::Gid(int)
   },
   "&" <int:"int"> <bra_str:"BracketedString"> => {
-    AstSegForOlaGrammar::GidStr(int, bra_str)
+    AstSeg::GidStr(int, bra_str)
   },
   <bra_str:"BracketedString"> => {
-    AstSegForOlaGrammar::Str(bra_str)
+    AstSeg::Str(bra_str)
   },
   <mfn: MemberFunction> => {
-    AstSegForOlaGrammar::MemberFunction(mfn)
+    AstSeg::MemberFunction(mfn)
   },
   <setfn: SetFnSpec> => {
-    AstSegForOlaGrammar::SetFunction(setfn)
+    AstSeg::SetFunction(setfn)
   },
   <exp_fn: ExpFnSpec> => {
-    AstSegForOlaGrammar::ExpFn(exp_fn)
+    AstSeg::ExpFn(exp_fn)
   },
   <lv_fn: LevelFunction> => {
-    AstSegForOlaGrammar::LevelFn(lv_fn)
+    AstSeg::LevelFn(lv_fn)
   },
 }
 
-Segments: Vec<AstSegForOlaGrammar> = {
+Segments: Vec<AstSeg> = {
   <seg:Seg> => {
     let mut list = Vec::with_capacity(6);
     list.push(seg);
