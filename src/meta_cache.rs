@@ -2,6 +2,8 @@ use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
+use crate::cfg::get_cfg;
+
 use crate::mdd::{Cube, Level, Member};
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
@@ -21,7 +23,11 @@ static FORMULA_MEMBER_CACHE: Lazy<Mutex<HashMap<u64, UniversalOlapEntity>>> =
 
 /// 初始化时批量拉取 level 并放入缓存
 pub async fn init() {
-    let mut grpc_cli = GrpcClient::new("http://192.168.66.51:50051".to_string())
+
+    let config = get_cfg();
+    println!("< 2 > config.meta_grpc_url: {:#?}", config.meta_grpc_url);
+
+    let mut grpc_cli = GrpcClient::new(config.meta_grpc_url)
         .await
         .expect("Failed to create client");
 

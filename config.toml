@@ -1,0 +1,9 @@
+# >> Code Review: Power of Hippo << --- Okay
+[def]
+meta_grpc_url = "http://192.168.66.51:50051"
+
+[dev]
+meta_grpc_url = "http://192.168.66.51:50051"
+
+[prod]
+meta_grpc_url = "http://192.168.66.51:50051"

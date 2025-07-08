@@ -2,6 +2,8 @@ use core::panic;
 use std::collections::HashMap;
 // use std::vec;
 
+use crate::cfg::get_cfg;
+
 use crate::mdx_grammar::SelectionMDXParser;
 use crate::mdx_lexer::Lexer as MdxLexer;
 
@@ -341,8 +343,11 @@ impl AstSelectionStatement {
         // 初始化默认 Cube
         let cube;
 
+        let config = get_cfg();
+        println!("< 1 > config.meta_grpc_url: {:#?}", config.meta_grpc_url);
+
         // 创建 gRPC 客户端
-        let mut grpc_cli = GrpcClient::new("http://192.168.66.51:50051".to_string())
+        let mut grpc_cli = GrpcClient::new(config.meta_grpc_url)
             .await
             .expect("Failed to create client");
 

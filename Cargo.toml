@@ -1,10 +1,16 @@
-# >> Code Review: Power of Hippo << --- doing......
+# >> Code Review: Power of Hippo << --- Okay
 [package]
 name = "olap-core"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# Used to deserialize configuration file.
+serde = { version = "^1.0.219", features = ["derive"] }
+toml = "^0.8.23"
+# Used to read multi-environment configurations.
+config = "^0.15.11"
+
 # gRPC implementation library
 tonic = "0.9"
 
