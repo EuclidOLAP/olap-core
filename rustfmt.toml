@@ -1,4 +1,4 @@
-# << code review 250709: ready >>
+# << code review 250709: okay >>
 # Rust edition
 edition = "2021"
 
@@ -12,7 +12,7 @@ hard_tabs = false
 tab_spaces = 4
 
 # Aggressively format chains and parameters to fit lines
-use_small_heuristics = "Max"
+use_small_heuristics = "Default"
 
 # Line ending style (Unix/Linux: LF, Windows: CRLF)
 newline_style = "Unix"
