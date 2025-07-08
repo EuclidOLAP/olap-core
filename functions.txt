@@ -1,4 +1,3 @@
-# >> Code Review: Power of Hippo << --- doing......
 							Euclid	SSAS	Essbase	in-cu
 
 << Member Functions >>

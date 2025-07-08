@@ -10,6 +10,7 @@ mod euclidolap {
 }
 
 pub mod calcul;
+pub mod cfg;
 pub mod mdx_ast;
 pub mod mdx_lexer;
 pub mod mdx_tokens;
