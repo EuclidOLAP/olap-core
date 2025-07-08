@@ -252,6 +252,22 @@ pub struct Tuple {
     pub member_roles: Vec<MemberRole>,
 }
 
+impl std::fmt::Display for Tuple {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let types_str = self
+            .member_roles
+            .iter()
+            .map(|mr| match mr {
+                MemberRole::BaseMember { .. } => "B",
+                MemberRole::FormulaMember { .. } => "F",
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        write!(f, "Tuple({})", types_str)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Set {
     pub tuples: Vec<Tuple>,
@@ -290,21 +306,39 @@ impl MultiDimensionalEntityLocator for Set {
                     if seg_list.len() > 1 {
                         panic!("Avg function can only have one segment. hsbt2839rr");
                     }
-                    let value = exp_fn_sum.val(slice_tuple, context, Some(MultiDimensionalEntity::SetWrap(self.clone()))).await;
+                    let value = exp_fn_sum
+                        .val(
+                            slice_tuple,
+                            context,
+                            Some(MultiDimensionalEntity::SetWrap(self.clone())),
+                        )
+                        .await;
                     MultiDimensionalEntity::CellValue(value)
                 }
                 AstExpFunction::Max(exp_fn_max) => {
                     if seg_list.len() > 1 {
                         panic!("Avg function can only have one segment. hsbt2839tt");
                     }
-                    let value = exp_fn_max.val(slice_tuple, context, Some(MultiDimensionalEntity::SetWrap(self.clone()))).await;
+                    let value = exp_fn_max
+                        .val(
+                            slice_tuple,
+                            context,
+                            Some(MultiDimensionalEntity::SetWrap(self.clone())),
+                        )
+                        .await;
                     MultiDimensionalEntity::CellValue(value)
                 }
                 AstExpFunction::Min(exp_fn_min) => {
                     if seg_list.len() > 1 {
                         panic!("Avg function can only have one segment. hsbt2839yy");
                     }
-                    let value = exp_fn_min.val(slice_tuple, context, Some(MultiDimensionalEntity::SetWrap(self.clone()))).await;
+                    let value = exp_fn_min
+                        .val(
+                            slice_tuple,
+                            context,
+                            Some(MultiDimensionalEntity::SetWrap(self.clone())),
+                        )
+                        .await;
                     MultiDimensionalEntity::CellValue(value)
                 }
                 _ => {
@@ -400,7 +434,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
             }
             AstSegForOlaGrammar::SetFunction(set_fn) => {
                 let set = set_fn
-                    .get_set(Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())), context)
+                    .get_set(Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())), slice_tuple, context)
                     .await;
 
                 if seg_list.len() == 1 {
