@@ -1,4 +1,3 @@
-// >> Code Review: Power of Hippo << --- doing......
 use serde::Deserialize;
 use std::env;
 use std::fs;
