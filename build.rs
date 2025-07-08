@@ -1,3 +1,4 @@
+// # >> Code Review: Power of Hippo << --- doing......
 fn main() {
     let proto_files = ["proto/euclidolap.proto", "proto/olapmeta.proto", "proto/agg-service.proto"];
 
