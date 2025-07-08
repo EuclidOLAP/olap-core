@@ -1,2 +1,2 @@
-<!-- # >> Code Review: Power of Hippo << --- doing...... -->
+<!-- # >> Code Review: Power of Hippo << --- Okay -->
 # olap-core
