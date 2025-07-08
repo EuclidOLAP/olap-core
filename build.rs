@@ -1,3 +1,4 @@
+// << code review 250709: ready >>
 fn main() {
     let proto_files = ["proto/euclidolap.proto", "proto/olapmeta.proto", "proto/agg-service.proto"];
 
