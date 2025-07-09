@@ -393,7 +393,64 @@ TupleWrap: mdx_ast::AstTuple = {
 SetFnSpec: AstSetFunction = {
   <chir: SetFnChildrenSpec> => {
     AstSetFunction::Children(chir)
-  }
+  },
+  /***************************************************************************/
+  /*****  << Set Functions >>  ***********************************************/
+  /***************************************************************************/
+  // BottomPercent               ....	SSAS	____	intc
+  // Children                    Eucl	SSAS	____	intc
+  // CrossJoin                   ....	SSAS	Esbs	intc
+  // Descendants                 ....	SSAS	____	intc
+  // Except                      ....	SSAS	Esbs	intc
+  // Filter                      ....	SSAS	____	intc
+  // Intersect                   ....	SSAS	Esbs	intc
+  // LateralMembers              ....	____	____	____
+  // Members                     ....	____	____	intc
+  // Order                       ....	SSAS	____	intc
+  // Tail                        ....	SSAS	Esbs	____
+  // TopCount                    ....	SSAS	____	intc
+  // TopPercent                  ....	SSAS	____	intc
+  // Union                       ....	SSAS	Esbs	intc
+  // Ytd                         ....	SSAS	____	intc
+  // Qtd                         ....	SSAS	____	intc
+  // Distinct                    ....	SSAS	Esbs	intc
+  // DrilldownLevel              ....	SSAS	____	intc
+  // DrilldownLevelBottom        ....	SSAS	____	intc
+  // DrillDownLevelTop           ....	SSAS	____	intc
+  // DrillDownMember             ....	SSAS	____	intc
+  // DrillDownMemberBottom       ....	SSAS	____	intc
+  // DrillDownMemberTop          ....	SSAS	____	intc
+  // DrillupLevel                ....	SSAS	____	intc
+  // DrillupMember               ....	SSAS	____	intc
+  // Ancestors                   ....	SSAS	____	intc
+  // BottomCount                 ....	SSAS	Esbs	intc
+  // BottomSum                   ....	SSAS	Esbs	intc
+  // TopSum                      ....	SSAS	Esbs	intc
+  // Extract                     ....	SSAS	Esbs	intc
+  // PeriodsToDate               ....	SSAS	Esbs	intc
+  // Generate                    ....	SSAS	Esbs	____
+  // Head                        ....	SSAS	Esbs	____
+  // Subset                      ....	SSAS	Esbs	____
+  // AddCalculatedMembers        ____	SSAS	____	____
+  // AllMembers                  ____	SSAS	____	____
+  // Ascendants                  ____	SSAS	____	____
+  // Axis                        ____	SSAS	____	____
+  // CurrentOrdinal              ____	SSAS	____	____
+  // Exists                      ____	SSAS	____	____
+  // Hierarchize                 ____	SSAS	____	____
+  // LastPeriods                 ____	SSAS	____	____
+  // Members (Set)               ____	SSAS	____	____
+  // Mtd                         ____	SSAS	____	intc
+  // NameToSet                   ____	SSAS	____	____
+  // NonEmptyCrossjoin           ____	SSAS	____	____
+  // Siblings                    ____	SSAS	____	____
+  // StripCalculatedMembers      ____	SSAS	____	____
+  // StrToSet                    ____	SSAS	____	____
+  // ToggleDrillState            ____	SSAS	____	____
+  // TupleRange                  ____	____	Esbs	____
+  // Unorder                     ____	SSAS	____	____
+  // VisualTotals                ____	SSAS	____	____
+  // Wtd                         ____	SSAS	____	intc
 }
 
 SetFnChildrenSpec: AstSetFnChildren = {
