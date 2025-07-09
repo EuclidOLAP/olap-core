@@ -1,6 +1,7 @@
 mod agg_service_client;
 // mod core;
 mod exmdx;
+mod cache;
 mod mdd;
 mod meta_cache;
 mod olapmeta_grpc_client;
@@ -33,6 +34,9 @@ use mdd::OlapVectorCoordinate;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    cache::meta::reload().await;
+
     meta_cache::init().await;
 
     // 定义服务端监听地址
