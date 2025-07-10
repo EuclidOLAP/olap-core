@@ -140,7 +140,7 @@ pub enum Token {
     #[regex("(?i)Except")]
     Except,
     
-
+    // Expression functions
     #[regex("(?i)Avg")]
     Avg,
     #[regex("(?i)Sum")]
@@ -153,6 +153,60 @@ pub enum Token {
     Count,
     #[regex("(?i)Tunnel")]
     Tunnel,
+    #[regex("(?i)Abs")]
+    Abs,
+    #[regex("(?i)Aggregate")]
+    Aggregate,
+    #[regex("(?i)CalculationCurrentPass")]
+    CalculationCurrentPass,
+    #[regex("(?i)CalculationPassValue")]
+    CalculationPassValue,
+    #[regex("(?i)CellValue")]
+    CellValue,
+    #[regex("(?i)CoalesceEmpty")]
+    CoalesceEmpty,
+    #[regex("(?i)Correlation")]
+    Correlation,
+    #[regex("(?i)Covariance")]
+    Covariance,
+    #[regex("(?i)CovarianceN")]
+    CovarianceN,
+    #[regex("(?i)DateDiff")]
+    DateDiff,
+    #[regex("(?i)DatePart")]
+    DatePart,
+    #[regex("(?i)DistinctCount")]
+    DistinctCount,
+    #[regex("(?i)EnumText")]
+    EnumText,
+    #[regex("(?i)EnumValue")]
+    EnumValue,
+    #[regex("(?i)Exp")]
+    Exp,
+    #[regex("(?i)Factorial")]
+    Factorial,
+    #[regex("(?i)InStr")]
+    InStr,
+    #[regex("(?i)Int")]
+    Int,
+    #[regex("(?i)Len")]
+    Len,
+    #[regex("(?i)LinRegIntercept")]
+    LinRegIntercept,
+    #[regex("(?i)LinRegPoint")]
+    LinRegPoint,
+    #[regex("(?i)LinRegR2")]
+    LinRegR2,
+    #[regex("(?i)LinRegSlope")]
+    LinRegSlope,
+    #[regex("(?i)LinRegVariance")]
+    LinRegVariance,
+    #[regex("(?i)Ln")]
+    Ln,
+    #[regex("(?i)Log")]
+    Log,
+    #[regex("(?i)Log10")]
+    Log10,
 
     #[regex("(?i)ClosingPeriod")]
     ClosingPeriod,

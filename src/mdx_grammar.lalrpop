@@ -23,6 +23,7 @@ use crate::mdx_ast::AstBoolFnIsLeaf;
 use crate::exmdx::exp_func::{AstExpFuncSum, AstExpFuncMax, AstExpFuncMin};
 use crate::exmdx::set_func::*;
 use crate::exmdx::mr_func::*;
+use crate::exmdx::exp_func::*;
 
 grammar;
 
@@ -104,6 +105,33 @@ extern {
     "Count" => Token::Count,
     "Tunnel" => Token::Tunnel,
     "IIf" => Token::IIf,
+    "Abs" => Token::Abs,
+    "Aggregate" => Token::Aggregate,
+    "CalculationCurrentPass" => Token::CalculationCurrentPass,
+    "CalculationPassValue" => Token::CalculationPassValue,
+    "CellValue" => Token::CellValue,
+    "CoalesceEmpty" => Token::CoalesceEmpty,
+    "Correlation" => Token::Correlation,
+    "Covariance" => Token::Covariance,
+    "CovarianceN" => Token::CovarianceN,
+    "DateDiff" => Token::DateDiff,
+    "DatePart" => Token::DatePart,
+    "DistinctCount" => Token::DistinctCount,
+    "EnumText" => Token::EnumText,
+    "EnumValue" => Token::EnumValue,
+    "Exp" => Token::Exp,
+    "Factorial" => Token::Factorial,
+    "InStr" => Token::InStr,
+    "Int" => Token::Int,
+    "Len" => Token::Len,
+    "LinRegIntercept" => Token::LinRegIntercept,
+    "LinRegPoint" => Token::LinRegPoint,
+    "LinRegR2" => Token::LinRegR2,
+    "LinRegSlope" => Token::LinRegSlope,
+    "LinRegVariance" => Token::LinRegVariance,
+    "Ln" => Token::Ln,
+    "Log" => Token::Log,
+    "Log10" => Token::Log10,
 
     "Name" => Token::Name,
 
@@ -779,7 +807,125 @@ ExpFnSpec: AstExpFunction = {
   <exp_fn: Exp_Func_Min> => {
     AstExpFunction::Min(exp_fn)
   },
+
+  // << Numeric Functions >>
+
+  // Abs                         ....	____	Esbs	intc
+  // Aggregate                   ....	SSAS	Esbs	intc
+  // CalculationCurrentPass      ____	SSAS	____	____
+  // CalculationPassValue        ____	SSAS	____	____
+  // CellValue                   ____	____	Esbs	____
+  // CoalesceEmpty               ....	SSAS	Esbs	intc
+  // Correlation                 ....	SSAS	____	intc
+  // Covariance                  ....	SSAS	____	intc
+  // CovarianceN                 ____	SSAS	____	____
+  // DateDiff                    ____	____	Esbs	____
+  // DatePart                    ____	____	Esbs	____
+  // DistinctCount               ____	SSAS	____	____
+  // EnumText                    ____	____	Esbs	____
+  // EnumValue                   ____	____	Esbs	____
+  // Exp                         ____	____	Esbs	____
+  // Factorial                   ____	____	Esbs	____
+  // InStr                       ____	____	Esbs	____
+  // Int                         ____	____	Esbs	____
+  // Len                         ____	____	Esbs	____
+  // LinRegIntercept             ....	SSAS	____	intc
+  // LinRegPoint                 ____	SSAS	____	____
+  // LinRegR2                    ....	SSAS	____	intc
+  // LinRegSlope                 ....	SSAS	____	intc
+  // LinRegVariance              ....	SSAS	____	intc
+  // Ln                          ____	____	Esbs	____
+  // Log                         ____	____	Esbs	____
+  // Log10                       ____	____	Esbs	____
+  <exp_fn: Exp_Func_Abs> => { AstExpFunction::Abs(exp_fn) },
+  <exp_fn: Exp_Func_Aggregate> => { AstExpFunction::Aggregate(exp_fn) },
+  <exp_fn: Exp_Func_CalculationCurrentPass> => { AstExpFunction::CalculationCurrentPass(exp_fn) },
+  <exp_fn: Exp_Func_CalculationPassValue> => { AstExpFunction::CalculationPassValue(exp_fn) },
+  <exp_fn: Exp_Func_CellValue> => { AstExpFunction::CellValue(exp_fn) },
+  <exp_fn: Exp_Func_CoalesceEmpty> => { AstExpFunction::CoalesceEmpty(exp_fn) },
+  <exp_fn: Exp_Func_Correlation> => { AstExpFunction::Correlation(exp_fn) },
+  <exp_fn: Exp_Func_Covariance> => { AstExpFunction::Covariance(exp_fn) },
+  <exp_fn: Exp_Func_CovarianceN> => { AstExpFunction::CovarianceN(exp_fn) },
+  <exp_fn: Exp_Func_DateDiff> => { AstExpFunction::DateDiff(exp_fn) },
+  <exp_fn: Exp_Func_DatePart> => { AstExpFunction::DatePart(exp_fn) },
+  <exp_fn: Exp_Func_DistinctCount> => { AstExpFunction::DistinctCount(exp_fn) },
+  <exp_fn: Exp_Func_EnumText> => { AstExpFunction::EnumText(exp_fn) },
+  <exp_fn: Exp_Func_EnumValue> => { AstExpFunction::EnumValue(exp_fn) },
+  <exp_fn: Exp_Func_Exp> => { AstExpFunction::Exp(exp_fn) },
+  <exp_fn: Exp_Func_Factorial> => { AstExpFunction::Factorial(exp_fn) },
+  <exp_fn: Exp_Func_InStr> => { AstExpFunction::InStr(exp_fn) },
+  <exp_fn: Exp_Func_Int> => { AstExpFunction::Int(exp_fn) },
+  <exp_fn: Exp_Func_Len> => { AstExpFunction::Len(exp_fn) },
+  <exp_fn: Exp_Func_LinRegIntercept> => { AstExpFunction::LinRegIntercept(exp_fn) },
+  <exp_fn: Exp_Func_LinRegPoint> => { AstExpFunction::LinRegPoint(exp_fn) },
+  <exp_fn: Exp_Func_LinRegR2> => { AstExpFunction::LinRegR2(exp_fn) },
+  <exp_fn: Exp_Func_LinRegSlope> => { AstExpFunction::LinRegSlope(exp_fn) },
+  <exp_fn: Exp_Func_LinRegVariance> => { AstExpFunction::LinRegVariance(exp_fn) },
+  <exp_fn: Exp_Func_Ln> => { AstExpFunction::Ln(exp_fn) },
+  <exp_fn: Exp_Func_Log> => { AstExpFunction::Log(exp_fn) },
+  <exp_fn: Exp_Func_Log10> => { AstExpFunction::Log10(exp_fn) },
+
+  // LookupCube                  ....	SSAS	____	____
+  // Median                      ....	SSAS	Esbs	intc
+  // Mod                         ____	____	Esbs	____
+  // NonEmptyCount               ____	____	Esbs	____
+  // NTile                       ____	____	Esbs	____
+  // Ordinal                     ....	SSAS	Esbs	____
+  // Percentile                  ____	____	Esbs	____
+  // Power                       ____	____	Esbs	____
+  // Predict                     ____	SSAS	____	____
+  // Rank                        ....	SSAS	Esbs	intc
+  // RealValue                   ____	____	Esbs	____
+  // Remainder                   ____	____	Esbs	____
+  // RollupChildren              ____	SSAS	____	____
+  // Round                       ____	____	Esbs	____
+  // Stddev                      ____	SSAS	Esbs	____
+  // Stddevp                     ____	____	Esbs	____
+  // StddevP                     ____	SSAS	____	____
+  // Stdev                       ....	SSAS	____	intc
+  // StdevP                      ____	SSAS	____	____
+  // StrToNum                    ____	____	Esbs	____
+  // StrToValue                  ____	SSAS	____	____
+  // Todate                      ____	____	Esbs	____
+  // Truncate                    ____	____	Esbs	____
+  // Value                       ____	SSAS	____	____
+  // Var                         ....	SSAS	____	intc
+  // Variance                    ____	SSAS	____	____
+  // VarianceP                   ____	SSAS	____	____
+  // VarP                        ____	SSAS	____	____
 }
+
+// ssssssssssss: ssssssssssss = { "ssssssssssss" "(" ")" => { AstExpFnAAAAAAAAAAAAAAAAAAAAAAAAAaaaaaa::Simple }, }
+Exp_Func_Abs: AstExpFnAbs = {
+  "Abs" "(" ")" => { AstExpFnAbs::Simple },
+}
+
+Exp_Func_Aggregate: AstExpFnAggregate = { "Aggregate" "(" ")" => { AstExpFnAggregate::Simple }, }
+Exp_Func_CalculationCurrentPass: AstExpFnCalculationCurrentPass = { "CalculationCurrentPass" "(" ")" => { AstExpFnCalculationCurrentPass::Simple }, }
+Exp_Func_CalculationPassValue: AstExpFnCalculationPassValue = { "CalculationPassValue" "(" ")" => { AstExpFnCalculationPassValue::Simple }, }
+Exp_Func_CellValue: AstExpFnCellValue = { "CellValue" "(" ")" => { AstExpFnCellValue::Simple }, }
+Exp_Func_CoalesceEmpty: AstExpFnCoalesceEmpty = { "CoalesceEmpty" "(" ")" => { AstExpFnCoalesceEmpty::Simple }, }
+Exp_Func_Correlation: AstExpFnCorrelation = { "Correlation" "(" ")" => { AstExpFnCorrelation::Simple }, }
+Exp_Func_Covariance: AstExpFnCovariance = { "Covariance" "(" ")" => { AstExpFnCovariance::Simple }, }
+Exp_Func_CovarianceN: AstExpFnCovarianceN = { "CovarianceN" "(" ")" => { AstExpFnCovarianceN::Simple }, }
+Exp_Func_DateDiff: AstExpFnDateDiff = { "DateDiff" "(" ")" => { AstExpFnDateDiff::Simple }, }
+Exp_Func_DatePart: AstExpFnDatePart = { "DatePart" "(" ")" => { AstExpFnDatePart::Simple }, }
+Exp_Func_DistinctCount: AstExpFnDistinctCount = { "DistinctCount" "(" ")" => { AstExpFnDistinctCount::Simple }, }
+Exp_Func_EnumText: AstExpFnEnumText = { "EnumText" "(" ")" => { AstExpFnEnumText::Simple }, }
+Exp_Func_EnumValue: AstExpFnEnumValue = { "EnumValue" "(" ")" => { AstExpFnEnumValue::Simple }, }
+Exp_Func_Exp: AstExpFnExp = { "Exp" "(" ")" => { AstExpFnExp::Simple }, }
+Exp_Func_Factorial: AstExpFnFactorial = { "Factorial" "(" ")" => { AstExpFnFactorial::Simple }, }
+Exp_Func_InStr: AstExpFnInStr = { "InStr" "(" ")" => { AstExpFnInStr::Simple }, }
+Exp_Func_Int: AstExpFnInt = { "Int" "(" ")" => { AstExpFnInt::Simple }, }
+Exp_Func_Len: AstExpFnLen = { "Len" "(" ")" => { AstExpFnLen::Simple }, }
+Exp_Func_LinRegIntercept: AstExpFnLinRegIntercept = { "LinRegIntercept" "(" ")" => { AstExpFnLinRegIntercept::Simple }, }
+Exp_Func_LinRegPoint: AstExpFnLinRegPoint = { "LinRegPoint" "(" ")" => { AstExpFnLinRegPoint::Simple }, }
+Exp_Func_LinRegR2: AstExpFnLinRegR2 = { "LinRegR2" "(" ")" => { AstExpFnLinRegR2::Simple }, }
+Exp_Func_LinRegSlope: AstExpFnLinRegSlope = { "LinRegSlope" "(" ")" => { AstExpFnLinRegSlope::Simple }, }
+Exp_Func_LinRegVariance: AstExpFnLinRegVariance = { "LinRegVariance" "(" ")" => { AstExpFnLinRegVariance::Simple }, }
+Exp_Func_Ln: AstExpFnLn = { "Ln" "(" ")" => { AstExpFnLn::Simple }, }
+Exp_Func_Log: AstExpFnLog = { "Log" "(" ")" => { AstExpFnLog::Simple }, }
+Exp_Func_Log10: AstExpFnLog10 = { "Log10" "(" ")" => { AstExpFnLog10::Simple }, }
 
 ExpFnNameSpec: AstExpFnName = {
   "Name" => {
