@@ -11,6 +11,7 @@ use futures::future::BoxFuture;
 // use std::pin::Pin;
 
 use crate::exmdx::exp_func::{AstExpFuncSum, AstExpFuncMax, AstExpFuncMin};
+use crate::exmdx::set_func::*;
 
 use crate::mdd;
 use crate::mdd::CellValue;
@@ -1011,6 +1012,10 @@ impl AstSetFnChildren {
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstSetFunction {
     Children(AstSetFnChildren),
+    BottomPercent(AstSetFnBottomPercent),
+    CrossJoin(AstSetFnCrossJoin),
+    Descendants(AstSetFnDescendants),
+    Except(AstSetFnExcept),
 }
 
 impl AstSetFunction {
@@ -1028,6 +1033,7 @@ impl AstSetFunction {
                 let mem_role = segs.materialize(slice_tuple, context).await;
                 AstSetFnChildren::do_get_set(Some(mem_role), context).await
             }
+            _ => todo!("AstSetFunction::get_set() [SHUA-927381]"),
         }
     }
 }

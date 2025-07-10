@@ -103,8 +103,18 @@ pub enum Token {
     #[regex("(?i)CurrentMember")]
     CurrentMember,
 
+    // Set functions
     #[regex("(?i)Children")]
     Children,
+    #[regex("(?i)BottomPercent")]
+    BottomPercent,
+    #[regex("(?i)Crossjoin")]
+    Crossjoin,
+    #[regex("(?i)Descendants")]
+    Descendants,
+    #[regex("(?i)Except")]
+    Except,
+    
 
     #[regex("(?i)Avg")]
     Avg,
