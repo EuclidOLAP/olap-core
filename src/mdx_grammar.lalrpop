@@ -22,6 +22,7 @@ use crate::mdx_ast::AstBoolFnIsLeaf;
 
 use crate::exmdx::exp_func::{AstExpFuncSum, AstExpFuncMax, AstExpFuncMin};
 use crate::exmdx::set_func::*;
+use crate::exmdx::mr_func::*;
 
 grammar;
 
@@ -77,6 +78,18 @@ extern {
     "CurrentMember" => Token::CurrentMember,
     "ClosingPeriod" => Token::ClosingPeriod,
     "OpeningPeriod" => Token::OpeningPeriod,
+    "FirstChild" => Token::FirstChild,
+    "FirstSibling" => Token::FirstSibling,
+    "Lag" => Token::Lag,
+    "LastChild" => Token::LastChild,
+    "LastSibling" => Token::LastSibling,
+    "Lead" => Token::Lead,
+    "ParallelPeriod" => Token::ParallelPeriod,
+    "PrevMember" => Token::PrevMember,
+    "NextMember" => Token::NextMember,
+    "Ancestor" => Token::Ancestor,
+    "Cousin" => Token::Cousin,
+    "DefaultMember" => Token::DefaultMember,
 
     "Children" => Token::Children,
     "BottomPercent" => Token::BottomPercent,
@@ -234,6 +247,133 @@ MemberFunction: AstMemberFunction = {
   <cur_mbr: MemberFnCurrentMember> => {
     AstMemberFunction::CurrentMember(cur_mbr)
   },
+
+  // << Member Functions >>
+  <mr_fn: MemberRole_Func_FirstChild> => { AstMemberFunction::FirstChild(mr_fn) },
+  <mr_fn: MemberRole_Func_FirstSibling> => { AstMemberFunction::FirstSibling(mr_fn) },
+  <mr_fn: MemberRole_Func_Lag> => { AstMemberFunction::Lag(mr_fn) },
+  <mr_fn: MemberRole_Func_LastChild> => { AstMemberFunction::LastChild(mr_fn) },
+  <mr_fn: MemberRole_Func_LastSibling> => { AstMemberFunction::LastSibling(mr_fn) },
+  <mr_fn: MemberRole_Func_Lead> => { AstMemberFunction::Lead(mr_fn) },
+  <mr_fn: MemberRole_Func_ParallelPeriod> => { AstMemberFunction::ParallelPeriod(mr_fn) },
+  <mr_fn: MemberRole_Func_PrevMember> => { AstMemberFunction::PrevMember(mr_fn) },
+  <mr_fn: MemberRole_Func_NextMember> => { AstMemberFunction::NextMember(mr_fn) },
+  <mr_fn: MemberRole_Func_Ancestor> => { AstMemberFunction::Ancestor(mr_fn) },
+  <mr_fn: MemberRole_Func_Cousin> => { AstMemberFunction::Cousin(mr_fn) },
+  <mr_fn: MemberRole_Func_DefaultMember> => { AstMemberFunction::DefaultMember(mr_fn) },
+  // CurrentAxisMember           ____	____	Esbs	____
+  // DataMember                  ____	SSAS	____	____
+  // DateToMember                ____	____	Esbs	____
+  // Item (Member)               ____	SSAS	____	____
+  // LinkMember                  ____	SSAS	____	____
+  // Members (String)            ____	SSAS	____	____
+  // Properties                  ____	____	____	intc
+  // StrToMbr                    ____	____	Esbs	____
+  // StrToMember                 ____	SSAS	____	____
+  // UnknownMember               ____	SSAS	____	____
+  // ValidMeasure                ____	SSAS	____	____
+}
+
+MemberRole_Func_FirstChild: AstMemRoleFnFirstChild = {
+  // FirstChild
+  // member.FirstChild
+  // FirstChild ( member )
+
+  "FirstChild" "(" ")" => { todo!("todo ___something___") },
+  "FirstChild" "(" <segs_mem_role: SegmentsWrap> ")" => { todo!("todo ___something___") },
+}
+
+MemberRole_Func_FirstSibling: AstMemRoleFnFirstSibling = {
+  // FirstSibling
+  // FirstSibling ( member [, hierarchy ])
+  // member.FirstSibling [(hierarchy)]
+  
+  "FirstSibling" "(" ")" => { todo!("todo ___something___") },
+
+  // "FirstSibling" "(" <segs_hier_role: SegmentsWrap> ")" => { todo!("todo ___something___") },
+  "FirstSibling" "(" <segs_obj: SegmentsWrap> ")" => {
+    // segs_obj is a MemberRole or a HierarchyRole
+    todo!("todo ___something___")
+  },
+
+  "FirstSibling" "(" <segs_mem_role: SegmentsWrap> "," <segs_hier_role: SegmentsWrap> ")" => { todo!("todo ___something___") },
+}
+
+MemberRole_Func_Lag: AstMemRoleFnLag = {
+  // Lag
+  // member.Lag (index [,layertype ] [, hierarchy ] )
+  // Lag ( member, index [, hierarchy ] )
+  
+  "Lag" "(" ")" => { todo!("todo ___something___") },
+}
+
+MemberRole_Func_LastChild: AstMemRoleFnLastChild = {
+  // LastChild
+  // member.LastChild
+  // LastChild ( member )
+  
+  "LastChild" "(" ")" => { todo!("todo ___something___") },
+}
+
+MemberRole_Func_LastSibling: AstMemRoleFnLastSibling = {
+  // LastSibling
+  // LastSibling ( member [, hierarchy ])
+  // member.LastSibling [(hierarchy)]
+  
+  "LastSibling" "(" ")" => { todo!("todo ___something___") },
+}
+
+MemberRole_Func_Lead: AstMemRoleFnLead = {
+  // Lead
+  // member.Lead (index [,layertype ] [, hierarchy ])
+  // Lead ( member, index [, hierarchy ] )
+  
+  "Lead" "(" ")" => { todo!("todo ___something___") },
+}
+
+MemberRole_Func_ParallelPeriod: AstMemRoleFnParallelPeriod = {
+  // ParallelPeriod
+  // ParallelPeriod ( [layer [,index [,member [, hierarchy ]]]])
+  
+  "ParallelPeriod" "(" ")" => { todo!("todo ___something___") },
+}
+
+MemberRole_Func_PrevMember: AstMemRoleFnPrevMember = {
+  // PrevMember
+  // member.PrevMember [( layertype ) ]
+  // PrevMember ( member [,layertype ] )
+  
+  "PrevMember" "(" ")" => { todo!("todo ___something___") },
+}
+
+MemberRole_Func_NextMember: AstMemRoleFnNextMember = {
+  // NextMember
+  // member.NextMember [( layertype ) ]
+  // NextMember ( member [,layertype ] )
+  
+  "NextMember" "(" ")" => { todo!("todo ___something___") },
+}
+
+MemberRole_Func_Ancestor: AstMemRoleFnAncestor = {
+  // Ancestor
+  // Ancestor ( member , layer | index [, hierarchy ] )
+  
+  "Ancestor" "(" ")" => { todo!("todo ___something___") },
+}
+
+MemberRole_Func_Cousin: AstMemRoleFnCousin = {
+  // Cousin
+  // Cousin ( member1, member2 )
+  
+  "Cousin" "(" ")" => { todo!("todo ___something___") },
+}
+
+MemberRole_Func_DefaultMember: AstMemRoleFnDefaultMember = {
+  // DefaultMember
+  // dimension.DefaultMember
+  // DefaultMember ( dimension )
+  
+  "DefaultMember" "(" ")" => { todo!("todo ___something___") },
 }
 
 MemberFnParent: AstMemberFnParent = {

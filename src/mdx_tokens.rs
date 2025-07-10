@@ -98,10 +98,35 @@ pub enum Token {
     #[regex("(?i)SECTIONS")]
     Sections,
 
+    // Member functions
     #[regex("(?i)Parent")]
     Parent,
     #[regex("(?i)CurrentMember")]
     CurrentMember,
+    #[regex("(?i)FirstChild")]
+    FirstChild,
+    #[regex("(?i)FirstSibling")]
+    FirstSibling,
+    #[regex("(?i)Lag")]
+    Lag,
+    #[regex("(?i)LastChild")]
+    LastChild,
+    #[regex("(?i)LastSibling")]
+    LastSibling,
+    #[regex("(?i)Lead")]
+    Lead,
+    #[regex("(?i)ParallelPeriod")]
+    ParallelPeriod,
+    #[regex("(?i)PrevMember")]
+    PrevMember,
+    #[regex("(?i)NextMember")]
+    NextMember,
+    #[regex("(?i)Ancestor")]
+    Ancestor,
+    #[regex("(?i)Cousin")]
+    Cousin,
+    #[regex("(?i)DefaultMember")]
+    DefaultMember,
 
     // Set functions
     #[regex("(?i)Children")]

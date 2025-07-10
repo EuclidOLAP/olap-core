@@ -12,6 +12,7 @@ use futures::future::BoxFuture;
 
 use crate::exmdx::exp_func::{AstExpFuncSum, AstExpFuncMax, AstExpFuncMin};
 use crate::exmdx::set_func::*;
+use crate::exmdx::mr_func::*;
 
 use crate::mdd;
 use crate::mdd::CellValue;
@@ -769,6 +770,18 @@ pub enum AstMemberFunction {
     ClosingPeriod(AstMemberFnClosingPeriod),
     OpeningPeriod(AstMemberFnOpeningPeriod),
     CurrentMember(AstMemberFnCurrentMember),
+    FirstChild(AstMemRoleFnFirstChild),
+    FirstSibling(AstMemRoleFnFirstSibling),
+    Lag(AstMemRoleFnLag),
+    LastChild(AstMemRoleFnLastChild),
+    LastSibling(AstMemRoleFnLastSibling),
+    Lead(AstMemRoleFnLead),
+    ParallelPeriod(AstMemRoleFnParallelPeriod),
+    PrevMember(AstMemRoleFnPrevMember),
+    NextMember(AstMemRoleFnNextMember),
+    Ancestor(AstMemRoleFnAncestor),
+    Cousin(AstMemRoleFnCousin),
+    DefaultMember(AstMemRoleFnDefaultMember),
 }
 
 impl AstMemberFunction {
@@ -858,6 +871,7 @@ impl AstMemberFunction {
                 )
                 .await
             }
+            _ => todo!("AstMemberFunction::get_member() - [NNNNNN-887766]"),
         }
     }
 }
