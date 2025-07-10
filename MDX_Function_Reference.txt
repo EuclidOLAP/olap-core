@@ -1,0 +1,3 @@
+https://docs.oracle.com/en/database/other-databases/essbase/21/esscq/mdx-function-list.html
+https://learn.microsoft.com/en-us/sql/mdx/mdx-function-reference-mdx?view=sql-server-ver17
+https://www.ibm.com/docs/en/planning-analytics/2.0.0?topic=references-mdx-function-support
