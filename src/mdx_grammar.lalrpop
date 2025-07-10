@@ -810,33 +810,6 @@ ExpFnSpec: AstExpFunction = {
 
   // << Numeric Functions >>
 
-  // Abs                         ....	____	Esbs	intc
-  // Aggregate                   ....	SSAS	Esbs	intc
-  // CalculationCurrentPass      ____	SSAS	____	____
-  // CalculationPassValue        ____	SSAS	____	____
-  // CellValue                   ____	____	Esbs	____
-  // CoalesceEmpty               ....	SSAS	Esbs	intc
-  // Correlation                 ....	SSAS	____	intc
-  // Covariance                  ....	SSAS	____	intc
-  // CovarianceN                 ____	SSAS	____	____
-  // DateDiff                    ____	____	Esbs	____
-  // DatePart                    ____	____	Esbs	____
-  // DistinctCount               ____	SSAS	____	____
-  // EnumText                    ____	____	Esbs	____
-  // EnumValue                   ____	____	Esbs	____
-  // Exp                         ____	____	Esbs	____
-  // Factorial                   ____	____	Esbs	____
-  // InStr                       ____	____	Esbs	____
-  // Int                         ____	____	Esbs	____
-  // Len                         ____	____	Esbs	____
-  // LinRegIntercept             ....	SSAS	____	intc
-  // LinRegPoint                 ____	SSAS	____	____
-  // LinRegR2                    ....	SSAS	____	intc
-  // LinRegSlope                 ....	SSAS	____	intc
-  // LinRegVariance              ....	SSAS	____	intc
-  // Ln                          ____	____	Esbs	____
-  // Log                         ____	____	Esbs	____
-  // Log10                       ____	____	Esbs	____
   <exp_fn: Exp_Func_Abs> => { AstExpFunction::Abs(exp_fn) },
   <exp_fn: Exp_Func_Aggregate> => { AstExpFunction::Aggregate(exp_fn) },
   <exp_fn: Exp_Func_CalculationCurrentPass> => { AstExpFunction::CalculationCurrentPass(exp_fn) },
