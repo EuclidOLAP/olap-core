@@ -1,4 +1,8 @@
 // src/olapmeta_grpc_client.rs
+
+use crate::cfg;
+use tokio::time::{sleep, Duration};
+
 use olapmeta::olap_meta_service_client::OlapMetaServiceClient;
 use olapmeta::EmptyParameterRequest;
 use olapmeta::GetChildMembersByGidRequest;
@@ -39,6 +43,22 @@ fn grpc_to_olap_member(grpc_member: GrpcMember) -> mdd::Member {
 }
 
 impl GrpcClient {
+    pub async fn get_cli() -> Self {
+        let config = cfg::get_cfg();
+        loop {
+            let res = GrpcClient::new(config.meta_grpc_url.clone()).await;
+            match res {
+                Ok(client) => {
+                    return client;
+                }
+                Err(e) => {
+                    println!("Failed to connect to gRPC server: {}. Retrying in 3 seconds...", e);
+                }
+            }
+            sleep(Duration::from_secs(3)).await;
+        }
+    }
+
     // 创建新的客户端实例
     pub async fn new(address: String) -> Result<Self, Box<dyn std::error::Error>> {
         let client = OlapMetaServiceClient::connect(address).await?;
