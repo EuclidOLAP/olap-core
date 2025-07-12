@@ -6,7 +6,7 @@ use crate::mdx_ast::AstFormulaObject;
 
 use crate::mdd::MultiDimensionalContext;
 use crate::mdd::MultiDimensionalEntity;
-use crate::mdd::Tuple;
+use crate::exmdx::mdd::TupleVector;
 use crate::mdd::GidType;
 use crate::mdd::MultiDimensionalEntityLocator;
 
@@ -40,7 +40,7 @@ impl AstSegsObj {
 impl Materializable for AstSegsObj {
     fn materialize<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
     ) -> BoxFuture<'a, MultiDimensionalEntity> {
         Box::pin(async move {

@@ -10,6 +10,8 @@ mod euclidolap {
     tonic::include_proto!("euclidolap");
 }
 
+use crate::exmdx::mdd::TupleVector;
+
 pub mod calcul;
 pub mod cfg;
 pub mod mdx_ast;
@@ -30,7 +32,7 @@ use crate::mdx_grammar::SelectionMDXParser;
 
 use crate::mdx_lexer::Lexer as MdxLexer;
 
-use mdd::OlapVectorCoordinate;
+// use mdd::OlapVectorCoordinate;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -121,7 +123,7 @@ async fn handle_stat(optype: String, statement: String) -> (u64, Vec<CellValue>)
 async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> (u64, Vec<CellValue>) {
     let mut context = ast_selstat.gen_md_context().await;
     let axes = ast_selstat.build_axes(&mut context).await;
-    let coordinates: Vec<OlapVectorCoordinate> =
+    let coordinates: Vec<TupleVector> =
         mdd::Axis::axis_vec_cartesian_product(&axes, &context);
 
     (context.cube.gid, calcul::calculate(coordinates, &mut context).await)

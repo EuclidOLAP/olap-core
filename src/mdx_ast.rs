@@ -20,9 +20,9 @@ use crate::mdd;
 use crate::mdd::CellValue;
 use crate::mdd::MultiDimensionalContext;
 use crate::mdd::MultiDimensionalEntityLocator;
-use crate::mdd::OlapVectorCoordinate;
+use crate::exmdx::mdd::TupleVector;
 use crate::mdd::{DimensionRole, Level, LevelRole};
-use crate::mdd::{GidType, MemberRole, MultiDimensionalEntity, Set, Tuple};
+use crate::mdd::{GidType, MemberRole, MultiDimensionalEntity, Set};
 use crate::olapmeta_grpc_client::GrpcClient;
 
 use crate::meta_cache;
@@ -32,7 +32,7 @@ use crate::calcul::calculate;
 pub trait Materializable {
     fn materialize<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut mdd::MultiDimensionalContext,
     ) -> BoxFuture<'a, MultiDimensionalEntity>;
 }
@@ -40,7 +40,7 @@ pub trait Materializable {
 pub trait ToCellValue {
     fn val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue>;
@@ -49,7 +49,7 @@ pub trait ToCellValue {
 pub trait ToBoolValue {
     fn bool_val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
     ) -> BoxFuture<'a, bool>;
 }
@@ -81,7 +81,7 @@ impl AstSeg {
 impl Materializable for AstSeg {
     fn materialize<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut mdd::MultiDimensionalContext,
     ) -> BoxFuture<'a, MultiDimensionalEntity> {
         Box::pin(async move {
@@ -127,7 +127,7 @@ impl Materializable for AstSeg {
 // impl Materializable for AstSegments {
 //     fn materialize<'a>(
 //         &'a self,
-//         slice_tuple: &'a Tuple,
+//         slice_tuple: &'a TupleVector,
 //         context: &'a mut mdd::MultiDimensionalContext,
 //     ) -> BoxFuture<'a, MultiDimensionalEntity> {
 //         Box::pin(async move {
@@ -200,7 +200,7 @@ pub enum AstTuple {
 impl Materializable for AstTuple {
     fn materialize<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut mdd::MultiDimensionalContext,
     ) -> BoxFuture<'a, MultiDimensionalEntity> {
         Box::pin(async move {
@@ -221,7 +221,7 @@ impl Materializable for AstTuple {
                             }
                         }
                     }
-                    MultiDimensionalEntity::TupleWrap(mdd::Tuple { member_roles })
+                    MultiDimensionalEntity::TupleWrap(TupleVector { member_roles })
                 }
             }
         })
@@ -236,9 +236,9 @@ pub enum AstSet {
 impl AstSet {
     async fn generate_fiducial_tuple(
         &self,
-        slice_tuple: &Tuple,
+        slice_tuple: &TupleVector,
         context: &mut mdd::MultiDimensionalContext,
-    ) -> mdd::Tuple {
+    ) -> TupleVector {
         let result;
         match self {
             AstSet::Tuples(tuples) => {
@@ -256,11 +256,11 @@ impl AstSet {
 impl Materializable for AstSet {
     fn materialize<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut mdd::MultiDimensionalContext,
     ) -> BoxFuture<'a, MultiDimensionalEntity> {
         Box::pin(async move {
-            let mut tuple_vec: Vec<Tuple> = Vec::new();
+            let mut tuple_vec: Vec<TupleVector> = Vec::new();
 
             match self {
                 AstSet::Tuples(tuples) => {
@@ -291,9 +291,9 @@ pub enum AstAxis {
 impl AstAxis {
     async fn generate_fiducial_tuple(
         &self,
-        slice_tuple: &Tuple,
+        slice_tuple: &TupleVector,
         context: &mut mdd::MultiDimensionalContext,
-    ) -> mdd::Tuple {
+    ) -> TupleVector {
         match self {
             AstAxis::SetDefinition { ast_set, pos: _ } => {
                 ast_set.generate_fiducial_tuple(slice_tuple, context).await
@@ -303,7 +303,7 @@ impl AstAxis {
 
     async fn translate_to_axis(
         &self,
-        slice_tuple: &Tuple,
+        slice_tuple: &TupleVector,
         context: &mut mdd::MultiDimensionalContext,
     ) -> mdd::Axis {
         let axis: mdd::Axis;
@@ -369,7 +369,7 @@ impl AstSelectionStatement {
             _ => panic!("The entity is not a Gid or a Str variant. 2"),
         }
 
-        let mut cube_def_tuple = mdd::Tuple { member_roles: Vec::new() };
+        let mut cube_def_tuple = TupleVector { member_roles: Vec::new() };
 
         let dimension_roles = grpc_cli.get_dimension_roles_by_cube_gid(cube.gid).await.unwrap();
         for dim_role in dimension_roles {
@@ -397,12 +397,12 @@ impl AstSelectionStatement {
             cube,
             // cube_def_tuple,
             // where_tuple: None,
-            query_slice_tuple: Tuple { member_roles: vec![] },
+            query_slice_tuple: TupleVector { member_roles: vec![] },
             grpc_client: grpc_cli,
             formulas_map,
         };
 
-        let mut where_tuple: Option<Tuple> = None;
+        let mut where_tuple: Option<TupleVector> = None;
         if let Some(mdx_where) = &self.basic_slice {
             where_tuple = match mdx_where.materialize(&cube_def_tuple, &mut context).await {
                 MultiDimensionalEntity::TupleWrap(tuple) => Some(tuple),
@@ -493,7 +493,7 @@ pub struct AstExpression {
 impl ToCellValue for AstExpression {
     fn val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -529,7 +529,7 @@ pub enum AstFactory {
 impl ToCellValue for AstFactory {
     fn val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -540,9 +540,9 @@ impl ToCellValue for AstFactory {
                 AstFactory::FactorySegs(segs) => match segs.materialize(slice_tuple, context).await
                 {
                     MultiDimensionalEntity::MemberRoleWrap(mr) => {
-                        let ovc_tp = slice_tuple.merge(&Tuple { member_roles: vec![mr] });
+                        let ovc_tp = slice_tuple.merge(&TupleVector { member_roles: vec![mr] });
 
-                        let ovc = OlapVectorCoordinate { member_roles: ovc_tp.member_roles };
+                        let ovc = TupleVector { member_roles: ovc_tp.member_roles };
 
                         let cell_values = calculate(vec![ovc], context).await;
                         cell_values.first().unwrap().clone()
@@ -559,7 +559,7 @@ impl ToCellValue for AstFactory {
                 AstFactory::FactoryTuple(tuple) => {
                     match tuple.materialize(slice_tuple, context).await {
                         MultiDimensionalEntity::TupleWrap(olap_tuple) => {
-                            let ovc = OlapVectorCoordinate {
+                            let ovc = TupleVector {
                                 member_roles: slice_tuple.merge(&olap_tuple).member_roles,
                             };
                             let cell_values = calculate(vec![ovc], context).await;
@@ -582,7 +582,7 @@ pub struct AstTerm {
 impl ToCellValue for AstTerm {
     fn val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -618,7 +618,7 @@ impl AstMemberFnClosingPeriod {
         left_outer_param: Option<MultiDimensionalEntity>,
         level_param: Option<&AstSegsObj>,
         member_param: Option<&AstSegsObj>,
-        slice_tuple: &Tuple,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         match (left_outer_param, level_param, member_param) {
@@ -652,7 +652,7 @@ impl AstMemberFnOpeningPeriod {
         left_outer_param: Option<MultiDimensionalEntity>,
         level_param: Option<&AstSegsObj>,
         member_param: Option<&AstSegsObj>,
-        slice_tuple: &Tuple,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         match (left_outer_param, level_param, member_param) {
@@ -684,7 +684,7 @@ impl AstMemberFnCurrentMember {
     async fn do_get_member(
         &self,
         outer_param: Option<MultiDimensionalEntity>,
-        slice_tuple: &Tuple,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         let param: MultiDimensionalEntity;
@@ -785,7 +785,7 @@ impl AstMemberFunction {
     pub async fn get_member(
         &self,
         left_outer_param: Option<MultiDimensionalEntity>,
-        slice_tuple: &Tuple,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         match self {
@@ -883,7 +883,7 @@ impl AstLevelFunction {
     pub async fn get_level_role(
         &self,
         left_outer_param: Option<MultiDimensionalEntity>,
-        slice_tuple: &Tuple,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> LevelRole {
         match self {
@@ -915,7 +915,7 @@ impl AstLevelFnLevel {
     async fn get_level_role(
         &self,
         left_outer_param: Option<MultiDimensionalEntity>,
-        slice_tuple: &Tuple,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> LevelRole {
         if let Some(MultiDimensionalEntity::MemberRoleWrap(mr)) = left_outer_param {
@@ -948,7 +948,7 @@ impl AstLevelFnLevels {
     async fn get_level_role(
         &self,
         left_outer_param: Option<MultiDimensionalEntity>,
-        slice_tuple: &Tuple,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> LevelRole {
         let mut param_dim_role: Option<DimensionRole> = None;
@@ -1002,9 +1002,9 @@ impl AstSetFnChildren {
                 let children =
                     context.grpc_client.get_child_members_by_gid(member.gid).await.unwrap();
 
-                let tuples: Vec<Tuple> = children
+                let tuples: Vec<TupleVector> = children
                     .into_iter()
-                    .map(|child| Tuple {
+                    .map(|child| TupleVector {
                         member_roles: vec![MemberRole::BaseMember {
                             dim_role: dim_role.clone(),
                             member: child,
@@ -1033,7 +1033,7 @@ impl AstSetFunction {
     pub async fn get_set(
         &self,
         left_unique_param: Option<MultiDimensionalEntity>,
-        slice_tuple: &Tuple,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> Set {
         match self {
@@ -1092,7 +1092,7 @@ pub enum AstExpFunction {
 impl ToCellValue for AstExpFunction {
     fn val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -1190,7 +1190,7 @@ pub enum AstExpFnName {
 impl ToCellValue for AstExpFnName {
     fn val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -1238,7 +1238,7 @@ pub enum AstExpFnAvg {
 impl ToCellValue for AstExpFnAvg {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -1256,7 +1256,7 @@ pub enum AstExpFnCount {
 impl ToCellValue for AstExpFnCount {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -1301,7 +1301,7 @@ pub struct AstExpFnIIf {
 impl ToCellValue for AstExpFnIIf {
     fn val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -1326,7 +1326,7 @@ pub enum AstBoolExp {
 impl ToBoolValue for AstBoolExp {
     fn bool_val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
     ) -> BoxFuture<'a, bool> {
         Box::pin(async move {
@@ -1357,7 +1357,7 @@ pub enum AstBoolTerm {
 impl ToBoolValue for AstBoolTerm {
     fn bool_val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
     ) -> BoxFuture<'a, bool> {
         Box::pin(async move {
@@ -1388,7 +1388,7 @@ pub enum AstBoolFactory {
 impl ToBoolValue for AstBoolFactory {
     fn bool_val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
     ) -> BoxFuture<'a, bool> {
         Box::pin(async move {
@@ -1413,7 +1413,7 @@ pub enum AstBoolFunction {
 impl ToBoolValue for AstBoolFunction {
     fn bool_val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
     ) -> BoxFuture<'a, bool> {
         Box::pin(async move {
@@ -1440,7 +1440,7 @@ impl AstBoolFnIsLeaf {
 impl ToBoolValue for AstBoolFnIsLeaf {
     fn bool_val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
     ) -> BoxFuture<'a, bool> {
         Box::pin(async move {
