@@ -6,7 +6,10 @@ use crate::meta_cache;
 use crate::mdx_ast::AstExpFnAvg;
 use crate::mdx_ast::AstExpFnCount;
 use crate::mdx_ast::AstExpFunction;
-use crate::mdx_ast::{AstExpression, AstFormulaObject, AstSeg, AstSegments};
+use crate::mdx_ast::{AstExpression, AstFormulaObject, AstSeg};
+
+use crate::exmdx::ast::AstSegsObj;
+use crate::exmdx::mdd::TupleVector;
 
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
@@ -46,7 +49,7 @@ pub enum MultiDimensionalEntity {
     Level(Level),
     LevelRole(LevelRole),
     DimensionRoleWrap(DimensionRole),
-    TupleWrap(Tuple),
+    TupleWrap(TupleVector),
     SetWrap(Set),
     MemberWrap(Member),
     MemberRoleWrap(MemberRole),
@@ -187,22 +190,22 @@ impl MultiDimensionalEntity {
 pub trait MultiDimensionalEntityLocator {
     async fn locate_entity(
         &self,
-        segs: &AstSegments,
-        slice_tuple: &Tuple,
+        segs: &AstSegsObj,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity;
 
     async fn locate_entity_by_gid(
         &self,
         gid: u64,
-        slice_tuple: &Tuple,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity;
 
     async fn locate_entity_by_seg(
         &self,
         seg: &String,
-        slice_tuple: &Tuple,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity;
 }
@@ -212,7 +215,7 @@ pub struct MultiDimensionalContext {
     pub cube: Cube,
     // pub cube_def_tuple: Tuple,
     // pub where_tuple: Option<Tuple>,
-    pub query_slice_tuple: Tuple,
+    pub query_slice_tuple: TupleVector,
     pub grpc_client: GrpcClient,
     pub formulas_map: HashMap<u64, AstFormulaObject>,
 }
@@ -247,37 +250,21 @@ impl MultiDimensionalContext {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Tuple {
-    pub member_roles: Vec<MemberRole>,
-}
-
-impl std::fmt::Display for Tuple {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let types_str = self
-            .member_roles
-            .iter()
-            .map(|mr| match mr {
-                MemberRole::BaseMember { .. } => "B",
-                MemberRole::FormulaMember { .. } => "F",
-            })
-            .collect::<Vec<_>>()
-            .join(", ");
-
-        write!(f, "Tuple({})", types_str)
-    }
-}
+// #[derive(Debug, Clone, PartialEq)]
+// pub struct Tuple {
+//     pub member_roles: Vec<MemberRole>,
+// }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Set {
-    pub tuples: Vec<Tuple>,
+    pub tuples: Vec<TupleVector>,
 }
 
 impl MultiDimensionalEntityLocator for Set {
     async fn locate_entity(
         &self,
-        segs: &AstSegments,
-        slice_tuple: &Tuple,
+        segs: &AstSegsObj,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         let seg_list = &segs.segs;
@@ -285,7 +272,7 @@ impl MultiDimensionalEntityLocator for Set {
         let seg = seg_list.iter().next().unwrap();
 
         match seg {
-            AstSeg::ExpFn(exp_fn) => match exp_fn {
+            AstSeg::ExpFunc(exp_fn) => match exp_fn {
                 AstExpFunction::Avg(_) => {
                     if seg_list.len() > 1 {
                         panic!("Avg function can only have one segment. hsbt2839");
@@ -352,7 +339,7 @@ impl MultiDimensionalEntityLocator for Set {
     async fn locate_entity_by_gid(
         &self,
         _gid: u64,
-        _slice_tuple: &Tuple,
+        _slice_tuple: &TupleVector,
         _context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         todo!()
@@ -361,27 +348,10 @@ impl MultiDimensionalEntityLocator for Set {
     async fn locate_entity_by_seg(
         &self,
         _seg: &String,
-        _slice_tuple: &Tuple,
+        _slice_tuple: &TupleVector,
         _context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         todo!()
-    }
-}
-
-impl Tuple {
-    /*
-     * self:   [Goods], [Transport], [starting region], [ending region], [starting date], [completion date], [**MeasureDimRole**]
-     * other:  [Transport], [completion date], [Goods], [starting region], [ending region]
-     * result: [starting date], [**MeasureDimRole**], [Transport], [completion date], [Goods], [starting region], [ending region]
-     */
-    pub fn merge(&self, other: &Tuple) -> Self {
-        let mut mrs = self.member_roles.clone();
-        mrs.retain(|mr| {
-            !other.member_roles.iter().any(|or| or.get_dim_role_gid() == mr.get_dim_role_gid())
-        });
-        mrs.extend(other.member_roles.clone());
-
-        Tuple { member_roles: mrs }
     }
 }
 
@@ -415,15 +385,15 @@ impl MemberRole {
 impl MultiDimensionalEntityLocator for MemberRole {
     async fn locate_entity(
         &self,
-        segs: &AstSegments,
-        slice_tuple: &Tuple,
+        segs: &AstSegsObj,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         let seg_list = &segs.segs;
 
         let seg = seg_list.first().unwrap();
         match seg {
-            AstSeg::MemberFunction(member_fn) => {
+            AstSeg::MemberFunc(member_fn) => {
                 member_fn
                     .get_member(
                         Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
@@ -432,7 +402,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
                     )
                     .await
             }
-            AstSeg::SetFunction(set_fn) => {
+            AstSeg::SetFunc(set_fn) => {
                 let set = set_fn
                     .get_set(Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())), slice_tuple, context)
                     .await;
@@ -441,11 +411,11 @@ impl MultiDimensionalEntityLocator for MemberRole {
                     MultiDimensionalEntity::SetWrap(set)
                 } else {
                     // let tail_segs = AstSegments::Segs(seg_list[1..].to_vec());
-                    let tail_segs = AstSegments { segs: (seg_list[1..].to_vec()) };
+                    let tail_segs = AstSegsObj { segs: (seg_list[1..].to_vec()) };
                     set.locate_entity(&tail_segs, slice_tuple, context).await
                 }
             }
-            AstSeg::LevelFn(level_fn) => {
+            AstSeg::LevelFunc(level_fn) => {
                 if seg_list.len() > 1 {
                     todo!("[bhso9957] MemberRole::locate_entity() LevelFn not implemented yet.");
                 }
@@ -458,7 +428,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
                     .await;
                 MultiDimensionalEntity::LevelRole(lv_role)
             }
-            AstSeg::ExpFn(exp_fn) => {
+            AstSeg::ExpFunc(exp_fn) => {
                 if seg_list.len() > 1 {
                     todo!("[bhso9957] MemberRole::locate_entity() LevelFn not implemented yet.");
                 }
@@ -478,7 +448,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
     async fn locate_entity_by_gid(
         &self,
         _gid: u64,
-        _slice_tuple: &Tuple,
+        _slice_tuple: &TupleVector,
         _context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         todo!("MemberRole::locate_entity_by_gid() not implemented yet.")
@@ -487,7 +457,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
     async fn locate_entity_by_seg(
         &self,
         _seg: &String,
-        _slice_tuple: &Tuple,
+        _slice_tuple: &TupleVector,
         _context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         todo!("MemberRole::locate_entity_by_seg() not implemented yet.")
@@ -518,8 +488,8 @@ pub struct DimensionRole {
 impl MultiDimensionalEntityLocator for DimensionRole {
     async fn locate_entity(
         &self,
-        segs: &AstSegments,
-        slice_tuple: &Tuple,
+        segs: &AstSegsObj,
+        slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         let seg_list = &segs.segs;
@@ -532,7 +502,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
             AstSeg::Str(seg) => {
                 self.locate_entity_by_seg(seg, slice_tuple, context).await
             }
-            AstSeg::LevelFn(level_fn) => MultiDimensionalEntity::LevelRole(
+            AstSeg::LevelFunc(level_fn) => MultiDimensionalEntity::LevelRole(
                 level_fn
                     .get_level_role(
                         Some(MultiDimensionalEntity::DimensionRoleWrap(self.clone())),
@@ -541,7 +511,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
                     )
                     .await,
             ),
-            AstSeg::MemberFunction(member_fn) => {
+            AstSeg::MemberFunc(member_fn) => {
                 member_fn
                     .get_member(
                         Some(MultiDimensionalEntity::DimensionRoleWrap(self.clone())),
@@ -559,7 +529,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
                     return MultiDimensionalEntity::MemberRoleWrap(member_role);
                 }
 
-                let tail_segs = AstSegments { segs: (seg_list[1..].to_vec()) };
+                let tail_segs = AstSegsObj { segs: (seg_list[1..].to_vec()) };
                 member_role.locate_entity(&tail_segs, slice_tuple, context).await
             }
             MultiDimensionalEntity::LevelRole(lv_role) => {
@@ -577,7 +547,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
     async fn locate_entity_by_gid(
         &self,
         gid: u64,
-        _slice_tuple: &Tuple,
+        _slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         match GidType::entity_type(gid) {
@@ -613,7 +583,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
     async fn locate_entity_by_seg(
         &self,
         _seg: &String,
-        _slice_tuple: &Tuple,
+        _slice_tuple: &TupleVector,
         _context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         todo!("DimensionRole::locate_entity_by_seg() not implemented yet.");
@@ -645,8 +615,8 @@ pub struct Cube {
 impl MultiDimensionalEntityLocator for Cube {
     async fn locate_entity(
         &self,
-        segs: &AstSegments,
-        _slice_tuple: &Tuple,
+        segs: &AstSegsObj,
+        _slice_tuple: &TupleVector,
         _context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         if segs.segs.len() != 1 {
@@ -655,7 +625,7 @@ impl MultiDimensionalEntityLocator for Cube {
 
         let seg = segs.segs.first().unwrap();
 
-        if let AstSeg::ExpFn(AstExpFunction::LookupCube(look_up_fn)) = seg {
+        if let AstSeg::ExpFunc(AstExpFunction::LookupCube(look_up_fn)) = seg {
             let mut look_up_fn = look_up_fn.clone();
             look_up_fn.set_cube(self.clone());
             MultiDimensionalEntity::ExpFn(AstExpFunction::LookupCube(look_up_fn))
@@ -667,7 +637,7 @@ impl MultiDimensionalEntityLocator for Cube {
     async fn locate_entity_by_gid(
         &self,
         _gid: u64,
-        _slice_tuple: &Tuple,
+        _slice_tuple: &TupleVector,
         _context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         todo!()
@@ -676,7 +646,7 @@ impl MultiDimensionalEntityLocator for Cube {
     async fn locate_entity_by_seg(
         &self,
         _seg: &String,
-        _slice_tuple: &Tuple,
+        _slice_tuple: &TupleVector,
         _context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         todo!()
@@ -693,7 +663,7 @@ impl Axis {
     pub fn axis_vec_cartesian_product(
         axes: &Vec<Axis>,
         context: &MultiDimensionalContext,
-    ) -> Vec<OlapVectorCoordinate> {
+    ) -> Vec<TupleVector> {
         let count = axes.len();
 
         if count == 0 {
@@ -701,23 +671,23 @@ impl Axis {
         }
 
         if count == 1 {
-            let mut ov_coordinates: Vec<OlapVectorCoordinate> = Vec::new();
+            let mut ov_coordinates: Vec<TupleVector> = Vec::new();
             let axis = axes.iter().next().unwrap();
             for ax_tuple in &axis.set.tuples {
                 ov_coordinates
-                    .push(OlapVectorCoordinate { member_roles: ax_tuple.member_roles.clone() });
+                    .push(TupleVector { member_roles: ax_tuple.member_roles.clone() });
             }
             return ov_coordinates;
         }
 
         let mut axes_itor = axes.iter();
         let axis_left = axes_itor.next().unwrap();
-        let mut finished_tuples: Vec<Tuple> = Vec::new();
+        let mut finished_tuples: Vec<TupleVector> = Vec::new();
         for ax_tuple in &axis_left.set.tuples {
             finished_tuples.push(ax_tuple.clone());
         }
 
-        let mut transitional_tuples: Vec<Tuple>;
+        let mut transitional_tuples: Vec<TupleVector>;
 
         for axis_right in axes_itor {
             transitional_tuples = Vec::new();
@@ -732,9 +702,9 @@ impl Axis {
             finished_tuples = transitional_tuples;
         }
 
-        let mut ov_coordinates: Vec<OlapVectorCoordinate> = Vec::new();
+        let mut ov_coordinates: Vec<TupleVector> = Vec::new();
         for tuple in finished_tuples {
-            ov_coordinates.push(OlapVectorCoordinate {
+            ov_coordinates.push(TupleVector {
                 member_roles: context.query_slice_tuple.merge(&tuple).member_roles,
             });
         }
@@ -743,7 +713,7 @@ impl Axis {
     }
 }
 
-#[derive(Debug)]
-pub struct OlapVectorCoordinate {
-    pub member_roles: Vec<MemberRole>,
-}
+// #[derive(Debug)]
+// pub struct OlapVectorCoordinate {
+//     pub member_roles: Vec<MemberRole>,
+// }

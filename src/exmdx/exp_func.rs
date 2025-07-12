@@ -1,18 +1,20 @@
 use futures::future::BoxFuture;
 
 use crate::mdx_ast::ToCellValue;
-use crate::mdx_ast::{AstExpression, AstSegments, AstSet, Materializable};
+use crate::mdx_ast::{AstExpression, AstSet, Materializable};
 
-use crate::mdd::OlapVectorCoordinate;
-use crate::mdd::{CellValue, MultiDimensionalContext, MultiDimensionalEntity, Tuple};
+use crate::exmdx::ast::AstSegsObj;
+
+use crate::exmdx::mdd::TupleVector;
+use crate::mdd::{CellValue, MultiDimensionalContext, MultiDimensionalEntity};
 
 use crate::calcul;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFuncSum {
     Simple,
-    SegsSet(AstSegments),
-    SegsSetExp(AstSegments, AstExpression),
+    SegsSet(AstSegsObj),
+    SegsSetExp(AstSegsObj, AstExpression),
     BraceSet(AstSet),
     BraceSetExp(AstSet, AstExpression),
 }
@@ -20,7 +22,7 @@ pub enum AstExpFuncSum {
 impl ToCellValue for AstExpFuncSum {
     fn val<'a>(
         &'a self,
-        slice_tuple: &'a Tuple,
+        slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -61,7 +63,7 @@ impl ToCellValue for AstExpFuncSum {
                     let value = exp.val(&tup, context, None).await;
                     cell_vals.push(value);
                 } else {
-                    let ovc = OlapVectorCoordinate { member_roles: tup.member_roles };
+                    let ovc = TupleVector { member_roles: tup.member_roles };
                     let values = calcul::calculate(vec![ovc], context).await;
                     let value = values[0].clone();
                     cell_vals.push(value);
@@ -81,8 +83,8 @@ impl ToCellValue for AstExpFuncSum {
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFuncMax {
     Simple,
-    SegsSet(AstSegments),
-    SegsSetExp(AstSegments, AstExpression),
+    SegsSet(AstSegsObj),
+    SegsSetExp(AstSegsObj, AstExpression),
     BraceSet(AstSet),
     BraceSetExp(AstSet, AstExpression),
 }
@@ -90,7 +92,7 @@ pub enum AstExpFuncMax {
 impl ToCellValue for AstExpFuncMax {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -101,8 +103,8 @@ impl ToCellValue for AstExpFuncMax {
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFuncMin {
     Simple,
-    SegsSet(AstSegments),
-    SegsSetExp(AstSegments, AstExpression),
+    SegsSet(AstSegsObj),
+    SegsSetExp(AstSegsObj, AstExpression),
     BraceSet(AstSet),
     BraceSetExp(AstSet, AstExpression),
 }
@@ -110,7 +112,7 @@ pub enum AstExpFuncMin {
 impl ToCellValue for AstExpFuncMin {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -125,7 +127,7 @@ pub enum AstExpFnAbs {
 impl ToCellValue for AstExpFnAbs {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -139,7 +141,7 @@ pub enum AstExpFnAggregate {
 impl ToCellValue for AstExpFnAggregate {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -153,7 +155,7 @@ pub enum AstExpFnCalculationCurrentPass {
 impl ToCellValue for AstExpFnCalculationCurrentPass {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -169,7 +171,7 @@ pub enum AstExpFnCalculationPassValue {
 impl ToCellValue for AstExpFnCalculationPassValue {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -185,7 +187,7 @@ pub enum AstExpFnCellValue {
 impl ToCellValue for AstExpFnCellValue {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -199,7 +201,7 @@ pub enum AstExpFnCoalesceEmpty {
 impl ToCellValue for AstExpFnCoalesceEmpty {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -213,7 +215,7 @@ pub enum AstExpFnCorrelation {
 impl ToCellValue for AstExpFnCorrelation {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -227,7 +229,7 @@ pub enum AstExpFnCovariance {
 impl ToCellValue for AstExpFnCovariance {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -241,7 +243,7 @@ pub enum AstExpFnCovarianceN {
 impl ToCellValue for AstExpFnCovarianceN {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -255,7 +257,7 @@ pub enum AstExpFnDateDiff {
 impl ToCellValue for AstExpFnDateDiff {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -269,7 +271,7 @@ pub enum AstExpFnDatePart {
 impl ToCellValue for AstExpFnDatePart {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -283,7 +285,7 @@ pub enum AstExpFnDistinctCount {
 impl ToCellValue for AstExpFnDistinctCount {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -297,7 +299,7 @@ pub enum AstExpFnEnumText {
 impl ToCellValue for AstExpFnEnumText {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -311,7 +313,7 @@ pub enum AstExpFnEnumValue {
 impl ToCellValue for AstExpFnEnumValue {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -325,7 +327,7 @@ pub enum AstExpFnExp {
 impl ToCellValue for AstExpFnExp {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -339,7 +341,7 @@ pub enum AstExpFnFactorial {
 impl ToCellValue for AstExpFnFactorial {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -353,7 +355,7 @@ pub enum AstExpFnInStr {
 impl ToCellValue for AstExpFnInStr {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -367,7 +369,7 @@ pub enum AstExpFnInt {
 impl ToCellValue for AstExpFnInt {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -381,7 +383,7 @@ pub enum AstExpFnLen {
 impl ToCellValue for AstExpFnLen {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -395,7 +397,7 @@ pub enum AstExpFnLinRegIntercept {
 impl ToCellValue for AstExpFnLinRegIntercept {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -409,7 +411,7 @@ pub enum AstExpFnLinRegPoint {
 impl ToCellValue for AstExpFnLinRegPoint {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -423,7 +425,7 @@ pub enum AstExpFnLinRegR2 {
 impl ToCellValue for AstExpFnLinRegR2 {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -437,7 +439,7 @@ pub enum AstExpFnLinRegSlope {
 impl ToCellValue for AstExpFnLinRegSlope {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -451,7 +453,7 @@ pub enum AstExpFnLinRegVariance {
 impl ToCellValue for AstExpFnLinRegVariance {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -465,7 +467,7 @@ pub enum AstExpFnLn {
 impl ToCellValue for AstExpFnLn {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -479,7 +481,7 @@ pub enum AstExpFnLog {
 impl ToCellValue for AstExpFnLog {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
@@ -493,7 +495,7 @@ pub enum AstExpFnLog10 {
 impl ToCellValue for AstExpFnLog10 {
     fn val<'a>(
         &'a self,
-        _slice_tuple: &'a Tuple,
+        _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {

@@ -6,7 +6,7 @@ use tonic::transport::Channel;
 
 use crate::mdd::MemberRole;
 use crate::mdd::MultiDimensionalContext;
-use crate::mdd::OlapVectorCoordinate;
+use crate::exmdx::mdd::TupleVector;
 
 pub mod agg_service {
     tonic::include_proto!("agg_service");
@@ -41,7 +41,7 @@ impl AggServiceGrpcClient {
 }
 
 pub async fn basic_aggregates(
-    coordinates: Vec<OlapVectorCoordinate>,
+    coordinates: Vec<TupleVector>,
     context: &MultiDimensionalContext,
 ) -> (u64, Vec<f64>, Vec<bool>) {
     if coordinates.is_empty() {
@@ -60,7 +60,7 @@ pub async fn basic_aggregates(
     result
 }
 
-fn transform_coordinates(coordinates: Vec<OlapVectorCoordinate>) -> Vec<GrpcVectorCoordinate> {
+fn transform_coordinates(coordinates: Vec<TupleVector>) -> Vec<GrpcVectorCoordinate> {
     let mut grpc_coordinates: Vec<GrpcVectorCoordinate> = Vec::new();
 
     for ocv in coordinates {

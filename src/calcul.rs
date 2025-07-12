@@ -2,22 +2,22 @@
 
 use crate::mdx_ast::ToCellValue;
 
-use crate::mdd::OlapVectorCoordinate;
+use crate::exmdx::mdd::TupleVector;
 use crate::mdd::{CellValue, MultiDimensionalContext};
-use crate::mdd::{MemberRole, Tuple};
+use crate::mdd::MemberRole;
 
 use crate::agg_service_client::basic_aggregates;
 
 pub async fn calculate(
-    vs: Vec<OlapVectorCoordinate>,
+    vs: Vec<TupleVector>,
     context: &mut MultiDimensionalContext,
 ) -> Vec<CellValue> {
     // Base OlapVectorCoordinates and Formula OlapVectorCoordinates
     // 分别存储索引和坐标数据
     let mut base_indices: Vec<usize> = Vec::new();
     let mut frml_indices: Vec<usize> = Vec::new();
-    let mut base_cords: Vec<OlapVectorCoordinate> = Vec::new();
-    let mut frml_cords: Vec<OlapVectorCoordinate> = Vec::new();
+    let mut base_cords: Vec<TupleVector> = Vec::new();
+    let mut frml_cords: Vec<TupleVector> = Vec::new();
 
     'outside: for (idx, cord) in vs.into_iter().enumerate() {
         for mr in &cord.member_roles {
@@ -61,7 +61,7 @@ pub async fn calculate(
 }
 
 async fn calculate_formula_vectors(
-    coordinates: Vec<OlapVectorCoordinate>,
+    coordinates: Vec<TupleVector>,
     context: &mut MultiDimensionalContext,
 ) -> Vec<CellValue> {
     let mut values: Vec<CellValue> = Vec::new();
@@ -94,8 +94,8 @@ async fn calculate_formula_vectors(
                     .unwrap();
 
                 let member_role = MemberRole::BaseMember { dim_role, member };
-                let one_mr_tup = Tuple { member_roles: vec![member_role] };
-                let slice_tuple = Tuple { member_roles: cord.member_roles.clone() }.merge(&one_mr_tup);
+                let one_mr_tup = TupleVector { member_roles: vec![member_role] };
+                let slice_tuple = TupleVector { member_roles: cord.member_roles.clone() }.merge(&one_mr_tup);
 
                 // todo 同一个表达式应该在不同的上下文下计算得不同的值，貌似不需要clone啊
                 let exp = exp.clone();
