@@ -58,7 +58,7 @@ extern {
     "," => Token::Comma,
     "&" => Token::Ampersand,
     "." => Token::Dot,
-    "int" => Token::Integer(<u64>),
+    "unsigned_int" => Token::Integer(<u64>),
     "double" => Token::Double(<f64>),
 
     "(" => Token::RoundBracketLeft,
@@ -146,10 +146,47 @@ extern {
   }
 }
 
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 // MDX Function Reference
 // https://docs.oracle.com/en/database/other-databases/essbase/21/esscq/mdx-function-list.html
 // https://learn.microsoft.com/en-us/sql/mdx/mdx-function-reference-mdx?view=sql-server-ver17
 // https://www.ibm.com/docs/en/planning-analytics/2.0.0?topic=references-mdx-function-support
+
+Seg: AstSeg = {
+  "&" <int: "unsigned_int"> => {
+    AstSeg::Gid(int)
+  },
+  "&" <int: "unsigned_int"> <bra_str:"BracketedString"> => {
+    AstSeg::GidStr(int, bra_str)
+  },
+  <bra_str:"BracketedString"> => {
+    AstSeg::Str(bra_str)
+  },
+  <func: Member_Func> => {
+    AstSeg::MemberFunc(func)
+  },
+  <func: Set_Func> => {
+    AstSeg::SetFunc(func)
+  },
+  <func: Exp_Func> => {
+    AstSeg::ExpFunc(func)
+  },
+  <func: Level_Func> => {
+    AstSeg::LevelFunc(func)
+  },
+}
+
+AxisPos: u64 = {
+  <axpos: "unsigned_int"> => axpos,
+  "Columns"     => 0,
+  "Rows"        => 1,
+  "Pages"       => 2,
+  "Chapters"    => 3,
+  "Sections"    => 4,
+}
+
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 pub SelectionMDX: mdx_ast::AstSelectionStatement = {
   "select" <axes:Axes> "from" <cube:Segments> (";")? => {
@@ -218,31 +255,6 @@ FormulaSet: AstFormulaObject = {
   }
 }
 
-// multi-dimensional object segment
-Seg: AstSeg = {
-  "&" <int:"int"> => {
-    AstSeg::Gid(int)
-  },
-  "&" <int:"int"> <bra_str:"BracketedString"> => {
-    AstSeg::GidStr(int, bra_str)
-  },
-  <bra_str:"BracketedString"> => {
-    AstSeg::Str(bra_str)
-  },
-  <mfn: MemberFunction> => {
-    AstSeg::MemberFunction(mfn)
-  },
-  <setfn: SetFnSpec> => {
-    AstSeg::SetFunction(setfn)
-  },
-  <exp_fn: ExpFnSpec> => {
-    AstSeg::ExpFn(exp_fn)
-  },
-  <lv_fn: LevelFunction> => {
-    AstSeg::LevelFn(lv_fn)
-  },
-}
-
 Segments: Vec<AstSeg> = {
   <seg:Seg> => {
     let mut list = Vec::with_capacity(6);
@@ -267,7 +279,7 @@ SegmentsWrap: mdx_ast::AstSegments = {
 //   <segs: Segs_Obj> "." <seg: Seg> => {},
 // }
 
-MemberFunction: AstMemberFunction = {
+Member_Func: AstMemberFunction = {
   <parent: MemberFnParent> => {
     AstMemberFunction::Parent(parent)
   },
@@ -463,7 +475,7 @@ MemberFnCurrentMember: AstMemberFnCurrentMember = {
   },
 }
 
-LevelFunction: AstLevelFunction = {
+Level_Func: AstLevelFunction = {
   <lv: LvFnLevel> => {
     AstLevelFunction::Level(lv)
   },
@@ -533,7 +545,7 @@ Factory: AstFactory = {
   <value:"double"> => {
     FactoryNum(value)
   },
-  <int_val:"int"> => {
+  <int_val: "unsigned_int"> => {
     let double_val: f64 = int_val as f64;
     FactoryNum(double_val)
   },
@@ -568,7 +580,7 @@ TupleWrap: mdx_ast::AstTuple = {
   }
 }
 
-SetFnSpec: AstSetFunction = {
+Set_Func: AstSetFunction = {
   <chir: SetFnChildrenSpec> => {
     AstSetFunction::Children(chir)
   },
@@ -787,7 +799,7 @@ Set_Func_Except: AstSetFnExcept = {
   },
 }
 
-ExpFnSpec: AstExpFunction = {
+Exp_Func: AstExpFunction = {
   <avg: ExpFnAvgSpec> => {
     AstExpFunction::Avg(avg)
   },
@@ -1127,15 +1139,6 @@ Axis: mdx_ast::AstAxis = {
       pos: axpos,
     }
   }
-}
-
-AxisPos: u64 = {
-  <axpos:"int"> => axpos,
-  "Columns"     => 0,
-  "Rows"        => 1,
-  "Pages"       => 2,
-  "Chapters"    => 3,
-  "Sections"    => 4,
 }
 
 Axes: Vec<mdx_ast::AstAxis> = {

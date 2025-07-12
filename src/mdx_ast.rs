@@ -60,10 +60,10 @@ pub enum AstSeg {
     Gid(u64),
     Str(String),
     GidStr(u64, String),
-    MemberFunction(AstMemberFunction),
-    SetFunction(AstSetFunction),
-    ExpFn(AstExpFunction),
-    LevelFn(AstLevelFunction),
+    MemberFunc(AstMemberFunction),
+    SetFunc(AstSetFunction),
+    ExpFunc(AstExpFunction),
+    LevelFunc(AstLevelFunction),
 }
 
 impl AstSeg {
@@ -88,18 +88,18 @@ impl Materializable for AstSeg {
                 AstSeg::Str(seg_str) => context.find_entity_by_str(seg_str).await,
                 AstSeg::GidStr(gid, _) => context.find_entity_by_gid(*gid).await,
                 // MemberFunction(AstMemberFunction),
-                AstSeg::MemberFunction(member_fn) => {
+                AstSeg::MemberFunc(member_fn) => {
                     member_fn.get_member(None, slice_tuple, context).await
                 }
-                AstSeg::LevelFn(lv_fn) => {
+                AstSeg::LevelFunc(lv_fn) => {
                     let lv_role = lv_fn.get_level_role(None, slice_tuple, context).await;
                     MultiDimensionalEntity::LevelRole(lv_role)
                 }
-                AstSeg::ExpFn(exp_fn) => {
+                AstSeg::ExpFunc(exp_fn) => {
                     let exp_val = exp_fn.val(slice_tuple, context, None).await;
                     MultiDimensionalEntity::CellValue(exp_val)
                 }
-                AstSeg::SetFunction(set_fn) => {
+                AstSeg::SetFunc(set_fn) => {
                     let set = set_fn.get_set(None, slice_tuple, context).await;
                     MultiDimensionalEntity::SetWrap(set)
                 }

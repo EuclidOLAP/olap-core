@@ -285,7 +285,7 @@ impl MultiDimensionalEntityLocator for Set {
         let seg = seg_list.iter().next().unwrap();
 
         match seg {
-            AstSeg::ExpFn(exp_fn) => match exp_fn {
+            AstSeg::ExpFunc(exp_fn) => match exp_fn {
                 AstExpFunction::Avg(_) => {
                     if seg_list.len() > 1 {
                         panic!("Avg function can only have one segment. hsbt2839");
@@ -423,7 +423,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
 
         let seg = seg_list.first().unwrap();
         match seg {
-            AstSeg::MemberFunction(member_fn) => {
+            AstSeg::MemberFunc(member_fn) => {
                 member_fn
                     .get_member(
                         Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
@@ -432,7 +432,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
                     )
                     .await
             }
-            AstSeg::SetFunction(set_fn) => {
+            AstSeg::SetFunc(set_fn) => {
                 let set = set_fn
                     .get_set(Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())), slice_tuple, context)
                     .await;
@@ -445,7 +445,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
                     set.locate_entity(&tail_segs, slice_tuple, context).await
                 }
             }
-            AstSeg::LevelFn(level_fn) => {
+            AstSeg::LevelFunc(level_fn) => {
                 if seg_list.len() > 1 {
                     todo!("[bhso9957] MemberRole::locate_entity() LevelFn not implemented yet.");
                 }
@@ -458,7 +458,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
                     .await;
                 MultiDimensionalEntity::LevelRole(lv_role)
             }
-            AstSeg::ExpFn(exp_fn) => {
+            AstSeg::ExpFunc(exp_fn) => {
                 if seg_list.len() > 1 {
                     todo!("[bhso9957] MemberRole::locate_entity() LevelFn not implemented yet.");
                 }
@@ -532,7 +532,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
             AstSeg::Str(seg) => {
                 self.locate_entity_by_seg(seg, slice_tuple, context).await
             }
-            AstSeg::LevelFn(level_fn) => MultiDimensionalEntity::LevelRole(
+            AstSeg::LevelFunc(level_fn) => MultiDimensionalEntity::LevelRole(
                 level_fn
                     .get_level_role(
                         Some(MultiDimensionalEntity::DimensionRoleWrap(self.clone())),
@@ -541,7 +541,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
                     )
                     .await,
             ),
-            AstSeg::MemberFunction(member_fn) => {
+            AstSeg::MemberFunc(member_fn) => {
                 member_fn
                     .get_member(
                         Some(MultiDimensionalEntity::DimensionRoleWrap(self.clone())),
@@ -655,7 +655,7 @@ impl MultiDimensionalEntityLocator for Cube {
 
         let seg = segs.segs.first().unwrap();
 
-        if let AstSeg::ExpFn(AstExpFunction::LookupCube(look_up_fn)) = seg {
+        if let AstSeg::ExpFunc(AstExpFunction::LookupCube(look_up_fn)) = seg {
             let mut look_up_fn = look_up_fn.clone();
             look_up_fn.set_cube(self.clone());
             MultiDimensionalEntity::ExpFn(AstExpFunction::LookupCube(look_up_fn))
