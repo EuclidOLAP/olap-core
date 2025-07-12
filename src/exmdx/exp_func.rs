@@ -1,7 +1,9 @@
 use futures::future::BoxFuture;
 
 use crate::mdx_ast::ToCellValue;
-use crate::mdx_ast::{AstExpression, AstSegments, AstSet, Materializable};
+use crate::mdx_ast::{AstExpression, AstSet, Materializable};
+
+use crate::exmdx::ast::AstSegsObj;
 
 use crate::mdd::OlapVectorCoordinate;
 use crate::mdd::{CellValue, MultiDimensionalContext, MultiDimensionalEntity, Tuple};
@@ -11,8 +13,8 @@ use crate::calcul;
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFuncSum {
     Simple,
-    SegsSet(AstSegments),
-    SegsSetExp(AstSegments, AstExpression),
+    SegsSet(AstSegsObj),
+    SegsSetExp(AstSegsObj, AstExpression),
     BraceSet(AstSet),
     BraceSetExp(AstSet, AstExpression),
 }
@@ -81,8 +83,8 @@ impl ToCellValue for AstExpFuncSum {
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFuncMax {
     Simple,
-    SegsSet(AstSegments),
-    SegsSetExp(AstSegments, AstExpression),
+    SegsSet(AstSegsObj),
+    SegsSetExp(AstSegsObj, AstExpression),
     BraceSet(AstSet),
     BraceSetExp(AstSet, AstExpression),
 }
@@ -101,8 +103,8 @@ impl ToCellValue for AstExpFuncMax {
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFuncMin {
     Simple,
-    SegsSet(AstSegments),
-    SegsSetExp(AstSegments, AstExpression),
+    SegsSet(AstSegsObj),
+    SegsSetExp(AstSegsObj, AstExpression),
     BraceSet(AstSet),
     BraceSetExp(AstSet, AstExpression),
 }
