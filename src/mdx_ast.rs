@@ -13,16 +13,16 @@ use futures::future::BoxFuture;
 use crate::exmdx::ast::AstSegsObj;
 
 use crate::exmdx::exp_func::*; // {AstExpFuncSum, AstExpFuncMax, AstExpFuncMin};
-use crate::exmdx::set_func::*;
-use crate::exmdx::mr_func::*;
+// use crate::exmdx::set_func::*;
+// use crate::exmdx::mr_func::*;
 
 use crate::mdd;
 use crate::mdd::CellValue;
 use crate::mdd::MultiDimensionalContext;
-use crate::mdd::MultiDimensionalEntityLocator;
+// use crate::mdd::MultiDimensionalEntityLocator;
 use crate::exmdx::mdd::TupleVector;
 use crate::mdd::{DimensionRole, Level, LevelRole};
-use crate::mdd::{GidType, MemberRole, MultiDimensionalEntity, Set};
+use crate::mdd::{MemberRole, MultiDimensionalEntity, Set};
 use crate::olapmeta_grpc_client::GrpcClient;
 
 use crate::meta_cache;
@@ -767,18 +767,18 @@ pub enum AstMemberFunction {
     ClosingPeriod(AstMemberFnClosingPeriod),
     OpeningPeriod(AstMemberFnOpeningPeriod),
     CurrentMember(AstMemberFnCurrentMember),
-    FirstChild(AstMemRoleFnFirstChild),
-    FirstSibling(AstMemRoleFnFirstSibling),
-    Lag(AstMemRoleFnLag),
-    LastChild(AstMemRoleFnLastChild),
-    LastSibling(AstMemRoleFnLastSibling),
-    Lead(AstMemRoleFnLead),
-    ParallelPeriod(AstMemRoleFnParallelPeriod),
-    PrevMember(AstMemRoleFnPrevMember),
-    NextMember(AstMemRoleFnNextMember),
-    Ancestor(AstMemRoleFnAncestor),
-    Cousin(AstMemRoleFnCousin),
-    DefaultMember(AstMemRoleFnDefaultMember),
+    // FirstChild(AstMemRoleFnFirstChild),
+    // FirstSibling(AstMemRoleFnFirstSibling),
+    // Lag(AstMemRoleFnLag),
+    // LastChild(AstMemRoleFnLastChild),
+    // LastSibling(AstMemRoleFnLastSibling),
+    // Lead(AstMemRoleFnLead),
+    // ParallelPeriod(AstMemRoleFnParallelPeriod),
+    // PrevMember(AstMemRoleFnPrevMember),
+    // NextMember(AstMemRoleFnNextMember),
+    // Ancestor(AstMemRoleFnAncestor),
+    // Cousin(AstMemRoleFnCousin),
+    // DefaultMember(AstMemRoleFnDefaultMember),
 }
 
 impl AstMemberFunction {
@@ -868,7 +868,7 @@ impl AstMemberFunction {
                 )
                 .await
             }
-            _ => todo!("AstMemberFunction::get_member() - [NNNNNN-887766]"),
+            // _ => todo!("AstMemberFunction::get_member() - [NNNNNN-887766]"),
         }
     }
 }
@@ -1023,10 +1023,10 @@ impl AstSetFnChildren {
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstSetFunction {
     Children(AstSetFnChildren),
-    BottomPercent(AstSetFnBottomPercent),
-    CrossJoin(AstSetFnCrossJoin),
-    Descendants(AstSetFnDescendants),
-    Except(AstSetFnExcept),
+    // BottomPercent(AstSetFnBottomPercent),
+    // CrossJoin(AstSetFnCrossJoin),
+    // Descendants(AstSetFnDescendants),
+    // Except(AstSetFnExcept),
 }
 
 impl AstSetFunction {
@@ -1044,7 +1044,7 @@ impl AstSetFunction {
                 let mem_role = segs.materialize(slice_tuple, context).await;
                 AstSetFnChildren::do_get_set(Some(mem_role), context).await
             }
-            _ => todo!("AstSetFunction::get_set() [SHUA-927381]"),
+            // _ => todo!("AstSetFunction::get_set() [SHUA-927381]"),
         }
     }
 }
@@ -1059,33 +1059,33 @@ pub enum AstExpFunction {
     Sum(AstExpFuncSum),
     Max(AstExpFuncMax),
     Min(AstExpFuncMin),
-    Abs(AstExpFnAbs),
-    Aggregate(AstExpFnAggregate),
-    CalculationCurrentPass(AstExpFnCalculationCurrentPass),
-    CalculationPassValue(AstExpFnCalculationPassValue),
-    CellValue(AstExpFnCellValue),
-    CoalesceEmpty(AstExpFnCoalesceEmpty),
-    Correlation(AstExpFnCorrelation),
-    Covariance(AstExpFnCovariance),
-    CovarianceN(AstExpFnCovarianceN),
-    DateDiff(AstExpFnDateDiff),
-    DatePart(AstExpFnDatePart),
-    DistinctCount(AstExpFnDistinctCount),
-    EnumText(AstExpFnEnumText),
-    EnumValue(AstExpFnEnumValue),
-    Exp(AstExpFnExp),
-    Factorial(AstExpFnFactorial),
-    InStr(AstExpFnInStr),
-    Int(AstExpFnInt),
-    Len(AstExpFnLen),
-    LinRegIntercept(AstExpFnLinRegIntercept),
-    LinRegPoint(AstExpFnLinRegPoint),
-    LinRegR2(AstExpFnLinRegR2),
-    LinRegSlope(AstExpFnLinRegSlope),
-    LinRegVariance(AstExpFnLinRegVariance),
-    Ln(AstExpFnLn),
-    Log(AstExpFnLog),
-    Log10(AstExpFnLog10),
+    // Abs(AstExpFnAbs),
+    // Aggregate(AstExpFnAggregate),
+    // CalculationCurrentPass(AstExpFnCalculationCurrentPass),
+    // CalculationPassValue(AstExpFnCalculationPassValue),
+    // CellValue(AstExpFnCellValue),
+    // CoalesceEmpty(AstExpFnCoalesceEmpty),
+    // Correlation(AstExpFnCorrelation),
+    // Covariance(AstExpFnCovariance),
+    // CovarianceN(AstExpFnCovarianceN),
+    // DateDiff(AstExpFnDateDiff),
+    // DatePart(AstExpFnDatePart),
+    // DistinctCount(AstExpFnDistinctCount),
+    // EnumText(AstExpFnEnumText),
+    // EnumValue(AstExpFnEnumValue),
+    // Exp(AstExpFnExp),
+    // Factorial(AstExpFnFactorial),
+    // InStr(AstExpFnInStr),
+    // Int(AstExpFnInt),
+    // Len(AstExpFnLen),
+    // LinRegIntercept(AstExpFnLinRegIntercept),
+    // LinRegPoint(AstExpFnLinRegPoint),
+    // LinRegR2(AstExpFnLinRegR2),
+    // LinRegSlope(AstExpFnLinRegSlope),
+    // LinRegVariance(AstExpFnLinRegVariance),
+    // Ln(AstExpFnLn),
+    // Log(AstExpFnLog),
+    // Log10(AstExpFnLog10),
 
 }
 
@@ -1147,33 +1147,33 @@ impl ToCellValue for AstExpFunction {
                 AstExpFunction::Min(exp_fn_min) => {
                     exp_fn_min.val(slice_tuple, context, outer_param).await
                 }
-                AstExpFunction::Abs(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::Aggregate(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::CalculationCurrentPass(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::CalculationPassValue(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::CellValue(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::CoalesceEmpty(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::Correlation(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::Covariance(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::CovarianceN(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::DateDiff(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::DatePart(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::DistinctCount(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::EnumText(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::EnumValue(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::Exp(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::Factorial(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::InStr(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::Int(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::Len(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::LinRegIntercept(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::LinRegPoint(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::LinRegR2(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::LinRegSlope(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::LinRegVariance(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::Ln(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::Log(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
-                AstExpFunction::Log10(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::Abs(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::Aggregate(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::CalculationCurrentPass(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::CalculationPassValue(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::CellValue(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::CoalesceEmpty(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::Correlation(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::Covariance(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::CovarianceN(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::DateDiff(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::DatePart(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::DistinctCount(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::EnumText(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::EnumValue(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::Exp(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::Factorial(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::InStr(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::Int(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::Len(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::LinRegIntercept(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::LinRegPoint(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::LinRegR2(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::LinRegSlope(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::LinRegVariance(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::Ln(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::Log(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
+                // AstExpFunction::Log10(exp_fn) => { exp_fn.val(slice_tuple, context, outer_param).await }
 
             }
         })
