@@ -107,7 +107,7 @@ pub enum Token {
     // Set functions
     #[regex("(?i)Children")]
     Children,
-    
+
     // Expression functions
     #[regex("(?i)Avg")]
     Avg,
@@ -122,7 +122,6 @@ pub enum Token {
     #[regex("(?i)Tunnel")]
     Tunnel,
     #[regex("(?i)Abs")]
-
     #[regex("(?i)ClosingPeriod")]
     ClosingPeriod,
 

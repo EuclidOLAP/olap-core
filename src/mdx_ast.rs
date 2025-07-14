@@ -5,14 +5,14 @@ use crate::mdx_lexer::Lexer as MdxLexer;
 
 use futures::future::BoxFuture;
 
-use crate::exmdx::ast::{AstSegsObj, AstTuple, AstSet};
+use crate::exmdx::ast::{AstSegsObj, AstSet, AstTuple};
 
 use crate::exmdx::exp_func::*;
 
+use crate::exmdx::mdd::TupleVector;
 use crate::mdd;
 use crate::mdd::CellValue;
 use crate::mdd::MultiDimensionalContext;
-use crate::exmdx::mdd::TupleVector;
 use crate::mdd::{DimensionRole, Level, LevelRole};
 use crate::mdd::{MemberRole, MultiDimensionalEntity, Set};
 
@@ -156,16 +156,21 @@ impl ToCellValue for AstFactory {
                 AstFactory::FactorySegs(segs) => match segs.materialize(slice_tuple, context).await
                 {
                     MultiDimensionalEntity::MemberRoleWrap(mr) => {
-                        let ovc_tp = slice_tuple.merge(&TupleVector { member_roles: vec![mr] });
+                        let ovc_tp = slice_tuple.merge(&TupleVector {
+                            member_roles: vec![mr],
+                        });
 
-                        let ovc = TupleVector { member_roles: ovc_tp.member_roles };
+                        let ovc = TupleVector {
+                            member_roles: ovc_tp.member_roles,
+                        };
 
                         let cell_values = calculate(vec![ovc], context).await;
                         cell_values.first().unwrap().clone()
                     }
-                    MultiDimensionalEntity::FormulaMemberWrap { dim_role_gid: _, exp } => {
-                        exp.val(slice_tuple, context, None).await
-                    }
+                    MultiDimensionalEntity::FormulaMemberWrap {
+                        dim_role_gid: _,
+                        exp,
+                    } => exp.val(slice_tuple, context, None).await,
                     MultiDimensionalEntity::ExpFn(exp_fn) => {
                         exp_fn.val(slice_tuple, context, None).await
                     }
@@ -395,7 +400,9 @@ impl AstMemberFunction {
         match self {
             // CurrentMember()
             AstMemberFunction::CurrentMember(current_member) => {
-                current_member.do_get_member(left_outer_param, slice_tuple, context).await
+                current_member
+                    .do_get_member(left_outer_param, slice_tuple, context)
+                    .await
             }
             // parent()
             AstMemberFunction::Parent(AstMemberFnParent::NoParam) => {
@@ -471,8 +478,7 @@ impl AstMemberFunction {
                     context,
                 )
                 .await
-            }
-            // _ => todo!("AstMemberFunction::get_member() - [NNNNNN-887766]"),
+            } // _ => todo!("AstMemberFunction::get_member() - [NNNNNN-887766]"),
         }
     }
 }
@@ -492,10 +498,14 @@ impl AstLevelFunction {
     ) -> LevelRole {
         match self {
             AstLevelFunction::Level(fn_level) => {
-                fn_level.get_level_role(left_outer_param, slice_tuple, context).await
+                fn_level
+                    .get_level_role(left_outer_param, slice_tuple, context)
+                    .await
             }
             AstLevelFunction::Levels(fn_levels) => {
-                fn_levels.get_level_role(left_outer_param, slice_tuple, context).await
+                fn_levels
+                    .get_level_role(left_outer_param, slice_tuple, context)
+                    .await
             }
         }
     }
@@ -603,8 +613,11 @@ impl AstSetFnChildren {
     ) -> Set {
         if let MultiDimensionalEntity::MemberRoleWrap(mr) = left_unique_param.unwrap() {
             if let MemberRole::BaseMember { dim_role, member } = mr {
-                let children =
-                    context.grpc_client.get_child_members_by_gid(member.gid).await.unwrap();
+                let children = context
+                    .grpc_client
+                    .get_child_members_by_gid(member.gid)
+                    .await
+                    .unwrap();
 
                 let tuples: Vec<TupleVector> = children
                     .into_iter()
@@ -643,8 +656,7 @@ impl AstSetFunction {
             AstSetFunction::Children(AstSetFnChildren::InnerParam(segs)) => {
                 let mem_role = segs.materialize(slice_tuple, context).await;
                 AstSetFnChildren::do_get_set(Some(mem_role), context).await
-            }
-            // _ => todo!("AstSetFunction::get_set() [SHUA-927381]"),
+            } // _ => todo!("AstSetFunction::get_set() [SHUA-927381]"),
         }
     }
 }
@@ -703,12 +715,17 @@ impl ToCellValue for AstExpFunction {
                         "with\n{}\nSelect {{ ( &0 ) }} on rows\nfrom &{}",
                         mdx_with_str, the_cube.gid
                     );
-                    let tunnel_ast =
-                        MdxStatementParser::new().parse(MdxLexer::new(&tunnel_mdx)).unwrap();
+                    let tunnel_ast = MdxStatementParser::new()
+                        .parse(MdxLexer::new(&tunnel_mdx))
+                        .unwrap();
                     let mut tunnel_context = tunnel_ast.gen_md_context().await;
 
-                    exp.val(&tunnel_context.query_slice_tuple.clone(), &mut tunnel_context, None)
-                        .await
+                    exp.val(
+                        &tunnel_context.query_slice_tuple.clone(),
+                        &mut tunnel_context,
+                        None,
+                    )
+                    .await
                 }
                 AstExpFunction::Sum(exp_fn_sum) => {
                     exp_fn_sum.val(slice_tuple, context, outer_param).await
@@ -827,7 +844,11 @@ pub struct AstExpFnLookupCube {
 
 impl AstExpFnLookupCube {
     pub fn new(cube_segs: Option<AstSegsObj>, exp: AstExpression) -> Self {
-        Self { cube_segs, cube: None, exp }
+        Self {
+            cube_segs,
+            cube: None,
+            exp,
+        }
     }
 
     pub fn set_cube(&mut self, cube: mdd::Cube) {

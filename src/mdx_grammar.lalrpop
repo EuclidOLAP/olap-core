@@ -217,10 +217,10 @@ Seg: AstSeg = {
   "&" <int: "unsigned_int"> => {
     AstSeg::Gid(int)
   },
-  "&" <int: "unsigned_int"> <bra_str:"BracketedString"> => {
+  "&" <int: "unsigned_int"> <bra_str: "BracketedString"> => {
     AstSeg::GidStr(int, bra_str)
   },
-  <bra_str:"BracketedString"> => {
+  <bra_str: "BracketedString"> => {
     AstSeg::Str(bra_str)
   },
   <func: Member_Func> => {

@@ -52,7 +52,10 @@ impl GrpcClient {
                     return client;
                 }
                 Err(e) => {
-                    println!("Failed to connect to gRPC server: {}. Retrying in 3 seconds...", e);
+                    println!(
+                        "Failed to connect to gRPC server: {}. Retrying in 3 seconds...",
+                        e
+                    );
                 }
             }
             sleep(Duration::from_secs(3)).await;
@@ -121,7 +124,10 @@ impl GrpcClient {
         // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_default_dimension_member_by_dimension_gid({})", dimension_gid);
         let request = GetDefaultDimensionMemberRequest { dimension_gid };
 
-        let response = self.client.get_default_dimension_member_by_dimension_gid(request).await?;
+        let response = self
+            .client
+            .get_default_dimension_member_by_dimension_gid(request)
+            .await?;
 
         let grpc_member = response.into_inner();
 
@@ -151,7 +157,9 @@ impl GrpcClient {
         dim_role_gid: u64,
     ) -> Result<mdd::DimensionRole, Box<dyn std::error::Error>> {
         // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_dimension_role_by_gid({})", dim_role_gid);
-        let req = GetDimensionRoleByGidRequest { dimension_role_gid: dim_role_gid };
+        let req = GetDimensionRoleByGidRequest {
+            dimension_role_gid: dim_role_gid,
+        };
 
         let response = self.client.get_dimension_role_by_gid(req).await?;
 
@@ -207,10 +215,15 @@ impl GrpcClient {
             target_entity_name: "".to_string(),
         });
 
-        let universal_olap_entity =
-            self.client.locate_universal_olap_entity_by_gid(request).await?.into_inner();
+        let universal_olap_entity = self
+            .client
+            .locate_universal_olap_entity_by_gid(request)
+            .await?
+            .into_inner();
 
-        Ok(MultiDimensionalEntity::from_universal_olap_entity(&universal_olap_entity))
+        Ok(MultiDimensionalEntity::from_universal_olap_entity(
+            &universal_olap_entity,
+        ))
     }
 
     pub async fn locate_universal_olap_entity_by_name(
@@ -227,19 +240,28 @@ impl GrpcClient {
         gid: u64,
     ) -> Result<MultiDimensionalEntity, Box<dyn std::error::Error>> {
         // println!(">>>>>> Call Meta Server gRPC API >>>>>> get_universal_olap_entity_by_gid({})", gid );
-        let request =
-            Request::new(GetUniversalOlapEntityByGidRequest { universal_olap_entity_gid: gid });
+        let request = Request::new(GetUniversalOlapEntityByGidRequest {
+            universal_olap_entity_gid: gid,
+        });
 
-        let universal_olap_entity =
-            self.client.get_universal_olap_entity_by_gid(request).await?.into_inner();
+        let universal_olap_entity = self
+            .client
+            .get_universal_olap_entity_by_gid(request)
+            .await?
+            .into_inner();
 
-        Ok(MultiDimensionalEntity::from_universal_olap_entity(&universal_olap_entity))
+        Ok(MultiDimensionalEntity::from_universal_olap_entity(
+            &universal_olap_entity,
+        ))
     }
 
     pub async fn get_all_dimension_roles(
         &mut self,
     ) -> Result<Vec<mdd::DimensionRole>, Box<dyn std::error::Error>> {
-        let response = self.client.get_all_dimension_roles(EmptyParameterRequest {}).await?;
+        let response = self
+            .client
+            .get_all_dimension_roles(EmptyParameterRequest {})
+            .await?;
 
         // 将响应数据解析为 DimensionRole 列表
         let dimension_roles: Vec<mdd::DimensionRole> = response
@@ -283,7 +305,10 @@ impl GrpcClient {
     pub async fn get_all_members(
         &mut self,
     ) -> Result<Vec<mdd::Member>, Box<dyn std::error::Error>> {
-        let response = self.client.get_all_members(EmptyParameterRequest {}).await?;
+        let response = self
+            .client
+            .get_all_members(EmptyParameterRequest {})
+            .await?;
 
         let members: Vec<mdd::Member> = response
             .into_inner()
@@ -324,7 +349,10 @@ impl GrpcClient {
     pub async fn get_all_formula_members(
         &mut self,
     ) -> Result<Vec<UniversalOlapEntity>, Box<dyn std::error::Error>> {
-        let response = self.client.get_all_formula_members(EmptyParameterRequest {}).await?;
+        let response = self
+            .client
+            .get_all_formula_members(EmptyParameterRequest {})
+            .await?;
 
         let formula_members: Vec<UniversalOlapEntity> = response
             .into_inner()

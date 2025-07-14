@@ -12,7 +12,9 @@ pub struct Lexer<'input> {
 impl<'input> Lexer<'input> {
     pub fn new(input: &'input str) -> Self {
         // the Token::lexer() method is provided by the Logos trait
-        Self { token_stream: Token::lexer(input).spanned() }
+        Self {
+            token_stream: Token::lexer(input).spanned(),
+        }
     }
 }
 
@@ -20,6 +22,8 @@ impl Iterator for Lexer<'_> {
     type Item = Spanned<Token, usize, LexicalError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.token_stream.next().map(|(token, span)| Ok((span.start, token?, span.end)))
+        self.token_stream
+            .next()
+            .map(|(token, span)| Ok((span.start, token?, span.end)))
     }
 }

@@ -8,7 +8,7 @@ use crate::mdx_ast::AstExpFnCount;
 use crate::mdx_ast::AstExpFunction;
 use crate::mdx_ast::{AstExpression, AstSeg};
 
-use crate::exmdx::ast::{AstSegsObj, AstCustomObject};
+use crate::exmdx::ast::{AstCustomObject, AstSegsObj};
 use crate::exmdx::mdd::TupleVector;
 
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
@@ -53,7 +53,10 @@ pub enum MultiDimensionalEntity {
     SetWrap(Set),
     MemberWrap(Member),
     MemberRoleWrap(MemberRole),
-    FormulaMemberWrap { dim_role_gid: u64, exp: AstExpression },
+    FormulaMemberWrap {
+        dim_role_gid: u64,
+        exp: AstExpression,
+    },
     ExpFn(AstExpFunction),
     CellValue(CellValue),
     Cube(Cube),
@@ -224,7 +227,11 @@ impl MultiDimensionalContext {
     pub async fn find_entity_by_gid(&mut self, gid: u64) -> MultiDimensionalEntity {
         match GidType::entity_type(gid) {
             GidType::DimensionRole => {
-                let dim_role = self.grpc_client.get_dimension_role_by_gid(gid).await.unwrap();
+                let dim_role = self
+                    .grpc_client
+                    .get_dimension_role_by_gid(gid)
+                    .await
+                    .unwrap();
                 MultiDimensionalEntity::DimensionRoleWrap(dim_role)
             }
             GidType::Cube => {
@@ -244,8 +251,11 @@ impl MultiDimensionalContext {
             "MultiDimensionalContext >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> find_entity_by_str({})",
             seg
         );
-        let dim_role =
-            self.grpc_client.get_dimension_role_by_name(self.cube.gid, seg).await.unwrap();
+        let dim_role = self
+            .grpc_client
+            .get_dimension_role_by_name(self.cube.gid, seg)
+            .await
+            .unwrap();
         MultiDimensionalEntity::DimensionRoleWrap(dim_role)
     }
 }
@@ -364,15 +374,24 @@ impl LevelRole {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MemberRole {
-    BaseMember { dim_role: DimensionRole, member: Member },
-    FormulaMember { dim_role_gid: u64, exp: AstExpression },
+    BaseMember {
+        dim_role: DimensionRole,
+        member: Member,
+    },
+    FormulaMember {
+        dim_role_gid: u64,
+        exp: AstExpression,
+    },
 }
 
 impl MemberRole {
     pub fn get_dim_role_gid(&self) -> u64 {
         match self {
             MemberRole::BaseMember { dim_role, .. } => dim_role.gid,
-            MemberRole::FormulaMember { dim_role_gid, exp: _ } => *dim_role_gid,
+            MemberRole::FormulaMember {
+                dim_role_gid,
+                exp: _,
+            } => *dim_role_gid,
         }
     }
 }
@@ -399,14 +418,20 @@ impl MultiDimensionalEntityLocator for MemberRole {
             }
             AstSeg::SetFunc(set_fn) => {
                 let set = set_fn
-                    .get_set(Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())), slice_tuple, context)
+                    .get_set(
+                        Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
+                        slice_tuple,
+                        context,
+                    )
                     .await;
 
                 if seg_list.len() == 1 {
                     MultiDimensionalEntity::SetWrap(set)
                 } else {
                     // let tail_segs = AstSegments::Segs(seg_list[1..].to_vec());
-                    let tail_segs = AstSegsObj { segs: (seg_list[1..].to_vec()) };
+                    let tail_segs = AstSegsObj {
+                        segs: (seg_list[1..].to_vec()),
+                    };
                     set.locate_entity(&tail_segs, slice_tuple, context).await
                 }
             }
@@ -494,9 +519,7 @@ impl MultiDimensionalEntityLocator for DimensionRole {
             AstSeg::Gid(gid) | AstSeg::GidStr(gid, _) => {
                 self.locate_entity_by_gid(*gid, slice_tuple, context).await
             }
-            AstSeg::Str(seg) => {
-                self.locate_entity_by_seg(seg, slice_tuple, context).await
-            }
+            AstSeg::Str(seg) => self.locate_entity_by_seg(seg, slice_tuple, context).await,
             AstSeg::LevelFunc(level_fn) => MultiDimensionalEntity::LevelRole(
                 level_fn
                     .get_level_role(
@@ -524,8 +547,12 @@ impl MultiDimensionalEntityLocator for DimensionRole {
                     return MultiDimensionalEntity::MemberRoleWrap(member_role);
                 }
 
-                let tail_segs = AstSegsObj { segs: (seg_list[1..].to_vec()) };
-                member_role.locate_entity(&tail_segs, slice_tuple, context).await
+                let tail_segs = AstSegsObj {
+                    segs: (seg_list[1..].to_vec()),
+                };
+                member_role
+                    .locate_entity(&tail_segs, slice_tuple, context)
+                    .await
             }
             MultiDimensionalEntity::LevelRole(lv_role) => {
                 if seg_list.len() == 1 {
@@ -556,7 +583,10 @@ impl MultiDimensionalEntityLocator for DimensionRole {
 
                 match olap_entity {
                     MultiDimensionalEntity::MemberWrap(member) => {
-                        let member_role = MemberRole::BaseMember { dim_role: self.clone(), member };
+                        let member_role = MemberRole::BaseMember {
+                            dim_role: self.clone(),
+                            member,
+                        };
                         // return MultiDimensionalEntity::MemberRoleWrap(member_role);
                         MultiDimensionalEntity::MemberRoleWrap(member_role)
                     }
@@ -669,8 +699,9 @@ impl Axis {
             let mut ov_coordinates: Vec<TupleVector> = Vec::new();
             let axis = axes.iter().next().unwrap();
             for ax_tuple in &axis.set.tuples {
-                ov_coordinates
-                    .push(TupleVector { member_roles: ax_tuple.member_roles.clone() });
+                ov_coordinates.push(TupleVector {
+                    member_roles: ax_tuple.member_roles.clone(),
+                });
             }
             return ov_coordinates;
         }

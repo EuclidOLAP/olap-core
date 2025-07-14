@@ -4,27 +4,19 @@ use crate::mdx_ast::AstExpression;
 use crate::mdx_ast::AstSeg;
 use crate::mdx_ast::Materializable;
 
+use crate::exmdx::mdd::TupleVector;
+use crate::mdd::GidType;
 use crate::mdd::MemberRole;
 use crate::mdd::MultiDimensionalContext;
 use crate::mdd::MultiDimensionalEntity;
-use crate::exmdx::mdd::TupleVector;
-use crate::mdd::GidType;
-use crate::mdd::{Set, Axis, Cube};
 use crate::mdd::MultiDimensionalEntityLocator;
-
-
+use crate::mdd::{Axis, Cube, Set};
 
 use core::panic;
 use std::collections::HashMap;
 
-
-
 use crate::cfg::get_cfg;
 use crate::olapmeta_grpc_client::GrpcClient;
-
-
-
-
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct AstSegsObj {
@@ -70,7 +62,11 @@ impl Materializable for AstSegsObj {
             if is_formula_member {
                 let dim_role_gid = self.get_first_gid().unwrap();
 
-                let cus_obj: AstCustomObject = context.formulas_map.get(&last_opt.unwrap()).unwrap().clone();
+                let cus_obj: AstCustomObject = context
+                    .formulas_map
+                    .get(&last_opt.unwrap())
+                    .unwrap()
+                    .clone();
                 if let AstCustomObject::FormulaMember(_, exp) = cus_obj {
                     // let AstCustomObject::FormulaMember(_, exp) =
                     //     context.formulas_map.get(&last_opt.unwrap()).unwrap().clone();
@@ -90,9 +86,13 @@ impl Materializable for AstSegsObj {
 
             match head_entity {
                 MultiDimensionalEntity::DimensionRoleWrap(dim_role) => {
-                    let tail_segs = AstSegsObj { segs: (self.segs[1..]).to_vec() };
+                    let tail_segs = AstSegsObj {
+                        segs: (self.segs[1..]).to_vec(),
+                    };
 
-                    dim_role.locate_entity(&tail_segs, slice_tuple, context).await
+                    dim_role
+                        .locate_entity(&tail_segs, slice_tuple, context)
+                        .await
                 }
                 MultiDimensionalEntity::MemberRoleWrap(member_role) => {
                     if self.segs.len() == 1 {
@@ -111,12 +111,16 @@ impl Materializable for AstSegsObj {
                         // return MultiDimensionalEntity::Cube(cube);
                         MultiDimensionalEntity::Cube(cube)
                     } else {
-                        let tail_segs = AstSegsObj { segs: (self.segs[1..]).to_vec() };
+                        let tail_segs = AstSegsObj {
+                            segs: (self.segs[1..]).to_vec(),
+                        };
                         cube.locate_entity(&tail_segs, slice_tuple, context).await
                     }
                 }
                 MultiDimensionalEntity::SetWrap(set) => {
-                    let tail_segs = AstSegsObj { segs: (self.segs[1..]).to_vec() };
+                    let tail_segs = AstSegsObj {
+                        segs: (self.segs[1..]).to_vec(),
+                    };
                     set.locate_entity(&tail_segs, slice_tuple, context).await
                 }
                 _ => {
@@ -185,18 +189,24 @@ impl AstMdxStatement {
             _ => panic!("The entity is not a Gid or a Str variant. 2"),
         }
 
-        let mut cube_def_tuple = TupleVector { member_roles: Vec::new() };
+        let mut cube_def_tuple = TupleVector {
+            member_roles: Vec::new(),
+        };
 
-        let dimension_roles = grpc_cli.get_dimension_roles_by_cube_gid(cube.gid).await.unwrap();
+        let dimension_roles = grpc_cli
+            .get_dimension_roles_by_cube_gid(cube.gid)
+            .await
+            .unwrap();
         for dim_role in dimension_roles {
             let dim_def_member = grpc_cli
                 .get_default_dimension_member_by_dimension_gid(dim_role.dimension_gid)
                 .await
                 .unwrap();
 
-            cube_def_tuple
-                .member_roles
-                .push(MemberRole::BaseMember { dim_role, member: dim_def_member });
+            cube_def_tuple.member_roles.push(MemberRole::BaseMember {
+                dim_role,
+                member: dim_def_member,
+            });
         }
 
         let mut formulas_map: HashMap<u64, AstCustomObject> = HashMap::new();
@@ -218,7 +228,9 @@ impl AstMdxStatement {
             cube,
             // cube_def_tuple,
             // where_tuple: None,
-            query_slice_tuple: TupleVector { member_roles: vec![] },
+            query_slice_tuple: TupleVector {
+                member_roles: vec![],
+            },
             grpc_client: grpc_cli,
             formulas_map,
         };
@@ -246,14 +258,23 @@ impl AstMdxStatement {
         match grpc_cli.get_cube_by_gid(gid).await {
             Ok(response) => response
                 .cube_meta
-                .map(|meta| Cube { gid: meta.gid, name: meta.name })
+                .map(|meta| Cube {
+                    gid: meta.gid,
+                    name: meta.name,
+                })
                 .unwrap_or_else(|| {
                     println!("Error fetching Cube by GID: CubeMeta is None");
-                    Cube { gid: 0, name: String::from(">>> No cube found <<<") }
+                    Cube {
+                        gid: 0,
+                        name: String::from(">>> No cube found <<<"),
+                    }
                 }),
             Err(e) => {
                 println!("Error fetching Cube by GID: {}", e);
-                Cube { gid: 0, name: String::from(">>> No cube found <<<") }
+                Cube {
+                    gid: 0,
+                    name: String::from(">>> No cube found <<<"),
+                }
             }
         }
     }
@@ -264,15 +285,24 @@ impl AstMdxStatement {
                 println!("Received Cube by Name: {:?}", response);
                 response
                     .cube_meta
-                    .map(|meta| Cube { gid: meta.gid, name: meta.name })
+                    .map(|meta| Cube {
+                        gid: meta.gid,
+                        name: meta.name,
+                    })
                     .unwrap_or_else(|| {
                         println!("Error fetching Cube by Name: CubeMeta is None");
-                        Cube { gid: 0, name: String::from(">>> No cube found <<<") }
+                        Cube {
+                            gid: 0,
+                            name: String::from(">>> No cube found <<<"),
+                        }
                     })
             }
             Err(e) => {
                 println!("Error fetching Cube by Name: {}", e);
-                Cube { gid: 0, name: String::from(">>> No cube found <<<") }
+                Cube {
+                    gid: 0,
+                    name: String::from(">>> No cube found <<<"),
+                }
             }
         }
     }
@@ -284,7 +314,9 @@ impl AstMdxStatement {
 
         for _ in 0..axes_count {
             for ast_axis in self.axes.iter() {
-                let fiducial_tuple = ast_axis.generate_fiducial_tuple(&slice_tuple, context).await;
+                let fiducial_tuple = ast_axis
+                    .generate_fiducial_tuple(&slice_tuple, context)
+                    .await;
                 slice_tuple = slice_tuple.merge(&fiducial_tuple);
             }
         }
@@ -315,7 +347,12 @@ impl AstSet {
         let result;
         match self {
             AstSet::Tuples(tuples) => {
-                result = match tuples.iter().next().unwrap().materialize(slice_tuple, context).await
+                result = match tuples
+                    .iter()
+                    .next()
+                    .unwrap()
+                    .materialize(slice_tuple, context)
+                    .await
                 {
                     MultiDimensionalEntity::TupleWrap(tuple) => tuple.clone(),
                     _ => panic!("The entity is not a TupleWrap variant."),
@@ -438,7 +475,10 @@ impl AstAxis {
                 let olap_entity = ast_set.materialize(slice_tuple, context).await;
                 match olap_entity {
                     MultiDimensionalEntity::SetWrap(set) => {
-                        axis = Axis { set, pos_num: *pos as u32 };
+                        axis = Axis {
+                            set,
+                            pos_num: *pos as u32,
+                        };
                     }
                     _ => {
                         panic!("The entity is not a SetWrap variant.");

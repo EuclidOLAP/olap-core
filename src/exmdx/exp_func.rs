@@ -63,7 +63,9 @@ impl ToCellValue for AstExpFuncSum {
                     let value = exp.val(&tup, context, None).await;
                     cell_vals.push(value);
                 } else {
-                    let ovc = TupleVector { member_roles: tup.member_roles };
+                    let ovc = TupleVector {
+                        member_roles: tup.member_roles,
+                    };
                     let values = calcul::calculate(vec![ovc], context).await;
                     let value = values[0].clone();
                     cell_vals.push(value);
