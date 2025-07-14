@@ -22,6 +22,17 @@ use crate::exmdx::ast::{AstMdxStatement, AstSet, AstTuple, AstAxis, AstCustomObj
 
 use crate::exmdx::exp_func::{AstExpFuncSum, AstExpFuncMax, AstExpFuncMin};
 
+// code review mark <<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 grammar;
 
 extern {
@@ -38,8 +49,6 @@ extern {
     "on" => Token::On,
     "from" => Token::From,
     "where" => Token::Where,
-    "BracketedString" => Token::BracketedString(<String>),
-    "QuotedString" => Token::QuotedString(<String>),
 
     "Columns" => Token::Columns,
     "Rows" => Token::Rows,
@@ -47,21 +56,20 @@ extern {
     "Chapters" => Token::Chapters,
     "Sections" => Token::Sections,
 
-    "+" => Token::Plus,
-    "-" => Token::Minus,
-    "*" => Token::Multiplied,
-    "/" => Token::Divided,
-
-    "," => Token::Comma,
-    "&" => Token::Ampersand,
-    "." => Token::Dot,
-    "unsigned_int" => Token::Integer(<u64>),
-    "double" => Token::Double(<f64>),
-
     "(" => Token::RoundBracketLeft,
     ")" => Token::RoundBracketRight,
     "{" => Token::CurlyBraceLeft,
     "}" => Token::CurlyBraceRight,
+
+    "," => Token::Comma,
+    "&" => Token::Ampersand,
+    "." => Token::Dot,
+    ";" => Token::Semicolon,
+
+    "+" => Token::Plus,
+    "-" => Token::Minus,
+    "*" => Token::Multiplied,
+    "/" => Token::Divided,
 
     "<" => Token::LT,
     "<=" => Token::LE,
@@ -70,7 +78,11 @@ extern {
     ">" => Token::GT,
     ">=" => Token::GE,
 
-    ";" => Token::Semicolon,
+    "unsigned_int" => Token::Integer(<u64>),
+    "double" => Token::Double(<f64>),
+
+    "BracketedString" => Token::BracketedString(<String>),
+    "QuotedString" => Token::QuotedString(<String>),
 
     "Parent" => Token::Parent,
     "CurrentMember" => Token::CurrentMember,
@@ -78,6 +90,9 @@ extern {
     "OpeningPeriod" => Token::OpeningPeriod,
 
     "Children" => Token::Children,
+
+    "Level" => Token::Level,
+    "Levels" => Token::Levels,
 
     "Avg" => Token::Avg,
     "Sum" => Token::Sum,
@@ -89,9 +104,6 @@ extern {
 
     "Name" => Token::Name,
 
-    "Level" => Token::Level,
-    "Levels" => Token::Levels,
-
     "Not" => Token::Not,
     "Or" => Token::Or,
     "And" => Token::And,
@@ -99,17 +111,6 @@ extern {
     "IsLeaf" => Token::IsLeaf,
   }
 }
-
-// code review mark <<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // MDX Function Reference
 // https://docs.oracle.com/en/database/other-databases/essbase/21/esscq/mdx-function-list.html
