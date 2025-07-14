@@ -1,9 +1,6 @@
 use crate::mdx_tokens::{Token, LexicalError};
 
-use crate::mdx_ast;
 use crate::mdx_ast::AstSeg;
-use crate::mdx_ast::AstFormulaObject;
-use crate::mdx_ast::AstFormulaObject::{CustomFormulaMember};
 use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
 use crate::mdx_ast::AstFactory::{FactoryNum, FactoryStr, FactorySegs,FactoryTuple,FactoryExp};
 use crate::mdx_ast::{AstLevelFunction, AstLevelFnLevel, AstLevelFnLevels};
@@ -21,11 +18,9 @@ use crate::mdx_ast::AstBoolFunction;
 use crate::mdx_ast::AstBoolFnIsLeaf;
 
 use crate::exmdx::ast::AstSegsObj;
+use crate::exmdx::ast::{AstMdxStatement, AstSet, AstTuple, AstAxis, AstCustomObject};
 
 use crate::exmdx::exp_func::{AstExpFuncSum, AstExpFuncMax, AstExpFuncMin};
-use crate::exmdx::set_func::*;
-use crate::exmdx::mr_func::*;
-use crate::exmdx::exp_func::*;
 
 grammar;
 
@@ -81,24 +76,8 @@ extern {
     "CurrentMember" => Token::CurrentMember,
     "ClosingPeriod" => Token::ClosingPeriod,
     "OpeningPeriod" => Token::OpeningPeriod,
-    "FirstChild" => Token::FirstChild,
-    "FirstSibling" => Token::FirstSibling,
-    "Lag" => Token::Lag,
-    "LastChild" => Token::LastChild,
-    "LastSibling" => Token::LastSibling,
-    "Lead" => Token::Lead,
-    "ParallelPeriod" => Token::ParallelPeriod,
-    "PrevMember" => Token::PrevMember,
-    "NextMember" => Token::NextMember,
-    "Ancestor" => Token::Ancestor,
-    "Cousin" => Token::Cousin,
-    "DefaultMember" => Token::DefaultMember,
 
     "Children" => Token::Children,
-    "BottomPercent" => Token::BottomPercent,
-    "Crossjoin" => Token::Crossjoin,
-    "Descendants" => Token::Descendants,
-    "Except" => Token::Except,
 
     "Avg" => Token::Avg,
     "Sum" => Token::Sum,
@@ -107,33 +86,6 @@ extern {
     "Count" => Token::Count,
     "Tunnel" => Token::Tunnel,
     "IIf" => Token::IIf,
-    "Abs" => Token::Abs,
-    "Aggregate" => Token::Aggregate,
-    "CalculationCurrentPass" => Token::CalculationCurrentPass,
-    "CalculationPassValue" => Token::CalculationPassValue,
-    "CellValue" => Token::CellValue,
-    "CoalesceEmpty" => Token::CoalesceEmpty,
-    "Correlation" => Token::Correlation,
-    "Covariance" => Token::Covariance,
-    "CovarianceN" => Token::CovarianceN,
-    "DateDiff" => Token::DateDiff,
-    "DatePart" => Token::DatePart,
-    "DistinctCount" => Token::DistinctCount,
-    "EnumText" => Token::EnumText,
-    "EnumValue" => Token::EnumValue,
-    "Exp" => Token::Exp,
-    "Factorial" => Token::Factorial,
-    "InStr" => Token::InStr,
-    "Int" => Token::Int,
-    "Len" => Token::Len,
-    "LinRegIntercept" => Token::LinRegIntercept,
-    "LinRegPoint" => Token::LinRegPoint,
-    "LinRegR2" => Token::LinRegR2,
-    "LinRegSlope" => Token::LinRegSlope,
-    "LinRegVariance" => Token::LinRegVariance,
-    "Ln" => Token::Ln,
-    "Log" => Token::Log,
-    "Log10" => Token::Log10,
 
     "Name" => Token::Name,
 
@@ -148,12 +100,107 @@ extern {
   }
 }
 
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // MDX Function Reference
 // https://docs.oracle.com/en/database/other-databases/essbase/21/esscq/mdx-function-list.html
 // https://learn.microsoft.com/en-us/sql/mdx/mdx-function-reference-mdx?view=sql-server-ver17
 // https://www.ibm.com/docs/en/planning-analytics/2.0.0?topic=references-mdx-function-support
+
+pub MdxStatement: AstMdxStatement = {
+  <querying: Slicing_Querying> (";")? => {
+    AstMdxStatement::new(vec![], querying)
+  },
+  "with" <custom_objs: With_Custom_Objects> <querying: Slicing_Querying> (";")? => {
+    AstMdxStatement::new(custom_objs, querying)
+  },
+}
+
+Slicing_Querying: (Vec<AstAxis>, AstSegsObj, Option<AstTuple>) = {
+  "select" <axes: Axes> "from" <cube_segs: Segs_Obj> => {
+    (axes, cube_segs, None)
+  },
+  "select" <axes: Axes> "from" <cube_segs: Segs_Obj> "where" <ast_tup: Bracket_Tuple> => {
+    (axes, cube_segs, Some(ast_tup))
+  },
+  "select" <axes: Axes> "from" <cube_segs: Segs_Obj> "where" <segs_obj: Segs_Obj> => {
+    (axes, cube_segs, Some(AstTuple::SegsObj(segs_obj)))
+  },
+}
+
+With_Custom_Objects: Vec<AstCustomObject> = {
+  <cus_obj: Custom_Object> => {
+    vec![cus_obj]
+  },
+  <cus_objs: With_Custom_Objects> (",")? <cus_obj: Custom_Object> => {
+    let mut list = cus_objs;
+    list.push(cus_obj);
+    list
+  },
+}
+
+Custom_Object: AstCustomObject = {
+  "member" <for_meb_segs: Segs_Obj> "as" <exp: Expression> => {
+    AstCustomObject::FormulaMember(for_meb_segs, exp)
+  },
+  "set" <cus_set_segs: Segs_Obj> "as" <ast_set: Brace_Set> => {
+    AstCustomObject::CustomSet(cus_set_segs, ast_set)
+  },
+  "set" <cus_set_segs: Segs_Obj> "as" <segs_obj: Segs_Obj> => {
+    AstCustomObject::CustomSet(cus_set_segs, AstSet::SegsObj(segs_obj))
+  },
+}
+
+Bracket_Tuple: AstTuple = {
+  "(" <segs_objs: Segs_Objects> ")" => {
+    AstTuple::SegsObjects(segs_objs)
+  },
+}
+
+Brace_Set: AstSet = {
+  "{" <tuples: Tuples> "}" => {
+    AstSet::Tuples(tuples)
+  },
+}
+
+Tuples: Vec<AstTuple> = {
+  <tuple_segs: Segs_Obj> => {
+    vec![AstTuple::SegsObj(tuple_segs)]
+  },
+  <bracket_tup: Bracket_Tuple> => {
+    vec![bracket_tup]
+  },
+  <tuples: Tuples> "," <tuple_segs: Segs_Obj> => {
+    let mut list = tuples;
+    list.push(AstTuple::SegsObj(tuple_segs));
+    list
+  },
+  <tuples: Tuples> "," <bracket_tup: Bracket_Tuple> => {
+    let mut list = tuples;
+    list.push(bracket_tup);
+    list
+  },
+}
+
+Segs_Objects: Vec<AstSegsObj> = {
+  <segs_obj: Segs_Obj> => {
+    vec![segs_obj]
+  },
+  <segs_objs: Segs_Objects> "," <segs_obj: Segs_Obj> => {
+    let mut list = segs_objs;
+    list.push(segs_obj);
+    list
+  },
+}
 
 Segs_Obj: AstSegsObj = {
   <seg: Seg> => {
@@ -170,10 +217,10 @@ Seg: AstSeg = {
   "&" <int: "unsigned_int"> => {
     AstSeg::Gid(int)
   },
-  "&" <int: "unsigned_int"> <bra_str:"BracketedString"> => {
+  "&" <int: "unsigned_int"> <bra_str: "BracketedString"> => {
     AstSeg::GidStr(int, bra_str)
   },
-  <bra_str:"BracketedString"> => {
+  <bra_str: "BracketedString"> => {
     AstSeg::Str(bra_str)
   },
   <func: Member_Func> => {
@@ -199,74 +246,16 @@ AxisPos: u64 = {
   "Sections"    => 4,
 }
 
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-pub SelectionMDX: mdx_ast::AstSelectionStatement = {
-  "select" <axes:Axes> "from" <cube_segs: Segs_Obj> (";")? => {
-    mdx_ast::AstSelectionStatement {
-      formula_objs: vec![],
-      axes,
-      cube_segs,
-      basic_slice: None,
-    }
-  },
-  "select" <axes:Axes> "from" <cube_segs: Segs_Obj> "where" <tuple:TupleWrap> (";")? => {
-    mdx_ast::AstSelectionStatement {
-      formula_objs: vec![],
-      axes,
-      cube_segs,
-      basic_slice: Some(tuple),
-    }
-  },
-  "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube_segs: Segs_Obj> (";")? => {
-    mdx_ast::AstSelectionStatement {
-      formula_objs: cfos,
-      axes,
-      cube_segs,
-      basic_slice: None,
-    }
-  },
-  "with" <cfos:CustomFormulaObjects> "select" <axes:Axes> "from" <cube_segs: Segs_Obj> "where" <tuple:TupleWrap> (";")? => {
-    mdx_ast::AstSelectionStatement {
-      formula_objs: cfos,
-      axes,
-      cube_segs,
-      basic_slice: Some(tuple),
-    }
-  },
-}
-
-CustomFormulaObjects: Vec<AstFormulaObject> = {
-  <fm:FormulaMember> => {
-    vec![fm]
-  },
-  <fs:FormulaSet> => {
-    vec![fs]
-  },
-  <cfos:CustomFormulaObjects> (",")? <fm:FormulaMember> => {
-    let mut list = cfos;
-    list.push(fm);
-    list
-  },
-  <cfos:CustomFormulaObjects> (",")? <fs:FormulaSet> => {
-    let mut list = cfos;
-    list.push(fs);
-    list
-  }
-}
-
-FormulaMember: AstFormulaObject = {
-  "member" <sw:Segs_Obj> "as" <exp:Expression> => {
-    CustomFormulaMember(sw, exp)
-  }
-}
-
-FormulaSet: AstFormulaObject = {
-  "set" <_sw:Segs_Obj> "as" => {
-    // CustomFormulaSet
-    todo!("<<< MDX Grammar Exception >>> CustomFormulaSet not implemented yet.")
-  }
-}
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>
 
 Member_Func: AstMemberFunction = {
   <parent: MemberFnParent> => {
@@ -283,131 +272,6 @@ Member_Func: AstMemberFunction = {
   },
 
   // << Member Functions >>
-  <mr_fn: MemberRole_Func_FirstChild> => { AstMemberFunction::FirstChild(mr_fn) },
-  <mr_fn: MemberRole_Func_FirstSibling> => { AstMemberFunction::FirstSibling(mr_fn) },
-  <mr_fn: MemberRole_Func_Lag> => { AstMemberFunction::Lag(mr_fn) },
-  <mr_fn: MemberRole_Func_LastChild> => { AstMemberFunction::LastChild(mr_fn) },
-  <mr_fn: MemberRole_Func_LastSibling> => { AstMemberFunction::LastSibling(mr_fn) },
-  <mr_fn: MemberRole_Func_Lead> => { AstMemberFunction::Lead(mr_fn) },
-  <mr_fn: MemberRole_Func_ParallelPeriod> => { AstMemberFunction::ParallelPeriod(mr_fn) },
-  <mr_fn: MemberRole_Func_PrevMember> => { AstMemberFunction::PrevMember(mr_fn) },
-  <mr_fn: MemberRole_Func_NextMember> => { AstMemberFunction::NextMember(mr_fn) },
-  <mr_fn: MemberRole_Func_Ancestor> => { AstMemberFunction::Ancestor(mr_fn) },
-  <mr_fn: MemberRole_Func_Cousin> => { AstMemberFunction::Cousin(mr_fn) },
-  <mr_fn: MemberRole_Func_DefaultMember> => { AstMemberFunction::DefaultMember(mr_fn) },
-  // CurrentAxisMember           ____	____	Esbs	____
-  // DataMember                  ____	SSAS	____	____
-  // DateToMember                ____	____	Esbs	____
-  // Item (Member)               ____	SSAS	____	____
-  // LinkMember                  ____	SSAS	____	____
-  // Members (String)            ____	SSAS	____	____
-  // Properties                  ____	____	____	intc
-  // StrToMbr                    ____	____	Esbs	____
-  // StrToMember                 ____	SSAS	____	____
-  // UnknownMember               ____	SSAS	____	____
-  // ValidMeasure                ____	SSAS	____	____
-}
-
-MemberRole_Func_FirstChild: AstMemRoleFnFirstChild = {
-  // FirstChild
-  // member.FirstChild
-  // FirstChild ( member )
-
-  "FirstChild" "(" ")" => { todo!("todo ___something___") },
-  "FirstChild" "(" <segs_mem_role: Segs_Obj> ")" => { todo!("todo ___something___") },
-}
-
-MemberRole_Func_FirstSibling: AstMemRoleFnFirstSibling = {
-  // FirstSibling
-  // FirstSibling ( member [, hierarchy ])
-  // member.FirstSibling [(hierarchy)]
-  
-  "FirstSibling" "(" ")" => { todo!("todo ___something___") },
-
-  // "FirstSibling" "(" <segs_hier_role: Segs_Obj> ")" => { todo!("todo ___something___") },
-  "FirstSibling" "(" <segs_obj: Segs_Obj> ")" => {
-    // segs_obj is a MemberRole or a HierarchyRole
-    todo!("todo ___something___")
-  },
-
-  "FirstSibling" "(" <segs_mem_role: Segs_Obj> "," <segs_hier_role: Segs_Obj> ")" => { todo!("todo ___something___") },
-}
-
-MemberRole_Func_Lag: AstMemRoleFnLag = {
-  // Lag
-  // member.Lag (index [,layertype ] [, hierarchy ] )
-  // Lag ( member, index [, hierarchy ] )
-  
-  "Lag" "(" ")" => { todo!("todo ___something___") },
-}
-
-MemberRole_Func_LastChild: AstMemRoleFnLastChild = {
-  // LastChild
-  // member.LastChild
-  // LastChild ( member )
-  
-  "LastChild" "(" ")" => { todo!("todo ___something___") },
-}
-
-MemberRole_Func_LastSibling: AstMemRoleFnLastSibling = {
-  // LastSibling
-  // LastSibling ( member [, hierarchy ])
-  // member.LastSibling [(hierarchy)]
-  
-  "LastSibling" "(" ")" => { todo!("todo ___something___") },
-}
-
-MemberRole_Func_Lead: AstMemRoleFnLead = {
-  // Lead
-  // member.Lead (index [,layertype ] [, hierarchy ])
-  // Lead ( member, index [, hierarchy ] )
-  
-  "Lead" "(" ")" => { todo!("todo ___something___") },
-}
-
-MemberRole_Func_ParallelPeriod: AstMemRoleFnParallelPeriod = {
-  // ParallelPeriod
-  // ParallelPeriod ( [layer [,index [,member [, hierarchy ]]]])
-  
-  "ParallelPeriod" "(" ")" => { todo!("todo ___something___") },
-}
-
-MemberRole_Func_PrevMember: AstMemRoleFnPrevMember = {
-  // PrevMember
-  // member.PrevMember [( layertype ) ]
-  // PrevMember ( member [,layertype ] )
-  
-  "PrevMember" "(" ")" => { todo!("todo ___something___") },
-}
-
-MemberRole_Func_NextMember: AstMemRoleFnNextMember = {
-  // NextMember
-  // member.NextMember [( layertype ) ]
-  // NextMember ( member [,layertype ] )
-  
-  "NextMember" "(" ")" => { todo!("todo ___something___") },
-}
-
-MemberRole_Func_Ancestor: AstMemRoleFnAncestor = {
-  // Ancestor
-  // Ancestor ( member , layer | index [, hierarchy ] )
-  
-  "Ancestor" "(" ")" => { todo!("todo ___something___") },
-}
-
-MemberRole_Func_Cousin: AstMemRoleFnCousin = {
-  // Cousin
-  // Cousin ( member1, member2 )
-  
-  "Cousin" "(" ")" => { todo!("todo ___something___") },
-}
-
-MemberRole_Func_DefaultMember: AstMemRoleFnDefaultMember = {
-  // DefaultMember
-  // dimension.DefaultMember
-  // DefaultMember ( dimension )
-  
-  "DefaultMember" "(" ")" => { todo!("todo ___something___") },
 }
 
 MemberFnParent: AstMemberFnParent = {
@@ -544,91 +408,25 @@ Factory: AstFactory = {
   <segs_wrap:Segs_Obj> => {
     FactorySegs(segs_wrap)
   },
-  <tuple_wrap:TupleWrap_2> => {
-    FactoryTuple(tuple_wrap)
+
+  // <tuple_wrap:TupleWrap_2> => {
+  //   FactoryTuple(tuple_wrap)
+  // },
+  "(" <seg_objs: Segs_Objects> "," <seg_obj: Segs_Obj> ")" => {
+    let mut seg_objs = seg_objs;
+    seg_objs.push(seg_obj);
+    FactoryTuple(AstTuple::SegsObjects(seg_objs))
   },
+
   "(" <exp:Expression> ")" => {
     FactoryExp(exp)
   },
-}
-
-Tuple: Vec<AstSegsObj> = {
-  <sw:Segs_Obj> => {
-    vec![sw]
-  },
-  <tuple:Tuple> "," <sw:Segs_Obj> => {
-    let mut list = tuple;
-    list.push(sw);
-    list
-  }
-}
-
-TupleWrap: mdx_ast::AstTuple = {
-  "(" <tuple:Tuple> ")" => {
-    mdx_ast::AstTuple::SegsList(tuple)
-  }
 }
 
 Set_Func: AstSetFunction = {
   <chir: SetFnChildrenSpec> => {
     AstSetFunction::Children(chir)
   },
-  // <set_fn: Set_Func_ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX> => { AstSetFunction::XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX(set_fn) },
-
-  <set_fn: Set_Func_BottomPercent> => { AstSetFunction::BottomPercent(set_fn) },
-  <set_fn: Set_Func_CrossJoin> => { AstSetFunction::CrossJoin(set_fn) },
-  <set_fn: Set_Func_Descendants> => { AstSetFunction::Descendants(set_fn) },
-  <set_fn: Set_Func_Except> => { AstSetFunction::Except(set_fn) },
-
-  // AddCalculatedMembers        ____	SSAS	____	____
-  // AllMembers                  ____	SSAS	____	____
-  // Ancestors                   ....	SSAS	____	intc
-  // Ascendants                  ____	SSAS	____	____
-  // Axis                        ____	SSAS	____	____
-  // BottomCount                 ....	SSAS	Esbs	intc
-  // BottomSum                   ....	SSAS	Esbs	intc
-  // CurrentOrdinal              ____	SSAS	____	____
-  // Distinct                    ....	SSAS	Esbs	intc
-  // DrilldownLevel              ....	SSAS	____	intc
-  // DrilldownLevelBottom        ....	SSAS	____	intc
-  // DrillDownLevelTop           ....	SSAS	____	intc
-  // DrillDownMember             ....	SSAS	____	intc
-  // DrillDownMemberBottom       ....	SSAS	____	intc
-  // DrillDownMemberTop          ....	SSAS	____	intc
-  // DrillupLevel                ....	SSAS	____	intc
-  // DrillupMember               ....	SSAS	____	intc
-  // Exists                      ____	SSAS	____	____
-  // Extract                     ....	SSAS	Esbs	intc
-  // Filter                      ....	SSAS	____	intc
-  // Generate                    ....	SSAS	Esbs	____
-  // Head                        ....	SSAS	Esbs	____
-  // Hierarchize                 ____	SSAS	____	____
-  // Intersect                   ....	SSAS	Esbs	intc
-  // LastPeriods                 ____	SSAS	____	____
-  // LateralMembers              ....	____	____	____
-  // Members                     ....	____	____	intc
-  // Members (Set)               ____	SSAS	____	____
-  // Mtd                         ____	SSAS	____	intc
-  // NameToSet                   ____	SSAS	____	____
-  // NonEmptyCrossjoin           ____	SSAS	____	____
-  // Order                       ....	SSAS	____	intc
-  // PeriodsToDate               ....	SSAS	Esbs	intc
-  // Qtd                         ....	SSAS	____	intc
-  // Siblings                    ____	SSAS	____	____
-  // StripCalculatedMembers      ____	SSAS	____	____
-  // StrToSet                    ____	SSAS	____	____
-  // Subset                      ....	SSAS	Esbs	____
-  // Tail                        ....	SSAS	Esbs	____
-  // ToggleDrillState            ____	SSAS	____	____
-  // TopCount                    ....	SSAS	____	intc
-  // TopPercent                  ....	SSAS	____	intc
-  // TopSum                      ....	SSAS	Esbs	intc
-  // TupleRange                  ____	____	Esbs	____
-  // Union                       ....	SSAS	Esbs	intc
-  // Unorder                     ____	SSAS	____	____
-  // VisualTotals                ____	SSAS	____	____
-  // Wtd                         ____	SSAS	____	intc
-  // Ytd                         ....	SSAS	____	intc
 }
 
 SetFnChildrenSpec: AstSetFnChildren = {
@@ -640,151 +438,6 @@ SetFnChildrenSpec: AstSetFnChildren = {
   },
   "Children" "(" <segments: Segs_Obj> ")" => {
     AstSetFnChildren::InnerParam(segments)
-  },
-}
-
-Set_Func_BottomPercent: AstSetFnBottomPercent = {
-  // SSAS:     BottomPercent(Set_Expression, Percentage, Numeric_Expression)
-  // Essbase:  BottomPercent ( set, percentage, numeric_value_expression )
-  // "BottomPercent" "(" <percentage: Expression> "," <numeric: Expression> ")" => {
-  //   todo!()
-  // },
-
-  "BottomPercent" "(" <segs_set: Segs_Obj> "," <percentage: Expression> "," <numeric: Expression> ")" => {
-    todo!()
-  },
-  "BottomPercent" "(" <brace_set: SetWrap> "," <percentage: Expression> "," <numeric: Expression> ")" => {
-    todo!()
-  },
-}
-
-Set_Func_CrossJoin: AstSetFnCrossJoin = {
-  // Standard syntax  
-  // Crossjoin(Set_Expression1 ,Set_Expression2 [,...n] )  
-
-  // Alternate syntax  
-  // Set_Expression1 * Set_Expression2 [* ...n] 
-  "Crossjoin" "(" <set_fn: CrossJoin_Sets> ")" => {
-    set_fn
-  },
-}
-
-CrossJoin_Sets: AstSetFnCrossJoin = {
-  <brace_set: SetWrap> => {
-    todo!()
-  },
-  <segs_set: Segs_Obj> => {
-    todo!()
-  },
-  <set_fn: CrossJoin_Sets> "," <brace_set: SetWrap> => {
-        todo!()
-  },
-  <set_fn: CrossJoin_Sets> "," <segs_set: Segs_Obj> => {
-    todo!()
-  },
-}
-
-Set_Func_Descendants: AstSetFnDescendants = {
-  // SSAS:     
-  // Member expression syntax using a level expression  
-  // Descendants(Member_Expression [ , Level_Expression [ ,Desc_Flag ] ] )  
-
-  // Member expression syntax using a numeric expression  
-  // Descendants(Member_Expression [ , Distance [ ,Desc_Flag ] ] )  
-
-  // Set expression syntax using a level expression  
-  // Descendants(Set_Expression [ , Level_Expression [ ,Desc_Flag ] ] )  
-
-  // Member expression syntax using a numeric expression  
-  // Descendants(Set_Expression [ , Distance [ ,Desc_Flag ] ] )
-
-  // Essbase:  
-  // Descendants ( member , [{ layer | index }[, Desc_flags ]])
-
-  // "Descendants" "(" ")" => {
-  //   todo!()
-  // },
-
-  // "Descendants" "(" <segs_lv: Segs_Obj> ")" => {
-  //   todo!()
-  // },
-  // "Descendants" "(" <distance: Expression> ")" => {
-  //   todo!()
-  // },
-
-  // "Descendants" "(" <segs_lv: Segs_Obj> "," <str: "QuotedString"> ")" => {
-  //   todo!()
-  // },
-  // "Descendants" "(" <distance: Expression> "," <str: "QuotedString"> ")" => {
-  //   todo!()
-  // },
-
-
-  "Descendants" "(" <segs_mem: Segs_Obj> ")" => {
-    todo!()
-  },
-
-  "Descendants" "(" <segs_mem: Segs_Obj> "," <segs_lv: Segs_Obj> ")" => {
-    todo!()
-  },
-  // "Descendants" "(" <segs_mem: Segs_Obj> "," <distance: Expression> ")" => {
-  //   todo!()
-  // },
-
-  "Descendants" "(" <segs_mem: Segs_Obj> "," <segs_lv: Segs_Obj> "," <str: "QuotedString"> ")" => {
-    todo!()
-  },
-  // "Descendants" "(" <segs_mem: Segs_Obj> "," <distance: Expression> "," <str: "QuotedString"> ")" => {
-  //   todo!()
-  // },
-}
-
-Set_Func_Except: AstSetFnExcept = {
-  // SSAS:     XXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  // Except(Set_Expression1, Set_Expression2 [, ALL ] )
-
-  // Essbase:  XXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  // Except ( set1, set2 [,ALL] )
-
-  "Except" "(" <brace_set_2: SetWrap> ")" => {
-    todo!()
-  },
-  "Except" "(" <segs_set_2: Segs_Obj> ")" => {
-    todo!()
-  },
-
-  "Except" "(" <brace_set_2: SetWrap> "," <str: "QuotedString"> ")" => {
-    todo!()
-  },
-  "Except" "(" <segs_set_2: Segs_Obj> "," <str: "QuotedString"> ")" => {
-    todo!()
-  },
-
-
-  "Except" "(" <brace_set_1: SetWrap> "," <brace_set_2: SetWrap> ")" => {
-    todo!()
-  },
-  "Except" "(" <brace_set_1: SetWrap> "," <segs_set_2: Segs_Obj> ")" => {
-    todo!()
-  },
-  "Except" "(" <segs_set_1: Segs_Obj> "," <brace_set_2: SetWrap> ")" => {
-    todo!()
-  },
-  "Except" "(" <segs_set_1: Segs_Obj> "," <segs_set_2: Segs_Obj> ")" => {
-    todo!()
-  },
-
-  "Except" "(" <brace_set_1: SetWrap> "," <brace_set_2: SetWrap> "," <str: "QuotedString"> ")" => {
-    todo!()
-  },
-  "Except" "(" <brace_set_1: SetWrap> "," <segs_set_2: Segs_Obj> "," <str: "QuotedString"> ")" => {
-    todo!()
-  },
-  "Except" "(" <segs_set_1: Segs_Obj> "," <brace_set_2: SetWrap> "," <str: "QuotedString"> ")" => {
-    todo!()
-  },
-  "Except" "(" <segs_set_1: Segs_Obj> "," <segs_set_2: Segs_Obj> "," <str: "QuotedString"> ")" => {
-    todo!()
   },
 }
 
@@ -815,96 +468,7 @@ Exp_Func: AstExpFunction = {
   },
 
   // << Numeric Functions >>
-
-  <exp_fn: Exp_Func_Abs> => { AstExpFunction::Abs(exp_fn) },
-  <exp_fn: Exp_Func_Aggregate> => { AstExpFunction::Aggregate(exp_fn) },
-  <exp_fn: Exp_Func_CalculationCurrentPass> => { AstExpFunction::CalculationCurrentPass(exp_fn) },
-  <exp_fn: Exp_Func_CalculationPassValue> => { AstExpFunction::CalculationPassValue(exp_fn) },
-  <exp_fn: Exp_Func_CellValue> => { AstExpFunction::CellValue(exp_fn) },
-  <exp_fn: Exp_Func_CoalesceEmpty> => { AstExpFunction::CoalesceEmpty(exp_fn) },
-  <exp_fn: Exp_Func_Correlation> => { AstExpFunction::Correlation(exp_fn) },
-  <exp_fn: Exp_Func_Covariance> => { AstExpFunction::Covariance(exp_fn) },
-  <exp_fn: Exp_Func_CovarianceN> => { AstExpFunction::CovarianceN(exp_fn) },
-  <exp_fn: Exp_Func_DateDiff> => { AstExpFunction::DateDiff(exp_fn) },
-  <exp_fn: Exp_Func_DatePart> => { AstExpFunction::DatePart(exp_fn) },
-  <exp_fn: Exp_Func_DistinctCount> => { AstExpFunction::DistinctCount(exp_fn) },
-  <exp_fn: Exp_Func_EnumText> => { AstExpFunction::EnumText(exp_fn) },
-  <exp_fn: Exp_Func_EnumValue> => { AstExpFunction::EnumValue(exp_fn) },
-  <exp_fn: Exp_Func_Exp> => { AstExpFunction::Exp(exp_fn) },
-  <exp_fn: Exp_Func_Factorial> => { AstExpFunction::Factorial(exp_fn) },
-  <exp_fn: Exp_Func_InStr> => { AstExpFunction::InStr(exp_fn) },
-  <exp_fn: Exp_Func_Int> => { AstExpFunction::Int(exp_fn) },
-  <exp_fn: Exp_Func_Len> => { AstExpFunction::Len(exp_fn) },
-  <exp_fn: Exp_Func_LinRegIntercept> => { AstExpFunction::LinRegIntercept(exp_fn) },
-  <exp_fn: Exp_Func_LinRegPoint> => { AstExpFunction::LinRegPoint(exp_fn) },
-  <exp_fn: Exp_Func_LinRegR2> => { AstExpFunction::LinRegR2(exp_fn) },
-  <exp_fn: Exp_Func_LinRegSlope> => { AstExpFunction::LinRegSlope(exp_fn) },
-  <exp_fn: Exp_Func_LinRegVariance> => { AstExpFunction::LinRegVariance(exp_fn) },
-  <exp_fn: Exp_Func_Ln> => { AstExpFunction::Ln(exp_fn) },
-  <exp_fn: Exp_Func_Log> => { AstExpFunction::Log(exp_fn) },
-  <exp_fn: Exp_Func_Log10> => { AstExpFunction::Log10(exp_fn) },
-
-  // LookupCube                  ....	SSAS	____	____
-  // Median                      ....	SSAS	Esbs	intc
-  // Mod                         ____	____	Esbs	____
-  // NonEmptyCount               ____	____	Esbs	____
-  // NTile                       ____	____	Esbs	____
-  // Ordinal                     ....	SSAS	Esbs	____
-  // Percentile                  ____	____	Esbs	____
-  // Power                       ____	____	Esbs	____
-  // Predict                     ____	SSAS	____	____
-  // Rank                        ....	SSAS	Esbs	intc
-  // RealValue                   ____	____	Esbs	____
-  // Remainder                   ____	____	Esbs	____
-  // RollupChildren              ____	SSAS	____	____
-  // Round                       ____	____	Esbs	____
-  // Stddev                      ____	SSAS	Esbs	____
-  // Stddevp                     ____	____	Esbs	____
-  // StddevP                     ____	SSAS	____	____
-  // Stdev                       ....	SSAS	____	intc
-  // StdevP                      ____	SSAS	____	____
-  // StrToNum                    ____	____	Esbs	____
-  // StrToValue                  ____	SSAS	____	____
-  // Todate                      ____	____	Esbs	____
-  // Truncate                    ____	____	Esbs	____
-  // Value                       ____	SSAS	____	____
-  // Var                         ....	SSAS	____	intc
-  // Variance                    ____	SSAS	____	____
-  // VarianceP                   ____	SSAS	____	____
-  // VarP                        ____	SSAS	____	____
 }
-
-// ssssssssssss: ssssssssssss = { "ssssssssssss" "(" ")" => { AstExpFnAAAAAAAAAAAAAAAAAAAAAAAAAaaaaaa::Simple }, }
-Exp_Func_Abs: AstExpFnAbs = {
-  "Abs" "(" ")" => { AstExpFnAbs::Simple },
-}
-
-Exp_Func_Aggregate: AstExpFnAggregate = { "Aggregate" "(" ")" => { AstExpFnAggregate::Simple }, }
-Exp_Func_CalculationCurrentPass: AstExpFnCalculationCurrentPass = { "CalculationCurrentPass" "(" ")" => { AstExpFnCalculationCurrentPass::Simple }, }
-Exp_Func_CalculationPassValue: AstExpFnCalculationPassValue = { "CalculationPassValue" "(" ")" => { AstExpFnCalculationPassValue::Simple }, }
-Exp_Func_CellValue: AstExpFnCellValue = { "CellValue" "(" ")" => { AstExpFnCellValue::Simple }, }
-Exp_Func_CoalesceEmpty: AstExpFnCoalesceEmpty = { "CoalesceEmpty" "(" ")" => { AstExpFnCoalesceEmpty::Simple }, }
-Exp_Func_Correlation: AstExpFnCorrelation = { "Correlation" "(" ")" => { AstExpFnCorrelation::Simple }, }
-Exp_Func_Covariance: AstExpFnCovariance = { "Covariance" "(" ")" => { AstExpFnCovariance::Simple }, }
-Exp_Func_CovarianceN: AstExpFnCovarianceN = { "CovarianceN" "(" ")" => { AstExpFnCovarianceN::Simple }, }
-Exp_Func_DateDiff: AstExpFnDateDiff = { "DateDiff" "(" ")" => { AstExpFnDateDiff::Simple }, }
-Exp_Func_DatePart: AstExpFnDatePart = { "DatePart" "(" ")" => { AstExpFnDatePart::Simple }, }
-Exp_Func_DistinctCount: AstExpFnDistinctCount = { "DistinctCount" "(" ")" => { AstExpFnDistinctCount::Simple }, }
-Exp_Func_EnumText: AstExpFnEnumText = { "EnumText" "(" ")" => { AstExpFnEnumText::Simple }, }
-Exp_Func_EnumValue: AstExpFnEnumValue = { "EnumValue" "(" ")" => { AstExpFnEnumValue::Simple }, }
-Exp_Func_Exp: AstExpFnExp = { "Exp" "(" ")" => { AstExpFnExp::Simple }, }
-Exp_Func_Factorial: AstExpFnFactorial = { "Factorial" "(" ")" => { AstExpFnFactorial::Simple }, }
-Exp_Func_InStr: AstExpFnInStr = { "InStr" "(" ")" => { AstExpFnInStr::Simple }, }
-Exp_Func_Int: AstExpFnInt = { "Int" "(" ")" => { AstExpFnInt::Simple }, }
-Exp_Func_Len: AstExpFnLen = { "Len" "(" ")" => { AstExpFnLen::Simple }, }
-Exp_Func_LinRegIntercept: AstExpFnLinRegIntercept = { "LinRegIntercept" "(" ")" => { AstExpFnLinRegIntercept::Simple }, }
-Exp_Func_LinRegPoint: AstExpFnLinRegPoint = { "LinRegPoint" "(" ")" => { AstExpFnLinRegPoint::Simple }, }
-Exp_Func_LinRegR2: AstExpFnLinRegR2 = { "LinRegR2" "(" ")" => { AstExpFnLinRegR2::Simple }, }
-Exp_Func_LinRegSlope: AstExpFnLinRegSlope = { "LinRegSlope" "(" ")" => { AstExpFnLinRegSlope::Simple }, }
-Exp_Func_LinRegVariance: AstExpFnLinRegVariance = { "LinRegVariance" "(" ")" => { AstExpFnLinRegVariance::Simple }, }
-Exp_Func_Ln: AstExpFnLn = { "Ln" "(" ")" => { AstExpFnLn::Simple }, }
-Exp_Func_Log: AstExpFnLog = { "Log" "(" ")" => { AstExpFnLog::Simple }, }
-Exp_Func_Log10: AstExpFnLog10 = { "Log10" "(" ")" => { AstExpFnLog10::Simple }, }
 
 ExpFnNameSpec: AstExpFnName = {
   "Name" => {
@@ -925,7 +489,7 @@ ExpFnCountSpec: AstExpFnCount = {
   "Count" "(" ")" => {
     AstExpFnCount::NoParam
   },
-  "Count" "(" <set: SetWrap> ")" => {
+  "Count" "(" <set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
     AstExpFnCount::InnerParam(set)
   },
 }
@@ -937,7 +501,7 @@ ExpFnAvgSpec: AstExpFnAvg = {
   "Avg" "(" ")" => {
     AstExpFnAvg::NoParam
   },
-  "Avg" "(" <set: SetWrap> ")" => {
+  "Avg" "(" <set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
     AstExpFnAvg::InnerParam(set)
   },
 }
@@ -953,10 +517,10 @@ Exp_Func_Sum: AstExpFuncSum = {
   "Sum" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {
     AstExpFuncSum::SegsSetExp(segs_set, exp)
   },
-  "Sum" "(" <cb_set: SetWrap> ")" => {
+  "Sum" "(" <cb_set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
     AstExpFuncSum::BraceSet(cb_set)
   },
-  "Sum" "(" <cb_set: SetWrap> "," <exp: Expression> ")" => {
+  "Sum" "(" <cb_set: Brace_Set> "," <exp: Expression> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
     AstExpFuncSum::BraceSetExp(cb_set, exp)
   },
 }
@@ -972,10 +536,10 @@ Exp_Func_Max: AstExpFuncMax = {
   "Max" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {
     AstExpFuncMax::SegsSetExp(segs_set, exp)
   },
-  "Max" "(" <cb_set: SetWrap> ")" => {
+  "Max" "(" <cb_set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
     AstExpFuncMax::BraceSet(cb_set)
   },
-  "Max" "(" <cb_set: SetWrap> "," <exp: Expression> ")" => {
+  "Max" "(" <cb_set: Brace_Set> "," <exp: Expression> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
     AstExpFuncMax::BraceSetExp(cb_set, exp)
   },
 }
@@ -991,10 +555,10 @@ Exp_Func_Min: AstExpFuncMin = {
   "Min" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {
     AstExpFuncMin::SegsSetExp(segs_set, exp)
   },
-  "Min" "(" <cb_set: SetWrap> ")" => {
+  "Min" "(" <cb_set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
     AstExpFuncMin::BraceSet(cb_set)
   },
-  "Min" "(" <cb_set: SetWrap> "," <exp: Expression> ")" => {
+  "Min" "(" <cb_set: Brace_Set> "," <exp: Expression> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
     AstExpFuncMin::BraceSetExp(cb_set, exp)
   },
 }
@@ -1017,34 +581,6 @@ ExpFnLookupCubeSpec: AstExpFnLookupCube = {
       AstExpFnLookupCube::new(None, exp_on_another_cube)
     },
 }
-
-Set: Vec<mdx_ast::AstTuple> = {
-  <ast_tp:TupleWrap> => {
-    vec![ast_tp]
-  },
-  <set:Set> "," <ast_tp:TupleWrap> => {
-    let mut list = set;
-    list.push(ast_tp);
-    list
-  }
-}
-
-SetWrap: mdx_ast::AstSet = {
-  "{" <tuples:Set> "}" => {
-    mdx_ast::AstSet::Tuples(tuples)
-  }
-}
-
-// Tuples: Vec<AstTuple> = {
-//   <tuple: Tuple> => {},
-//   <tuples: Tuples> "," <tuple: Tuple> => {},
-// }
-
-// Curly_Brace_Set: AstCurlyBraceSet = {
-//   "{" <tuple_list: Tuples> "}" => {
-
-//   },
-// }
 
 BoolExpression: AstBoolExp = {
   <bt: BoolTerm> => {
@@ -1112,25 +648,17 @@ BoolFnIsLeaf: AstBoolFnIsLeaf = {
   },
 }
 
-TupleWrap_2: mdx_ast::AstTuple = {
-  "(" <sw:Segs_Obj> "," <tuple:Tuple> ")" => {
-    let mut list = tuple; // Vec<mdx_ast::AstSegments>
-    list.insert(0, sw); // mdx_ast::AstSegments
-    mdx_ast::AstTuple::SegsList(list)
-  }
-}
-
 // COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
-Axis: mdx_ast::AstAxis = {
-  <ast_set:SetWrap> "on" <axpos:AxisPos> => {
-    mdx_ast::AstAxis::SetDefinition {
+Axis: AstAxis = {
+  <ast_set:Brace_Set> "on" <axpos:AxisPos> => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
+    AstAxis::SetDefinition {
       ast_set,
       pos: axpos,
     }
   }
 }
 
-Axes: Vec<mdx_ast::AstAxis> = {
+Axes: Vec<AstAxis> = {
   <axis:Axis> => {
     vec![axis]
   },

@@ -43,7 +43,10 @@ pub fn get_cfg() -> Config {
     // 如果没有设置环境变量，打印消息
     match env_var {
         Ok(value) => {
-            println!("<<<<<<<<<<<<<<<<< <<<<<<<<<<<<<<<<< <<<<<<<<<<<<<<<<< OLAP_ENV is set to: {}", value);
+            println!(
+                "<<<<<<<<<<<<<<<<< <<<<<<<<<<<<<<<<< <<<<<<<<<<<<<<<<< OLAP_ENV is set to: {}",
+                value
+            );
             match value.as_str() {
                 "dev" => settings.dev,
                 "prod" => settings.prod,

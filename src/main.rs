@@ -1,7 +1,7 @@
 mod agg_service_client;
 // mod core;
-mod exmdx;
 mod cache;
+mod exmdx;
 mod mdd;
 mod meta_cache;
 mod olapmeta_grpc_client;
@@ -10,6 +10,7 @@ mod euclidolap {
     tonic::include_proto!("euclidolap");
 }
 
+use crate::exmdx::ast::AstMdxStatement;
 use crate::exmdx::mdd::TupleVector;
 
 pub mod calcul;
@@ -27,16 +28,12 @@ use tonic::{transport::Server, Request, Response, Status};
 
 use lalrpop_util::lalrpop_mod;
 
-// use crate::mdx_grammar::EuclidMdxStatementParser;
-use crate::mdx_grammar::SelectionMDXParser;
+use crate::mdx_grammar::MdxStatementParser;
 
 use crate::mdx_lexer::Lexer as MdxLexer;
 
-// use mdd::OlapVectorCoordinate;
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-
     cache::meta::reload().await;
 
     meta_cache::init().await;
@@ -78,22 +75,32 @@ impl OlapApi for EuclidOLAPService {
         let grpc_olap_vectors: Vec<GrpcOlapVector> = cell_vals
             .iter()
             .map(|cell| match cell {
-                CellValue::Double(val) => {
-                    GrpcOlapVector { null_flag: false, val: *val, str: format!("{}", *val) }
-                }
-                CellValue::Str(str) => {
-                    GrpcOlapVector { null_flag: false, val: 0.0, str: String::from(str) }
-                }
-                CellValue::Null => {
-                    GrpcOlapVector { null_flag: true, val: 0.0, str: String::from("") }
-                }
-                CellValue::Invalid => {
-                    GrpcOlapVector { null_flag: false, val: 0.0, str: String::from("Invalid") }
-                }
+                CellValue::Double(val) => GrpcOlapVector {
+                    null_flag: false,
+                    val: *val,
+                    str: format!("{}", *val),
+                },
+                CellValue::Str(str) => GrpcOlapVector {
+                    null_flag: false,
+                    val: 0.0,
+                    str: String::from(str),
+                },
+                CellValue::Null => GrpcOlapVector {
+                    null_flag: true,
+                    val: 0.0,
+                    str: String::from(""),
+                },
+                CellValue::Invalid => GrpcOlapVector {
+                    null_flag: false,
+                    val: 0.0,
+                    str: String::from("Invalid"),
+                },
             })
             .collect();
 
-        let olap_resp = OlapResponse { vectors: grpc_olap_vectors };
+        let olap_resp = OlapResponse {
+            vectors: grpc_olap_vectors,
+        };
 
         Ok(Response::new(olap_resp))
     }
@@ -102,29 +109,28 @@ impl OlapApi for EuclidOLAPService {
 async fn handle_stat(optype: String, statement: String) -> (u64, Vec<CellValue>) {
     match optype.as_str() {
         "MDX" => {
-            // println!(">>>>>>>> MDX Statement >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-            // println!("{}", statement);
-            // println!(">>>>>>>> <<<<<<<<<<<<< >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-
-            // let ast_selstat =
-            //     EuclidMdxStatementParser::new().parse(MdxLexer::new(&statement)).unwrap();
-            // println!("[Cyrex] EuclidMdxStatementParser >>>>>> {:?}", ast_selstat);
-
-            let ast_selstat = SelectionMDXParser::new().parse(MdxLexer::new(&statement)).unwrap();
+            let ast_selstat = MdxStatementParser::new()
+                .parse(MdxLexer::new(&statement))
+                .unwrap();
 
             exe_md_query(ast_selstat).await
         }
         _ => {
-            panic!("In fn `handle_stat()`: Unexpected operation type: {}", optype);
+            panic!(
+                "In fn `handle_stat()`: Unexpected operation type: {}",
+                optype
+            );
         }
     }
 }
 
-async fn exe_md_query(ast_selstat: mdx_ast::AstSelectionStatement) -> (u64, Vec<CellValue>) {
+async fn exe_md_query(ast_selstat: AstMdxStatement) -> (u64, Vec<CellValue>) {
     let mut context = ast_selstat.gen_md_context().await;
     let axes = ast_selstat.build_axes(&mut context).await;
-    let coordinates: Vec<TupleVector> =
-        mdd::Axis::axis_vec_cartesian_product(&axes, &context);
+    let coordinates: Vec<TupleVector> = mdd::Axis::axis_vec_cartesian_product(&axes, &context);
 
-    (context.cube.gid, calcul::calculate(coordinates, &mut context).await)
+    (
+        context.cube.gid,
+        calcul::calculate(coordinates, &mut context).await,
+    )
 }

@@ -23,7 +23,6 @@ static FORMULA_MEMBER_CACHE: Lazy<Mutex<HashMap<u64, UniversalOlapEntity>>> =
 
 /// 初始化时批量拉取 level 并放入缓存
 pub async fn init() {
-
     let config = get_cfg();
     println!("< 2 > config.meta_grpc_url: {:#?}", config.meta_grpc_url);
 
@@ -100,7 +99,10 @@ pub fn get_hierarchy_level(hierarchy_gid: u64, level_val: u32) -> Level {
             return level.clone();
         }
     }
-    panic!("Level not found for hierarchy_gid = {} and level = {}", hierarchy_gid, level_val);
+    panic!(
+        "Level not found for hierarchy_gid = {} and level = {}",
+        hierarchy_gid, level_val
+    );
 }
 
 pub fn mdx_formula_members_fragment(cube: &Cube) -> String {

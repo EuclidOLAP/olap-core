@@ -103,43 +103,11 @@ pub enum Token {
     Parent,
     #[regex("(?i)CurrentMember")]
     CurrentMember,
-    #[regex("(?i)FirstChild")]
-    FirstChild,
-    #[regex("(?i)FirstSibling")]
-    FirstSibling,
-    #[regex("(?i)Lag")]
-    Lag,
-    #[regex("(?i)LastChild")]
-    LastChild,
-    #[regex("(?i)LastSibling")]
-    LastSibling,
-    #[regex("(?i)Lead")]
-    Lead,
-    #[regex("(?i)ParallelPeriod")]
-    ParallelPeriod,
-    #[regex("(?i)PrevMember")]
-    PrevMember,
-    #[regex("(?i)NextMember")]
-    NextMember,
-    #[regex("(?i)Ancestor")]
-    Ancestor,
-    #[regex("(?i)Cousin")]
-    Cousin,
-    #[regex("(?i)DefaultMember")]
-    DefaultMember,
 
     // Set functions
     #[regex("(?i)Children")]
     Children,
-    #[regex("(?i)BottomPercent")]
-    BottomPercent,
-    #[regex("(?i)Crossjoin")]
-    Crossjoin,
-    #[regex("(?i)Descendants")]
-    Descendants,
-    #[regex("(?i)Except")]
-    Except,
-    
+
     // Expression functions
     #[regex("(?i)Avg")]
     Avg,
@@ -154,60 +122,6 @@ pub enum Token {
     #[regex("(?i)Tunnel")]
     Tunnel,
     #[regex("(?i)Abs")]
-    Abs,
-    #[regex("(?i)Aggregate")]
-    Aggregate,
-    #[regex("(?i)CalculationCurrentPass")]
-    CalculationCurrentPass,
-    #[regex("(?i)CalculationPassValue")]
-    CalculationPassValue,
-    #[regex("(?i)CellValue")]
-    CellValue,
-    #[regex("(?i)CoalesceEmpty")]
-    CoalesceEmpty,
-    #[regex("(?i)Correlation")]
-    Correlation,
-    #[regex("(?i)Covariance")]
-    Covariance,
-    #[regex("(?i)CovarianceN")]
-    CovarianceN,
-    #[regex("(?i)DateDiff")]
-    DateDiff,
-    #[regex("(?i)DatePart")]
-    DatePart,
-    #[regex("(?i)DistinctCount")]
-    DistinctCount,
-    #[regex("(?i)EnumText")]
-    EnumText,
-    #[regex("(?i)EnumValue")]
-    EnumValue,
-    #[regex("(?i)Exp")]
-    Exp,
-    #[regex("(?i)Factorial")]
-    Factorial,
-    #[regex("(?i)InStr")]
-    InStr,
-    #[regex("(?i)Int")]
-    Int,
-    #[regex("(?i)Len")]
-    Len,
-    #[regex("(?i)LinRegIntercept")]
-    LinRegIntercept,
-    #[regex("(?i)LinRegPoint")]
-    LinRegPoint,
-    #[regex("(?i)LinRegR2")]
-    LinRegR2,
-    #[regex("(?i)LinRegSlope")]
-    LinRegSlope,
-    #[regex("(?i)LinRegVariance")]
-    LinRegVariance,
-    #[regex("(?i)Ln")]
-    Ln,
-    #[regex("(?i)Log")]
-    Log,
-    #[regex("(?i)Log10")]
-    Log10,
-
     #[regex("(?i)ClosingPeriod")]
     ClosingPeriod,
 
