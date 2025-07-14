@@ -1,9 +1,9 @@
 use futures::future::BoxFuture;
 
 use crate::mdx_ast::ToCellValue;
-use crate::mdx_ast::{AstExpression, AstSet, Materializable};
+use crate::mdx_ast::{AstExpression, Materializable};
 
-use crate::exmdx::ast::AstSegsObj;
+use crate::exmdx::ast::{AstSegsObj, AstSet};
 
 use crate::exmdx::mdd::TupleVector;
 use crate::mdd::{CellValue, MultiDimensionalContext, MultiDimensionalEntity};

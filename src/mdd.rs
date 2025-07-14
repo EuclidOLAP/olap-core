@@ -6,9 +6,9 @@ use crate::meta_cache;
 use crate::mdx_ast::AstExpFnAvg;
 use crate::mdx_ast::AstExpFnCount;
 use crate::mdx_ast::AstExpFunction;
-use crate::mdx_ast::{AstExpression, AstFormulaObject, AstSeg};
+use crate::mdx_ast::{AstExpression, AstSeg};
 
-use crate::exmdx::ast::AstSegsObj;
+use crate::exmdx::ast::{AstSegsObj, AstCustomObject};
 use crate::exmdx::mdd::TupleVector;
 
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
@@ -217,7 +217,7 @@ pub struct MultiDimensionalContext {
     // pub where_tuple: Option<Tuple>,
     pub query_slice_tuple: TupleVector,
     pub grpc_client: GrpcClient,
-    pub formulas_map: HashMap<u64, AstFormulaObject>,
+    pub formulas_map: HashMap<u64, AstCustomObject>,
 }
 
 impl MultiDimensionalContext {
@@ -249,11 +249,6 @@ impl MultiDimensionalContext {
         MultiDimensionalEntity::DimensionRoleWrap(dim_role)
     }
 }
-
-// #[derive(Debug, Clone, PartialEq)]
-// pub struct Tuple {
-//     pub member_roles: Vec<MemberRole>,
-// }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Set {
@@ -712,8 +707,3 @@ impl Axis {
         ov_coordinates
     }
 }
-
-// #[derive(Debug)]
-// pub struct OlapVectorCoordinate {
-//     pub member_roles: Vec<MemberRole>,
-// }
