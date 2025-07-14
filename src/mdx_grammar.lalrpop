@@ -238,6 +238,64 @@ Seg: AstSeg = {
   },
 }
 
+Member_Func: AstMemberFunction = {
+  <memb_func: Parent> => {
+    AstMemberFunction::Parent(memb_func)
+  },
+  <memb_func: Closing_Period> => {
+    AstMemberFunction::ClosingPeriod(memb_func)
+  },
+  <memb_func: Opening_Period> => {
+    AstMemberFunction::OpeningPeriod(memb_func)
+  },
+  <memb_func: Current_Member> => {
+    AstMemberFunction::CurrentMember(memb_func)
+  },
+}
+
+Level_Func: AstLevelFunction = {
+  <lv_func: Level> => {
+    AstLevelFunction::Level(lv_func)
+  },
+  <lv_func: Levels> => {
+    AstLevelFunction::Levels(lv_func)
+  },
+}
+
+Set_Func: AstSetFunction = {
+  <set_func: Children> => {
+    AstSetFunction::Children(set_func)
+  },
+}
+
+Exp_Func: AstExpFunction = {
+  <num_func: Avg> => {
+    AstExpFunction::Avg(num_func)
+  },
+  <num_func: Count> => {
+    AstExpFunction::Count(num_func)
+  },
+  <num_func: IIf> => {
+    AstExpFunction::IIf(num_func)
+  },
+  <num_func: LookupCube> => {
+    AstExpFunction::LookupCube(num_func)
+  },
+  <num_func: Sum> => {
+    AstExpFunction::Sum(num_func)
+  },
+  <num_func: Max> => {
+    AstExpFunction::Max(num_func)
+  },
+  <num_func: Min> => {
+    AstExpFunction::Min(num_func)
+  },
+
+  <str_func: Name> => {
+    AstExpFunction::Name(str_func)
+  },
+}
+
 AxisPos: u64 = {
   <axpos: "unsigned_int"> => axpos,
   "Columns"     => 0,
@@ -258,24 +316,7 @@ AxisPos: u64 = {
 // code review mark >>>>>>>>>>>>>>>>>>>>
 // code review mark >>>>>>>>>>
 
-Member_Func: AstMemberFunction = {
-  <parent: MemberFnParent> => {
-    AstMemberFunction::Parent(parent)
-  },
-  <cp: MemberFnClosingPeriod> => {
-    AstMemberFunction::ClosingPeriod(cp)
-  },
-  <op: MemberFnOpeningPeriod> => {
-    AstMemberFunction::OpeningPeriod(op)
-  },
-  <cur_mbr: MemberFnCurrentMember> => {
-    AstMemberFunction::CurrentMember(cur_mbr)
-  },
-
-  // << Member Functions >>
-}
-
-MemberFnParent: AstMemberFnParent = {
+Parent: AstMemberFnParent = {
   "Parent" => {
     AstMemberFnParent::NoParam
   },
@@ -287,7 +328,7 @@ MemberFnParent: AstMemberFnParent = {
   },
 }
 
-MemberFnClosingPeriod: AstMemberFnClosingPeriod = {
+Closing_Period: AstMemberFnClosingPeriod = {
   "ClosingPeriod" => {
     AstMemberFnClosingPeriod::NoParam
   },
@@ -302,7 +343,7 @@ MemberFnClosingPeriod: AstMemberFnClosingPeriod = {
   },
 }
 
-MemberFnOpeningPeriod: AstMemberFnOpeningPeriod = {
+Opening_Period: AstMemberFnOpeningPeriod = {
   "OpeningPeriod" => {
     AstMemberFnOpeningPeriod::NoParam
   },
@@ -317,7 +358,7 @@ MemberFnOpeningPeriod: AstMemberFnOpeningPeriod = {
   },
 }
 
-MemberFnCurrentMember: AstMemberFnCurrentMember = {
+Current_Member: AstMemberFnCurrentMember = {
   "CurrentMember" => {
     AstMemberFnCurrentMember::NoParam
   },
@@ -329,16 +370,7 @@ MemberFnCurrentMember: AstMemberFnCurrentMember = {
   },
 }
 
-Level_Func: AstLevelFunction = {
-  <lv: LvFnLevel> => {
-    AstLevelFunction::Level(lv)
-  },
-  <lvs: LvFnLevels> => {
-    AstLevelFunction::Levels(lvs)
-  },
-}
-
-LvFnLevel: AstLevelFnLevel = {
+Level: AstLevelFnLevel = {
   "Level" => {
     AstLevelFnLevel::NoParam
   },
@@ -350,7 +382,7 @@ LvFnLevel: AstLevelFnLevel = {
   },
 }
 
-LvFnLevels: AstLevelFnLevels = {
+Levels: AstLevelFnLevels = {
   "Levels" "(" <idx_exp: Expression> ")" => {
     AstLevelFnLevels::new(None, idx_exp)
   },
@@ -424,13 +456,7 @@ Factory: AstFactory = {
   },
 }
 
-Set_Func: AstSetFunction = {
-  <chir: SetFnChildrenSpec> => {
-    AstSetFunction::Children(chir)
-  },
-}
-
-SetFnChildrenSpec: AstSetFnChildren = {
+Children: AstSetFnChildren = {
   "Children" => {
     AstSetFnChildren::NoParam
   },
@@ -442,36 +468,7 @@ SetFnChildrenSpec: AstSetFnChildren = {
   },
 }
 
-Exp_Func: AstExpFunction = {
-  <avg: ExpFnAvgSpec> => {
-    AstExpFunction::Avg(avg)
-  },
-  <count: ExpFnCountSpec> => {
-    AstExpFunction::Count(count)
-  },
-  <iif: ExpFnIIfSpec> => {
-    AstExpFunction::IIf(iif)
-  },
-  <lookup_cube: ExpFnLookupCubeSpec> => {
-    AstExpFunction::LookupCube(lookup_cube)
-  },
-  <name: ExpFnNameSpec> => {
-    AstExpFunction::Name(name)
-  },
-  <exp_fn: Exp_Func_Sum> => {
-    AstExpFunction::Sum(exp_fn)
-  },
-  <exp_fn: Exp_Func_Max> => {
-    AstExpFunction::Max(exp_fn)
-  },
-  <exp_fn: Exp_Func_Min> => {
-    AstExpFunction::Min(exp_fn)
-  },
-
-  // << Numeric Functions >>
-}
-
-ExpFnNameSpec: AstExpFnName = {
+Name: AstExpFnName = {
   "Name" => {
     AstExpFnName::NoParam
   },
@@ -483,7 +480,7 @@ ExpFnNameSpec: AstExpFnName = {
   },
 }
 
-ExpFnCountSpec: AstExpFnCount = {
+Count: AstExpFnCount = {
   "Count" => {
     AstExpFnCount::NoParam
   },
@@ -495,7 +492,7 @@ ExpFnCountSpec: AstExpFnCount = {
   },
 }
 
-ExpFnAvgSpec: AstExpFnAvg = {
+Avg: AstExpFnAvg = {
   "Avg" => {
     AstExpFnAvg::NoParam
   },
@@ -507,7 +504,7 @@ ExpFnAvgSpec: AstExpFnAvg = {
   },
 }
 
-Exp_Func_Sum: AstExpFuncSum = {
+Sum: AstExpFuncSum = {
   "Sum" ("(" ")")? => {
     AstExpFuncSum::Simple
   },
@@ -526,7 +523,7 @@ Exp_Func_Sum: AstExpFuncSum = {
   },
 }
 
-Exp_Func_Max: AstExpFuncMax = {
+Max: AstExpFuncMax = {
   "Max" ("(" ")")? => {
     AstExpFuncMax::Simple
   },
@@ -545,7 +542,7 @@ Exp_Func_Max: AstExpFuncMax = {
   },
 }
 
-Exp_Func_Min: AstExpFuncMin = {
+Min: AstExpFuncMin = {
   "Min" ("(" ")")? => {
     AstExpFuncMin::Simple
   },
@@ -564,7 +561,7 @@ Exp_Func_Min: AstExpFuncMin = {
   },
 }
 
-ExpFnIIfSpec: AstExpFnIIf = {
+IIf: AstExpFnIIf = {
   "IIf" "(" <bool_exp: BoolExpression> "," <exp_t: Expression> "," <exp_f: Expression> ")" => {
     AstExpFnIIf {
       bool_exp,
@@ -574,7 +571,7 @@ ExpFnIIfSpec: AstExpFnIIf = {
   }
 }
 
-ExpFnLookupCubeSpec: AstExpFnLookupCube = {
+LookupCube: AstExpFnLookupCube = {
     "Tunnel" "(" <cube_segs: Segs_Obj> "," <exp_on_another_cube: Expression> ")" => {
       AstExpFnLookupCube::new(Some(cube_segs), exp_on_another_cube)
     },
