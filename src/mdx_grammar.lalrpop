@@ -138,6 +138,17 @@ Slicing_Querying: (Vec<AstAxis>, AstSegsObj, Option<AstTuple>) = {
   },
 }
 
+Axes: Vec<AstAxis> = {
+  <axis: Axis> => {
+    vec![axis]
+  },
+  <axes: Axes> (",")? <axis: Axis> => {
+    let mut list = axes;
+    list.push(axis);
+    list
+  }
+}
+
 With_Custom_Objects: Vec<AstCustomObject> = {
   <cus_obj: Custom_Object> => {
     vec![cus_obj]
@@ -653,16 +664,5 @@ Axis: AstAxis = {
       ast_set,
       pos: axpos,
     }
-  }
-}
-
-Axes: Vec<AstAxis> = {
-  <axis:Axis> => {
-    vec![axis]
-  },
-  <axes:Axes> "," <axis:Axis> => {
-    let mut list = axes;
-    list.push(axis);
-    list
   }
 }
