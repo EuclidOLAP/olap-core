@@ -446,8 +446,9 @@ pub enum AstCustomObject {
 }
 
 // #[derive(Clone, Debug, PartialEq)]
-pub enum AstAxis {
-    SetDefinition { ast_set: AstSet, pos: u64 },
+pub struct AstAxis {
+    pub ast_set: AstSet,
+    pub position: u64,
 }
 
 impl AstAxis {
@@ -456,11 +457,7 @@ impl AstAxis {
         slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> TupleVector {
-        match self {
-            AstAxis::SetDefinition { ast_set, pos: _ } => {
-                ast_set.generate_fiducial_tuple(slice_tuple, context).await
-            }
-        }
+        self.ast_set.generate_fiducial_tuple(slice_tuple, context).await
     }
 
     async fn translate_to_axis(
@@ -470,22 +467,19 @@ impl AstAxis {
     ) -> Axis {
         let axis: Axis;
 
-        match self {
-            AstAxis::SetDefinition { ast_set, pos } => {
-                let olap_entity = ast_set.materialize(slice_tuple, context).await;
-                match olap_entity {
-                    MultiDimensionalEntity::SetWrap(set) => {
-                        axis = Axis {
-                            set,
-                            pos_num: *pos as u32,
-                        };
-                    }
-                    _ => {
-                        panic!("The entity is not a SetWrap variant.");
-                    }
-                }
+        let olap_entity = self.ast_set.materialize(slice_tuple, context).await;
+        match olap_entity {
+            MultiDimensionalEntity::SetWrap(set) => {
+                axis = Axis {
+                    set,
+                    pos_num: self.position as u32,
+                };
+            }
+            _ => {
+                panic!("The entity is not a SetWrap variant.");
             }
         }
+
         axis
     }
 }

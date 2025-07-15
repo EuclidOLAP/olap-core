@@ -149,6 +149,16 @@ Axes: Vec<AstAxis> = {
   }
 }
 
+// COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
+Axis: AstAxis = {
+  <ast_set: Brace_Set> "on" <position: AxisPos> => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
+    AstAxis { ast_set, position }
+  },
+  <segs_obj: Segs_Obj> "on" <position: AxisPos> => {
+    AstAxis { ast_set: AstSet::SegsObj(segs_obj), position }
+  },
+}
+
 With_Custom_Objects: Vec<AstCustomObject> = {
   <cus_obj: Custom_Object> => {
     vec![cus_obj]
@@ -655,14 +665,4 @@ BoolFnIsLeaf: AstBoolFnIsLeaf = {
   "IsLeaf" "(" <member_segs: Segs_Obj> ")" => {
     AstBoolFnIsLeaf::new(member_segs)
   },
-}
-
-// COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
-Axis: AstAxis = {
-  <ast_set:Brace_Set> "on" <axpos:AxisPos> => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstAxis::SetDefinition {
-      ast_set,
-      pos: axpos,
-    }
-  }
 }
