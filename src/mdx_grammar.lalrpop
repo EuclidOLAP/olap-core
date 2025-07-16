@@ -22,16 +22,29 @@ use crate::exmdx::ast::{AstMdxStatement, AstSet, AstTuple, AstAxis, AstCustomObj
 
 use crate::exmdx::exp_func::{AstExpFuncSum, AstExpFuncMax, AstExpFuncMin};
 
-// code review mark <<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark >>>>>
+// code review mark >>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 grammar;
 
@@ -182,6 +195,66 @@ Custom_Object: AstCustomObject = {
   },
 }
 
+Expression: AstExpression = {
+  <term: Term> => {
+    AstExpression {
+      terms: vec![('+', term)],
+    }
+  },
+  <exp: Expression> "+" <term: Term> => {
+    let mut exp = exp;
+    exp.terms.push(('+', term));
+    exp
+  },
+  <exp: Expression> "-" <term: Term> => {
+    let mut exp = exp;
+    exp.terms.push(('-', term));
+    exp
+  }
+}
+
+Term: AstTerm = {
+  <factory: Factory> => {
+    AstTerm {
+      factories: vec![('*', factory)],
+    }
+  },
+  <term: Term> "*" <factory: Factory> => {
+    let mut term = term;
+    term.factories.push(('*', factory));
+    term
+  },
+  <term: Term> "/" <factory: Factory> => {
+    let mut term = term;
+    term.factories.push(('/', factory));
+    term
+  }
+}
+
+Factory: AstFactory = {
+  <numeric: "double"> => {
+    FactoryNum(numeric)
+  },
+  <long_int: "unsigned_int"> => {
+    // let numeric: f64 = long_int as f64;
+    FactoryNum(long_int as f64)
+  },
+  <str: "QuotedString"> => {
+    FactoryStr(str)
+  },
+  <segs_obj: Segs_Obj> => {
+    FactorySegs(segs_obj)
+  },
+  "(" <segs_objs: Segs_Objects> "," <segs_obj: Segs_Obj> ")" => {
+    let mut segs_objs = segs_objs;
+    segs_objs.push(segs_obj);
+    FactoryTuple(AstTuple::SegsObjects(segs_objs))
+  },
+  "(" <exp: Expression> ")" => {
+    FactoryExp(exp)
+  },
+}
+
 Bracket_Tuple: AstTuple = {
   "(" <segs_objs: Segs_Objects> ")" => {
     AstTuple::SegsObjects(segs_objs)
@@ -276,7 +349,7 @@ Member_Func: AstMemberFunction = {
 
 Parent: AstMemberFnParent = {
   "Parent" ("(" ")")? => {
-    AstMemberFnParent::Chained
+    AstMemberFnParent::Chain
   },
   "Parent" "(" <mem_segs: Segs_Obj> ")" => {
     AstMemberFnParent::MemSegs(mem_segs)
@@ -285,7 +358,7 @@ Parent: AstMemberFnParent = {
 
 Closing_Period: AstMemberFnClosingPeriod = {
   "ClosingPeriod" ("(" ")")? => {
-    AstMemberFnClosingPeriod::Chained
+    AstMemberFnClosingPeriod::Chain
   },
   "ClosingPeriod" "(" <level_segs: Segs_Obj> ")" => {
     AstMemberFnClosingPeriod::LvSegs(level_segs)
@@ -297,7 +370,7 @@ Closing_Period: AstMemberFnClosingPeriod = {
 
 Opening_Period: AstMemberFnOpeningPeriod = {
   "OpeningPeriod" ("(" ")")? => {
-    AstMemberFnOpeningPeriod::Chained
+    AstMemberFnOpeningPeriod::Chain
   },
   "OpeningPeriod" "(" <level_segs: Segs_Obj> ")" => {
     AstMemberFnOpeningPeriod::LvSegs(level_segs)
@@ -309,7 +382,7 @@ Opening_Period: AstMemberFnOpeningPeriod = {
 
 Current_Member: AstMemberFnCurrentMember = {
   "CurrentMember" ("(" ")")? => {
-    AstMemberFnCurrentMember::Chained
+    AstMemberFnCurrentMember::Chain
   },
   "CurrentMember" "(" <segs_obj: Segs_Obj> ")" => {
     AstMemberFnCurrentMember::SegsObj(segs_obj)
@@ -327,7 +400,7 @@ Level_Func: AstLevelFunction = {
 
 Level: AstLevelFnLevel = {
   "Level" ("(" ")")? => {
-    AstLevelFnLevel::Chained
+    AstLevelFnLevel::Chain
   },
   "Level" "(" <mem_segs: Segs_Obj> ")" => {
     AstLevelFnLevel::MemSegs(mem_segs)
@@ -336,7 +409,7 @@ Level: AstLevelFnLevel = {
 
 Levels: AstLevelFnLevels = {
   "Levels" "(" <exp: Expression> ")" => {
-    AstLevelFnLevels::Chained_Exp(exp)
+    AstLevelFnLevels::Chain_Exp(exp)
   },
   "Levels" "(" <segs_obj: Segs_Obj> "," <exp: Expression> ")" => {
     AstLevelFnLevels::SegsObj_Exp(segs_obj, exp)
@@ -346,6 +419,15 @@ Levels: AstLevelFnLevels = {
 Set_Func: AstSetFunction = {
   <set_func: Children> => {
     AstSetFunction::Children(set_func)
+  },
+}
+
+Children: AstSetFnChildren = {
+  "Children" ("(" ")")? => {
+    AstSetFnChildren::Chain
+  },
+  "Children" "(" <mem_segs: Segs_Obj> ")" => {
+    AstSetFnChildren::MemSegs(mem_segs)
   },
 }
 
@@ -386,93 +468,30 @@ AxisPos: u64 = {
   "Sections"    => 4,
 }
 
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<
+// code review mark <<<<<
 
-Expression: AstExpression = {
-  <term:Term> => {
-    AstExpression {
-      terms: vec![(' ', term)],
-    }
-  },
-  <exp:Expression> "+" <term:Term> => {
-    let mut e = exp;
-    e.terms.push(('+', term));
-    e
-  },
-  <exp:Expression> "-" <term:Term> => {
-    let mut e = exp;
-    e.terms.push(('-', term));
-    e
-  }
-}
-
-Term: AstTerm = {
-  <factory:Factory> => {
-    AstTerm {
-      factories: vec![(' ', factory)],
-    }
-  },
-  <term:Term> "*" <factory:Factory> => {
-    let mut t = term;
-    t.factories.push(('*', factory));
-    t
-  },
-  <term:Term> "/" <factory:Factory> => {
-    let mut t = term;
-    t.factories.push(('/', factory));
-    t
-  }
-}
-
-Factory: AstFactory = {
-  <value:"double"> => {
-    FactoryNum(value)
-  },
-  <int_val: "unsigned_int"> => {
-    let double_val: f64 = int_val as f64;
-    FactoryNum(double_val)
-  },
-  <str:"QuotedString"> => {
-    FactoryStr(str)
-  },
-  <segs_wrap:Segs_Obj> => {
-    FactorySegs(segs_wrap)
-  },
-
-  // <tuple_wrap:TupleWrap_2> => {
-  //   FactoryTuple(tuple_wrap)
-  // },
-  "(" <seg_objs: Segs_Objects> "," <seg_obj: Segs_Obj> ")" => {
-    let mut seg_objs = seg_objs;
-    seg_objs.push(seg_obj);
-    FactoryTuple(AstTuple::SegsObjects(seg_objs))
-  },
-
-  "(" <exp:Expression> ")" => {
-    FactoryExp(exp)
-  },
-}
-
-Children: AstSetFnChildren = {
-  "Children" => {
-    AstSetFnChildren::NoParam
-  },
-  "Children" "(" ")" => {
-    AstSetFnChildren::NoParam
-  },
-  "Children" "(" <segments: Segs_Obj> ")" => {
-    AstSetFnChildren::InnerParam(segments)
-  },
-}
 
 Name: AstExpFnName = {
   "Name" => {

@@ -230,7 +230,7 @@ impl ToCellValue for AstTerm {
 #[derive(Clone, Debug, PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum AstMemberFnClosingPeriod {
-    Chained,
+    Chain,
     LvSegs(AstSegsObj),
     LvSegs_MemSegs(AstSegsObj, AstSegsObj),
 }
@@ -265,7 +265,7 @@ impl AstMemberFnClosingPeriod {
 #[derive(Clone, Debug, PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum AstMemberFnOpeningPeriod {
-    Chained,
+    Chain,
     LvSegs(AstSegsObj),
     LvSegs_MemSegs(AstSegsObj, AstSegsObj),
 }
@@ -300,7 +300,7 @@ impl AstMemberFnOpeningPeriod {
 #[derive(Clone, Debug, PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum AstMemberFnCurrentMember {
-    Chained,
+    Chain,
     SegsObj(AstSegsObj),
 }
 
@@ -349,7 +349,7 @@ impl AstMemberFnCurrentMember {
 #[derive(Clone, Debug, PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum AstMemberFnParent {
-    Chained,
+    Chain,
     MemSegs(AstSegsObj),
 }
 
@@ -409,14 +409,14 @@ impl AstMemberFunction {
                     .await
             }
             // parent()
-            AstMemberFunction::Parent(AstMemberFnParent::Chained) => {
+            AstMemberFunction::Parent(AstMemberFnParent::Chain) => {
                 AstMemberFnParent::do_get_member(left_outer_param, context).await
             }
             AstMemberFunction::Parent(AstMemberFnParent::MemSegs(_segs)) => {
                 todo!("AstMemberFunction::get_member()")
             }
             // ClosingPeriod()
-            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::Chained) => {
+            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::Chain) => {
                 AstMemberFnClosingPeriod::do_get_member(
                     left_outer_param,
                     None,
@@ -450,7 +450,7 @@ impl AstMemberFunction {
                 .await
             }
             // OpeningPeriod()
-            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::Chained) => {
+            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::Chain) => {
                 AstMemberFnOpeningPeriod::do_get_member(
                     left_outer_param,
                     None,
@@ -517,7 +517,7 @@ impl AstLevelFunction {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstLevelFnLevel {
-    Chained,
+    Chain,
     MemSegs(AstSegsObj),
 }
 
@@ -555,7 +555,7 @@ impl AstLevelFnLevel {
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstLevelFnLevels {
-    Chained_Exp(AstExpression),
+    Chain_Exp(AstExpression),
     SegsObj_Exp(AstSegsObj, AstExpression),
     // dim_segs: Option<AstSegsObj>,
     // idx_exp: AstExpression,
@@ -606,7 +606,7 @@ impl AstLevelFnLevels {
         let param_dim_role = param_dim_role.unwrap();
 
         let idx_exp = match self {
-            AstLevelFnLevels::Chained_Exp(exp) => exp,
+            AstLevelFnLevels::Chain_Exp(exp) => exp,
             AstLevelFnLevels::SegsObj_Exp(_, exp) => exp,
         };
 
@@ -624,8 +624,8 @@ impl AstLevelFnLevels {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstSetFnChildren {
-    NoParam,
-    InnerParam(AstSegsObj),
+    Chain,
+    MemSegs(AstSegsObj),
 }
 
 impl AstSetFnChildren {
@@ -672,10 +672,10 @@ impl AstSetFunction {
         context: &mut MultiDimensionalContext,
     ) -> Set {
         match self {
-            AstSetFunction::Children(AstSetFnChildren::NoParam) => {
+            AstSetFunction::Children(AstSetFnChildren::Chain) => {
                 AstSetFnChildren::do_get_set(left_unique_param, context).await
             }
-            AstSetFunction::Children(AstSetFnChildren::InnerParam(segs)) => {
+            AstSetFunction::Children(AstSetFnChildren::MemSegs(segs)) => {
                 let mem_role = segs.materialize(slice_tuple, context).await;
                 AstSetFnChildren::do_get_set(Some(mem_role), context).await
             } // _ => todo!("AstSetFunction::get_set() [SHUA-927381]"),
