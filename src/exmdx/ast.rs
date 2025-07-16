@@ -457,7 +457,9 @@ impl AstAxis {
         slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> TupleVector {
-        self.ast_set.generate_fiducial_tuple(slice_tuple, context).await
+        self.ast_set
+            .generate_fiducial_tuple(slice_tuple, context)
+            .await
     }
 
     async fn translate_to_axis(

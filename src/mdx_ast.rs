@@ -228,10 +228,11 @@ impl ToCellValue for AstTerm {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[allow(non_camel_case_types)]
 pub enum AstMemberFnClosingPeriod {
-    NoParam,
-    OneParam(AstSegsObj),
-    TwoParams(AstSegsObj, AstSegsObj),
+    Chained,
+    LvSegs(AstSegsObj),
+    LvSegs_MemSegs(AstSegsObj, AstSegsObj),
 }
 
 impl AstMemberFnClosingPeriod {
@@ -262,10 +263,11 @@ impl AstMemberFnClosingPeriod {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[allow(non_camel_case_types)]
 pub enum AstMemberFnOpeningPeriod {
-    NoParam,
-    OneParam(AstSegsObj),
-    TwoParams(AstSegsObj, AstSegsObj),
+    Chained,
+    LvSegs(AstSegsObj),
+    LvSegs_MemSegs(AstSegsObj, AstSegsObj),
 }
 
 impl AstMemberFnOpeningPeriod {
@@ -296,9 +298,10 @@ impl AstMemberFnOpeningPeriod {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[allow(non_camel_case_types)]
 pub enum AstMemberFnCurrentMember {
-    NoParam,
-    InnerParam(AstSegsObj),
+    Chained,
+    SegsObj(AstSegsObj),
 }
 
 impl AstMemberFnCurrentMember {
@@ -313,7 +316,7 @@ impl AstMemberFnCurrentMember {
         if let Some(outer_param) = outer_param {
             param = outer_param;
         } else {
-            if let AstMemberFnCurrentMember::InnerParam(ast_segs) = self {
+            if let AstMemberFnCurrentMember::SegsObj(ast_segs) = self {
                 param = ast_segs.materialize(slice_tuple, context).await;
             } else {
                 panic!("[34BH85BHE] Invalid parameter combination. Only inner_param should be Some, and outer_param should be None.")
@@ -344,9 +347,10 @@ impl AstMemberFnCurrentMember {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[allow(non_camel_case_types)]
 pub enum AstMemberFnParent {
-    NoParam,
-    HasParam(AstSegsObj),
+    Chained,
+    MemSegs(AstSegsObj),
 }
 
 impl AstMemberFnParent {
@@ -405,14 +409,14 @@ impl AstMemberFunction {
                     .await
             }
             // parent()
-            AstMemberFunction::Parent(AstMemberFnParent::NoParam) => {
+            AstMemberFunction::Parent(AstMemberFnParent::Chained) => {
                 AstMemberFnParent::do_get_member(left_outer_param, context).await
             }
-            AstMemberFunction::Parent(AstMemberFnParent::HasParam(_segs)) => {
+            AstMemberFunction::Parent(AstMemberFnParent::MemSegs(_segs)) => {
                 todo!("AstMemberFunction::get_member()")
             }
             // ClosingPeriod()
-            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::NoParam) => {
+            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::Chained) => {
                 AstMemberFnClosingPeriod::do_get_member(
                     left_outer_param,
                     None,
@@ -422,7 +426,7 @@ impl AstMemberFunction {
                 )
                 .await
             }
-            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::OneParam(level_segs)) => {
+            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::LvSegs(level_segs)) => {
                 AstMemberFnClosingPeriod::do_get_member(
                     left_outer_param,
                     Some(level_segs),
@@ -432,7 +436,7 @@ impl AstMemberFunction {
                 )
                 .await
             }
-            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::TwoParams(
+            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::LvSegs_MemSegs(
                 level_segs,
                 member_segs,
             )) => {
@@ -446,7 +450,7 @@ impl AstMemberFunction {
                 .await
             }
             // OpeningPeriod()
-            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::NoParam) => {
+            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::Chained) => {
                 AstMemberFnOpeningPeriod::do_get_member(
                     left_outer_param,
                     None,
@@ -456,7 +460,7 @@ impl AstMemberFunction {
                 )
                 .await
             }
-            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::OneParam(level_segs)) => {
+            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::LvSegs(level_segs)) => {
                 AstMemberFnOpeningPeriod::do_get_member(
                     left_outer_param,
                     Some(level_segs),
@@ -466,7 +470,7 @@ impl AstMemberFunction {
                 )
                 .await
             }
-            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::TwoParams(
+            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::LvSegs_MemSegs(
                 level_segs,
                 member_segs,
             )) => {

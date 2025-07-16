@@ -274,6 +274,48 @@ Member_Func: AstMemberFunction = {
   },
 }
 
+Parent: AstMemberFnParent = {
+  "Parent" ("(" ")")? => {
+    AstMemberFnParent::Chained
+  },
+  "Parent" "(" <mem_segs: Segs_Obj> ")" => {
+    AstMemberFnParent::MemSegs(mem_segs)
+  },
+}
+
+Closing_Period: AstMemberFnClosingPeriod = {
+  "ClosingPeriod" ("(" ")")? => {
+    AstMemberFnClosingPeriod::Chained
+  },
+  "ClosingPeriod" "(" <level_segs: Segs_Obj> ")" => {
+    AstMemberFnClosingPeriod::LvSegs(level_segs)
+  },
+  "ClosingPeriod" "(" <level_segs: Segs_Obj> "," <member_segs: Segs_Obj> ")" => {
+    AstMemberFnClosingPeriod::LvSegs_MemSegs(level_segs, member_segs)
+  },
+}
+
+Opening_Period: AstMemberFnOpeningPeriod = {
+  "OpeningPeriod" ("(" ")")? => {
+    AstMemberFnOpeningPeriod::Chained
+  },
+  "OpeningPeriod" "(" <level_segs: Segs_Obj> ")" => {
+    AstMemberFnOpeningPeriod::LvSegs(level_segs)
+  },
+  "OpeningPeriod" "(" <level_segs: Segs_Obj> "," <member_segs: Segs_Obj> ")" => {
+    AstMemberFnOpeningPeriod::LvSegs_MemSegs(level_segs, member_segs)
+  },
+}
+
+Current_Member: AstMemberFnCurrentMember = {
+  "CurrentMember" ("(" ")")? => {
+    AstMemberFnCurrentMember::Chained
+  },
+  "CurrentMember" "(" <segs_obj: Segs_Obj> ")" => {
+    AstMemberFnCurrentMember::SegsObj(segs_obj)
+  },
+}
+
 Level_Func: AstLevelFunction = {
   <lv_func: Level> => {
     AstLevelFunction::Level(lv_func)
@@ -336,60 +378,6 @@ AxisPos: u64 = {
 // code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // code review mark >>>>>>>>>>>>>>>>>>>>
 // code review mark >>>>>>>>>>
-
-Parent: AstMemberFnParent = {
-  "Parent" => {
-    AstMemberFnParent::NoParam
-  },
-  "Parent" "(" ")" => {
-    AstMemberFnParent::NoParam
-  },
-  "Parent" "(" <segments: Segs_Obj> ")" => {
-    AstMemberFnParent::HasParam(segments)
-  },
-}
-
-Closing_Period: AstMemberFnClosingPeriod = {
-  "ClosingPeriod" => {
-    AstMemberFnClosingPeriod::NoParam
-  },
-  "ClosingPeriod" "(" ")" => {
-    AstMemberFnClosingPeriod::NoParam
-  },
-  "ClosingPeriod" "(" <level_segs: Segs_Obj> ")" => {
-    AstMemberFnClosingPeriod::OneParam(level_segs)
-  },
-  "ClosingPeriod" "(" <level_segs: Segs_Obj> "," <member_segs: Segs_Obj> ")" => {
-    AstMemberFnClosingPeriod::TwoParams(level_segs, member_segs)
-  },
-}
-
-Opening_Period: AstMemberFnOpeningPeriod = {
-  "OpeningPeriod" => {
-    AstMemberFnOpeningPeriod::NoParam
-  },
-  "OpeningPeriod" "(" ")" => {
-    AstMemberFnOpeningPeriod::NoParam
-  },
-  "OpeningPeriod" "(" <level_segs: Segs_Obj> ")" => {
-    AstMemberFnOpeningPeriod::OneParam(level_segs)
-  },
-  "OpeningPeriod" "(" <level_segs: Segs_Obj> "," <member_segs: Segs_Obj> ")" => {
-    AstMemberFnOpeningPeriod::TwoParams(level_segs, member_segs)
-  },
-}
-
-Current_Member: AstMemberFnCurrentMember = {
-  "CurrentMember" => {
-    AstMemberFnCurrentMember::NoParam
-  },
-  "CurrentMember" "(" ")" => {
-    AstMemberFnCurrentMember::NoParam
-  },
-  "CurrentMember" "(" <segments: Segs_Obj> ")" => {
-    AstMemberFnCurrentMember::InnerParam(segments)
-  },
-}
 
 Level: AstLevelFnLevel = {
   "Level" => {
