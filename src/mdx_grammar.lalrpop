@@ -112,7 +112,8 @@ extern {
     "Max" => Token::Max,
     "Min" => Token::Min,
     "Count" => Token::Count,
-    "Tunnel" => Token::Tunnel,
+    // "Tunnel" => Token::Tunnel,
+    "LookupCube" => Token::LookupCube,
     "IIf" => Token::IIf,
 
     "Name" => Token::Name,
@@ -597,10 +598,10 @@ IIf: AstExpFnIIf = {
 }
 
 LookupCube: AstExpFnLookupCube = {
-    "Tunnel" "(" <cube_segs: Segs_Obj> "," <exp_on_another_cube: Expression> ")" => {
+    "LookupCube" "(" <cube_segs: Segs_Obj> "," <exp_on_another_cube: Expression> ")" => {
       AstExpFnLookupCube::new(Some(cube_segs), exp_on_another_cube)
     },
-    "Tunnel" "(" <exp_on_another_cube: Expression> ")" => {
+    "LookupCube" "(" <exp_on_another_cube: Expression> ")" => {
       AstExpFnLookupCube::new(None, exp_on_another_cube)
     },
 }
