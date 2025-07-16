@@ -517,8 +517,8 @@ impl AstLevelFunction {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstLevelFnLevel {
-    NoParam,
-    OneParam(AstSegsObj),
+    Chained,
+    MemSegs(AstSegsObj),
 }
 
 impl AstLevelFnLevel {
@@ -540,7 +540,7 @@ impl AstLevelFnLevel {
             return self.do_get_level_role(mr);
         }
 
-        if let AstLevelFnLevel::OneParam(ast_segs) = self {
+        if let AstLevelFnLevel::MemSegs(ast_segs) = self {
             if let MultiDimensionalEntity::MemberRoleWrap(mr) =
                 ast_segs.materialize(slice_tuple, context).await
             {
@@ -552,16 +552,19 @@ impl AstLevelFnLevel {
     }
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct AstLevelFnLevels {
-    dim_segs: Option<AstSegsObj>,
-    idx_exp: AstExpression,
+pub enum AstLevelFnLevels {
+    Chained_Exp(AstExpression),
+    SegsObj_Exp(AstSegsObj, AstExpression),
+    // dim_segs: Option<AstSegsObj>,
+    // idx_exp: AstExpression,
 }
 
 impl AstLevelFnLevels {
-    pub fn new(dim_segs: Option<AstSegsObj>, idx_exp: AstExpression) -> Self {
-        Self { dim_segs, idx_exp }
-    }
+    // pub fn new(dim_segs: Option<AstSegsObj>, idx_exp: AstExpression) -> Self {
+    //     Self { dim_segs, idx_exp }
+    // }
 
     async fn get_level_role(
         &self,
@@ -575,15 +578,25 @@ impl AstLevelFnLevels {
         if let Some(MultiDimensionalEntity::DimensionRoleWrap(dr)) = left_outer_param {
             def_hierarchy_gid = dr.default_hierarchy_gid;
             param_dim_role = Some(dr);
-        } else if let Some(ast_segs) = &self.dim_segs {
+        } else if let Self::SegsObj_Exp(segs_obj,_ ) = self {
             if let MultiDimensionalEntity::DimensionRoleWrap(dr) =
-                ast_segs.materialize(slice_tuple, context).await
+                segs_obj.materialize(slice_tuple, context).await
             {
                 def_hierarchy_gid = dr.default_hierarchy_gid;
                 param_dim_role = Some(dr);
             } else {
                 panic!("[003BHE] The entity is not a DimensionRole variant.");
             }
+
+        // } else if let Some(ast_segs) = &self.dim_segs {
+        //     if let MultiDimensionalEntity::DimensionRoleWrap(dr) =
+        //         ast_segs.materialize(slice_tuple, context).await
+        //     {
+        //         def_hierarchy_gid = dr.default_hierarchy_gid;
+        //         param_dim_role = Some(dr);
+        //     } else {
+        //         panic!("[003BHE] The entity is not a DimensionRole variant.");
+        //     }
         }
 
         if let None = param_dim_role {
@@ -592,7 +605,12 @@ impl AstLevelFnLevels {
 
         let param_dim_role = param_dim_role.unwrap();
 
-        let cell_val = self.idx_exp.val(slice_tuple, context, None).await;
+        let idx_exp = match self {
+            AstLevelFnLevels::Chained_Exp(exp) => exp,
+            AstLevelFnLevels::SegsObj_Exp(_, exp) => exp,
+        };
+
+        let cell_val = idx_exp.val(slice_tuple, context, None).await;
         if let CellValue::Double(idx) = cell_val {
             let lv_val = idx as u32;
 

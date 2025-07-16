@@ -325,6 +325,24 @@ Level_Func: AstLevelFunction = {
   },
 }
 
+Level: AstLevelFnLevel = {
+  "Level" ("(" ")")? => {
+    AstLevelFnLevel::Chained
+  },
+  "Level" "(" <mem_segs: Segs_Obj> ")" => {
+    AstLevelFnLevel::MemSegs(mem_segs)
+  },
+}
+
+Levels: AstLevelFnLevels = {
+  "Levels" "(" <exp: Expression> ")" => {
+    AstLevelFnLevels::Chained_Exp(exp)
+  },
+  "Levels" "(" <segs_obj: Segs_Obj> "," <exp: Expression> ")" => {
+    AstLevelFnLevels::SegsObj_Exp(segs_obj, exp)
+  },
+}
+
 Set_Func: AstSetFunction = {
   <set_func: Children> => {
     AstSetFunction::Children(set_func)
@@ -378,27 +396,6 @@ AxisPos: u64 = {
 // code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // code review mark >>>>>>>>>>>>>>>>>>>>
 // code review mark >>>>>>>>>>
-
-Level: AstLevelFnLevel = {
-  "Level" => {
-    AstLevelFnLevel::NoParam
-  },
-  "Level" "(" ")" => {
-    AstLevelFnLevel::NoParam
-  },
-  "Level" "(" <segments: Segs_Obj> ")" => {
-    AstLevelFnLevel::OneParam(segments)
-  },
-}
-
-Levels: AstLevelFnLevels = {
-  "Levels" "(" <idx_exp: Expression> ")" => {
-    AstLevelFnLevels::new(None, idx_exp)
-  },
-  "Levels" "(" <dim_segs: Segs_Obj> "," <idx_exp: Expression> ")" => {
-    AstLevelFnLevels::new(Some(dim_segs), idx_exp)
-  },
-}
 
 Expression: AstExpression = {
   <term:Term> => {
