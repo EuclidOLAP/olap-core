@@ -442,9 +442,6 @@ Exp_Func: AstExpFunction = {
   <num_func: IIf> => {
     AstExpFunction::IIf(num_func)
   },
-  <num_func: LookupCube> => {
-    AstExpFunction::LookupCube(num_func)
-  },
   <num_func: Sum> => {
     AstExpFunction::Sum(num_func)
   },
@@ -453,6 +450,10 @@ Exp_Func: AstExpFunction = {
   },
   <num_func: Min> => {
     AstExpFunction::Min(num_func)
+  },
+
+  <exp_func: LookupCube> => {
+    AstExpFunction::LookupCube(exp_func)
   },
 
   <str_func: Name> => {
@@ -492,19 +493,6 @@ AxisPos: u64 = {
 // code review mark <<<<<<<<<<<<<<<
 // code review mark <<<<<<<<<<
 // code review mark <<<<<
-
-
-Name: AstExpFnName = {
-  "Name" => {
-    AstExpFnName::NoParam
-  },
-  "Name" "(" ")" => {
-    AstExpFnName::NoParam
-  },
-  "Name" "(" <olap_obj_segs: Segs_Obj> ")" => {
-    AstExpFnName::InnerParam(olap_obj_segs)
-  },
-}
 
 Count: AstExpFnCount = {
   "Count" => {
@@ -604,6 +592,18 @@ LookupCube: AstExpFnLookupCube = {
     "LookupCube" "(" <exp_on_another_cube: Expression> ")" => {
       AstExpFnLookupCube::new(None, exp_on_another_cube)
     },
+}
+
+Name: AstExpFnName = {
+  "Name" => {
+    AstExpFnName::NoParam
+  },
+  "Name" "(" ")" => {
+    AstExpFnName::NoParam
+  },
+  "Name" "(" <olap_obj_segs: Segs_Obj> ")" => {
+    AstExpFnName::InnerParam(olap_obj_segs)
+  },
 }
 
 BoolExpression: AstBoolExp = {
