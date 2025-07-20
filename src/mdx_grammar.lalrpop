@@ -564,6 +564,15 @@ IIf: AstNumFnIIf = {
   }
 }
 
+LookupCube: AstExpFnLookupCube = {
+    "LookupCube" "(" <exp: Expression> ")" => {
+      AstExpFnLookupCube::Chain(exp)
+    },
+    "LookupCube" "(" <cube_segs: Segs_Obj> "," <exp: Expression> ")" => {
+      AstExpFnLookupCube::CubeSegs_Exp(cube_segs, exp)
+    },
+}
+
 AxisPos: u64 = {
   <axpos: "unsigned_int"> => axpos,
   "Columns"     => 0,
@@ -596,15 +605,6 @@ AxisPos: u64 = {
 // code review mark <<<<<<<<<<<<<<<
 // code review mark <<<<<<<<<<
 // code review mark <<<<<
-
-LookupCube: AstExpFnLookupCube = {
-    "LookupCube" "(" <cube_segs: Segs_Obj> "," <exp_on_another_cube: Expression> ")" => {
-      AstExpFnLookupCube::new(Some(cube_segs), exp_on_another_cube)
-    },
-    "LookupCube" "(" <exp_on_another_cube: Expression> ")" => {
-      AstExpFnLookupCube::new(None, exp_on_another_cube)
-    },
-}
 
 Name: AstExpFnName = {
   "Name" => {

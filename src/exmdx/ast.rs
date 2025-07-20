@@ -389,8 +389,18 @@ impl Materializable for AstSet {
                         }
                     }
                 }
-                _ => {
-                    panic!("AstSet::SegsObj is not implemented yet.")
+                AstSet::SegsObj(segs_obj) => {
+                    let olap_entity = segs_obj.materialize(slice_tuple, context).await;
+                    match olap_entity {
+                        MultiDimensionalEntity::SetWrap(set) => {
+                            for tuple in set.tuples.iter() {
+                                tuple_vec.push(tuple.clone());
+                            }
+                        }
+                        _ => {
+                            panic!("The entity is not a SetWrap variant.");
+                        }
+                    }
                 }
             }
 

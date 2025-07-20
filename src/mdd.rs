@@ -57,7 +57,6 @@ pub enum MultiDimensionalEntity {
         dim_role_gid: u64,
         exp: AstExpression,
     },
-    ExpFn(AstExpFunction),
     CellValue(CellValue),
     Cube(Cube),
     // Dimension(Dimension), // 维度实体
@@ -283,7 +282,13 @@ impl MultiDimensionalEntityLocator for Set {
                         panic!("Avg function can only have one segment. hsbt2839");
                     }
 
-                    let fn_result = avg_fn.val(slice_tuple, context, Some(MultiDimensionalEntity::SetWrap(self.clone()))).await;
+                    let fn_result = avg_fn
+                        .val(
+                            slice_tuple,
+                            context,
+                            Some(MultiDimensionalEntity::SetWrap(self.clone())),
+                        )
+                        .await;
                     MultiDimensionalEntity::CellValue(fn_result)
 
                     // // let set_copy = self.clone();
@@ -296,7 +301,13 @@ impl MultiDimensionalEntityLocator for Set {
                         panic!("Count function can only have one segment. hs8533BJ");
                     }
 
-                    let fn_result = count_fn.val(slice_tuple, context, Some(MultiDimensionalEntity::SetWrap(self.clone()))).await;
+                    let fn_result = count_fn
+                        .val(
+                            slice_tuple,
+                            context,
+                            Some(MultiDimensionalEntity::SetWrap(self.clone())),
+                        )
+                        .await;
                     MultiDimensionalEntity::CellValue(fn_result)
 
                     // // let set_copy = self.clone();
@@ -651,8 +662,8 @@ impl MultiDimensionalEntityLocator for Cube {
     async fn locate_entity(
         &self,
         segs: &AstSegsObj,
-        _slice_tuple: &TupleVector,
-        _context: &mut MultiDimensionalContext,
+        slice_tuple: &TupleVector,
+        context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
         if segs.segs.len() != 1 {
             todo!("[bhs987sub3] Cube::locate_entity() not implemented yet.");
@@ -661,9 +672,14 @@ impl MultiDimensionalEntityLocator for Cube {
         let seg = segs.segs.first().unwrap();
 
         if let AstSeg::ExpFunc(AstExpFunction::LookupCube(look_up_fn)) = seg {
-            let mut look_up_fn = look_up_fn.clone();
-            look_up_fn.set_cube(self.clone());
-            MultiDimensionalEntity::ExpFn(AstExpFunction::LookupCube(look_up_fn))
+            let cell_val = look_up_fn
+                .val(
+                    slice_tuple,
+                    context,
+                    Some(MultiDimensionalEntity::Cube(self.clone())),
+                )
+                .await;
+            return MultiDimensionalEntity::CellValue(cell_val);
         } else {
             unimplemented!("[nsbk8562] Cube::locate_entity() not implemented yet.")
         }

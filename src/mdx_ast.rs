@@ -171,9 +171,9 @@ impl ToCellValue for AstFactory {
                         dim_role_gid: _,
                         exp,
                     } => exp.val(slice_tuple, context, None).await,
-                    MultiDimensionalEntity::ExpFn(exp_fn) => {
-                        exp_fn.val(slice_tuple, context, None).await
-                    }
+                    // MultiDimensionalEntity::ExpFn(exp_fn) => {
+                    //     exp_fn.val(slice_tuple, context, None).await
+                    // }
                     MultiDimensionalEntity::CellValue(cell_value) => cell_value.clone(),
                     _ => panic!("The entity is not a CellValue variant."),
                 },
@@ -578,7 +578,7 @@ impl AstLevelFnLevels {
         if let Some(MultiDimensionalEntity::DimensionRoleWrap(dr)) = left_outer_param {
             def_hierarchy_gid = dr.default_hierarchy_gid;
             param_dim_role = Some(dr);
-        } else if let Self::SegsObj_Exp(segs_obj,_ ) = self {
+        } else if let Self::SegsObj_Exp(segs_obj, _) = self {
             if let MultiDimensionalEntity::DimensionRoleWrap(dr) =
                 segs_obj.materialize(slice_tuple, context).await
             {
@@ -587,16 +587,6 @@ impl AstLevelFnLevels {
             } else {
                 panic!("[003BHE] The entity is not a DimensionRole variant.");
             }
-
-        // } else if let Some(ast_segs) = &self.dim_segs {
-        //     if let MultiDimensionalEntity::DimensionRoleWrap(dr) =
-        //         ast_segs.materialize(slice_tuple, context).await
-        //     {
-        //         def_hierarchy_gid = dr.default_hierarchy_gid;
-        //         param_dim_role = Some(dr);
-        //     } else {
-        //         panic!("[003BHE] The entity is not a DimensionRole variant.");
-        //     }
         }
 
         if let None = param_dim_role {
@@ -715,39 +705,8 @@ impl ToCellValue for AstExpFunction {
                         name_fn.val(slice_tuple, context, None).await
                     }
                 }
-                AstExpFunction::LookupCube(eval_fn) => {
-                    let the_cube;
-                    if let Some(cube) = &eval_fn.cube {
-                        the_cube = cube.clone();
-                    } else if let Some(ast_segs) = &eval_fn.cube_segs {
-                        match ast_segs.materialize(slice_tuple, context).await {
-                            MultiDimensionalEntity::Cube(cube) => {
-                                the_cube = cube.clone();
-                            }
-                            _ => panic!("[dsuc-0-8492] AstExpFunction::val()"),
-                        }
-                    } else {
-                        panic!("[dsuc-0-::-8492] AstExpFunction::val()")
-                    }
-
-                    let exp = eval_fn.exp.clone();
-
-                    let mdx_with_str = meta_cache::mdx_formula_members_fragment(&the_cube);
-                    let tunnel_mdx = format!(
-                        "with\n{}\nSelect {{ ( &0 ) }} on rows\nfrom &{}",
-                        mdx_with_str, the_cube.gid
-                    );
-                    let tunnel_ast = MdxStatementParser::new()
-                        .parse(MdxLexer::new(&tunnel_mdx))
-                        .unwrap();
-                    let mut tunnel_context = tunnel_ast.gen_md_context().await;
-
-                    exp.val(
-                        &tunnel_context.query_slice_tuple.clone(),
-                        &mut tunnel_context,
-                        None,
-                    )
-                    .await
+                AstExpFunction::LookupCube(lookup_cube) => {
+                    lookup_cube.val(slice_tuple, context, outer_param).await
                 }
                 AstExpFunction::Sum(exp_fn_sum) => {
                     exp_fn_sum.val(slice_tuple, context, outer_param).await
@@ -845,45 +804,76 @@ impl ToCellValue for AstNumFnCount {
         outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
-
-
-            // let set = match self {
-            //     AstNumFnCount::InnerParam(_set) => {
-            //         todo!("AstNumFnCount::val()")
-            //     }
-            //     AstNumFnCount::OuterParam(set) => set,
-            //     _ => panic!("AstNumFnCount::val()"),
-            // };
-            // CellValue::Double(set.tuples.len() as f64)
-
             if let Some(MultiDimensionalEntity::SetWrap(set)) = outer_param {
                 CellValue::Double(set.tuples.len() as f64)
             } else {
                 CellValue::Str("count函数参数错误".to_string())
             }
-
         })
     }
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct AstExpFnLookupCube {
-    pub cube_segs: Option<AstSegsObj>,
-    pub cube: Option<mdd::Cube>,
-    pub exp: AstExpression,
+pub enum AstExpFnLookupCube {
+    Chain(AstExpression),
+    CubeSegs_Exp(AstSegsObj, AstExpression),
 }
 
-impl AstExpFnLookupCube {
-    pub fn new(cube_segs: Option<AstSegsObj>, exp: AstExpression) -> Self {
-        Self {
-            cube_segs,
-            cube: None,
-            exp,
-        }
-    }
+impl ToCellValue for AstExpFnLookupCube {
+    fn val<'a>(
+        &'a self,
+        slice_tuple: &'a TupleVector,
+        context: &'a mut MultiDimensionalContext,
+        outer_param: Option<MultiDimensionalEntity>,
+    ) -> BoxFuture<'a, CellValue> {
+        Box::pin(async move {
+            let param_cube;
+            let param_exp;
 
-    pub fn set_cube(&mut self, cube: mdd::Cube) {
-        self.cube = Some(cube);
+            match self {
+                AstExpFnLookupCube::Chain(exp) => {
+                    param_cube = if let Some(olap_obj) = outer_param {
+                        match olap_obj {
+                            MultiDimensionalEntity::Cube(cube) => cube,
+                            _ => panic!("[dsuc-0-8492] AstExpFunction::val()"),
+                        }
+                    } else {
+                        todo!("AstExpFunction::val() - lookupCube :: [SHUA-927381]")
+                    };
+                    param_exp = exp.clone();
+                }
+                AstExpFnLookupCube::CubeSegs_Exp(segs_obj, exp) => {
+                    param_cube = if let MultiDimensionalEntity::Cube(cube) =
+                        segs_obj.materialize(slice_tuple, context).await
+                    {
+                        cube
+                    } else {
+                        panic!("[dsuc-0-8492] AstExpFunction::val()")
+                    };
+                    param_exp = exp.clone();
+                }
+            }
+
+            let mdx_with_str = meta_cache::mdx_formula_members_fragment(&param_cube);
+            let tunnel_mdx = format!(
+                "with\n{}\nSelect {{ ( &0 ) }} on rows\nfrom &{}",
+                mdx_with_str, param_cube.gid
+            );
+
+            let tunnel_ast = MdxStatementParser::new()
+                .parse(MdxLexer::new(&tunnel_mdx))
+                .unwrap();
+            let mut tunnel_context = tunnel_ast.gen_md_context().await;
+
+            param_exp
+                .val(
+                    &tunnel_context.query_slice_tuple.clone(),
+                    &mut tunnel_context,
+                    None,
+                )
+                .await
+        })
     }
 }
 
