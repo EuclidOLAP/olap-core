@@ -687,7 +687,7 @@ impl AstSetFunction {
 pub enum AstExpFunction {
     Avg(AstNumFnAvg),
     Count(AstNumFnCount),
-    IIf(AstExpFnIIf),
+    IIf(AstNumFnIIf),
     LookupCube(AstExpFnLookupCube),
     Name(AstExpFnName),
     Sum(AstNumFnSum),
@@ -888,13 +888,13 @@ impl AstExpFnLookupCube {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct AstExpFnIIf {
+pub struct AstNumFnIIf {
     pub bool_exp: AstBoolExp,
-    pub exp_t: AstExpression,
-    pub exp_f: AstExpression,
+    pub true_exp: AstExpression,
+    pub false_exp: AstExpression,
 }
 
-impl ToCellValue for AstExpFnIIf {
+impl ToCellValue for AstNumFnIIf {
     fn val<'a>(
         &'a self,
         slice_tuple: &'a TupleVector,
@@ -904,9 +904,9 @@ impl ToCellValue for AstExpFnIIf {
         Box::pin(async move {
             let bool_val = self.bool_exp.bool_val(slice_tuple, context).await;
             if bool_val {
-                self.exp_t.val(slice_tuple, context, None).await
+                self.true_exp.val(slice_tuple, context, None).await
             } else {
-                self.exp_f.val(slice_tuple, context, None).await
+                self.false_exp.val(slice_tuple, context, None).await
             }
         })
     }
