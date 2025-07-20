@@ -7,7 +7,8 @@ use crate::mdx_ast::{AstLevelFunction, AstLevelFnLevel, AstLevelFnLevels};
 use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent, AstMemberFnClosingPeriod, AstMemberFnOpeningPeriod};
 use crate::mdx_ast::{AstMemberFnCurrentMember};
 use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
-use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
+use crate::mdx_ast::{AstExpFunction};
+use crate::mdx_ast::{AstNumFnCount, AstNumFnAvg};
 use crate::mdx_ast::{AstExpFnName};
 use crate::mdx_ast::{AstExpFnLookupCube};
 use crate::mdx_ast::AstExpFnIIf;
@@ -20,7 +21,7 @@ use crate::mdx_ast::AstBoolFnIsLeaf;
 use crate::exmdx::ast::AstSegsObj;
 use crate::exmdx::ast::{AstMdxStatement, AstSet, AstTuple, AstAxis, AstCustomObject};
 
-use crate::exmdx::exp_func::{AstExpFuncSum, AstExpFuncMax, AstExpFuncMin};
+use crate::exmdx::exp_func::{AstNumFnSum, AstNumFnMax, AstNumFnMin};
 
 // code review mark >>>>>
 // code review mark >>>>>>>>>>
@@ -461,6 +462,102 @@ Exp_Func: AstExpFunction = {
   },
 }
 
+Count: AstNumFnCount = {
+  "Count" ("(" ")")? => {
+    AstNumFnCount::Chain
+  },
+  "Count" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnCount::AstSet(ast_set)
+  },
+  "Count" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnCount::AstSet(AstSet::SegsObj(set_segs))
+  },
+}
+
+Avg: AstNumFnAvg = {
+  "Avg" ("(" ")")? => {
+    AstNumFnAvg::Chain
+  },
+  // "Avg" "(" <exp: Expression> ")" => {
+  //   AstNumFnAvg::Chain_Exp(exp)
+  // },
+  "Avg" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnAvg::AstSet(AstSet::SegsObj(set_segs))
+  },
+  "Avg" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnAvg::AstSet(ast_set)
+  },
+  "Avg" "(" <set_segs: Segs_Obj> "," <exp: Expression> ")" => {
+    AstNumFnAvg::AstSet_Exp(AstSet::SegsObj(set_segs), exp)
+  },
+  "Avg" "(" <ast_set: Brace_Set> "," <exp: Expression> ")" => {
+    AstNumFnAvg::AstSet_Exp(ast_set, exp)
+  },
+}
+
+Sum: AstNumFnSum = {
+  "Sum" ("(" ")")? => {
+    AstNumFnSum::Chain
+  },
+  // "Sum" "(" <exp: Expression> ")" => {
+  //   AstNumFnSum::Chain_Exp(exp)
+  // },
+  "Sum" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnSum::AstSet(AstSet::SegsObj(set_segs))
+  },
+  "Sum" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnSum::AstSet(ast_set)
+  },
+  "Sum" "(" <set_segs: Segs_Obj> "," <exp: Expression> ")" => {
+    AstNumFnSum::AstSet_Exp(AstSet::SegsObj(set_segs), exp)
+  },
+  "Sum" "(" <ast_set: Brace_Set> "," <exp: Expression> ")" => {
+    AstNumFnSum::AstSet_Exp(ast_set, exp)
+  },
+}
+
+Max: AstNumFnMax = {
+  "Max" ("(" ")")? => {
+    AstNumFnMax::Chain
+  },
+  // "Max" "(" <exp: Expression> ")" => {
+  //   AstNumFnMax::Chain_Exp(exp)
+  // },
+  "Max" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnMax::AstSet(AstSet::SegsObj(set_segs))
+  },
+  "Max" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnMax::AstSet(ast_set)
+  },
+  "Max" "(" <set_segs: Segs_Obj> "," <exp: Expression> ")" => {
+    AstNumFnMax::AstSet_Exp(AstSet::SegsObj(set_segs), exp)
+  },
+  "Max" "(" <ast_set: Brace_Set> "," <exp: Expression> ")" => {
+    AstNumFnMax::AstSet_Exp(ast_set, exp)
+  },
+}
+
+Min: AstNumFnMin = {
+  "Min" ("(" ")")? => {
+    AstNumFnMin::Chain
+  },
+  // "Min" "(" <exp: Expression> ")" => {
+  //   AstNumFnMin::Chain_Exp(exp)
+  // },
+  "Min" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnMin::AstSet(AstSet::SegsObj(set_segs))
+  },
+  "Min" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnMin::AstSet(ast_set)
+  },
+  "Min" "(" <set_segs: Segs_Obj> "," <exp: Expression> ")" => {
+    AstNumFnMin::AstSet_Exp(AstSet::SegsObj(set_segs), exp)
+  },
+  "Min" "(" <ast_set: Brace_Set> "," <exp: Expression> ")" => {
+    AstNumFnMin::AstSet_Exp(ast_set, exp)
+  },
+}
+
 AxisPos: u64 = {
   <axpos: "unsigned_int"> => axpos,
   "Columns"     => 0,
@@ -493,87 +590,6 @@ AxisPos: u64 = {
 // code review mark <<<<<<<<<<<<<<<
 // code review mark <<<<<<<<<<
 // code review mark <<<<<
-
-Count: AstExpFnCount = {
-  "Count" => {
-    AstExpFnCount::NoParam
-  },
-  "Count" "(" ")" => {
-    AstExpFnCount::NoParam
-  },
-  "Count" "(" <set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFnCount::InnerParam(set)
-  },
-}
-
-Avg: AstExpFnAvg = {
-  "Avg" => {
-    AstExpFnAvg::NoParam
-  },
-  "Avg" "(" ")" => {
-    AstExpFnAvg::NoParam
-  },
-  "Avg" "(" <set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFnAvg::InnerParam(set)
-  },
-}
-
-Sum: AstExpFuncSum = {
-  "Sum" ("(" ")")? => {
-    AstExpFuncSum::Simple
-  },
-  // "Sum" "(" <exp: Expression> ")" => {},
-  "Sum" "(" <segs_set: Segs_Obj> ")" => {
-    AstExpFuncSum::SegsSet(segs_set)
-  },
-  "Sum" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {
-    AstExpFuncSum::SegsSetExp(segs_set, exp)
-  },
-  "Sum" "(" <cb_set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFuncSum::BraceSet(cb_set)
-  },
-  "Sum" "(" <cb_set: Brace_Set> "," <exp: Expression> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFuncSum::BraceSetExp(cb_set, exp)
-  },
-}
-
-Max: AstExpFuncMax = {
-  "Max" ("(" ")")? => {
-    AstExpFuncMax::Simple
-  },
-  // "Max" "(" <exp: Expression> ")" => {},
-  "Max" "(" <segs_set: Segs_Obj> ")" => {
-    AstExpFuncMax::SegsSet(segs_set)
-  },
-  "Max" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {
-    AstExpFuncMax::SegsSetExp(segs_set, exp)
-  },
-  "Max" "(" <cb_set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFuncMax::BraceSet(cb_set)
-  },
-  "Max" "(" <cb_set: Brace_Set> "," <exp: Expression> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFuncMax::BraceSetExp(cb_set, exp)
-  },
-}
-
-Min: AstExpFuncMin = {
-  "Min" ("(" ")")? => {
-    AstExpFuncMin::Simple
-  },
-  // "Min" "(" <exp: Expression> ")" => {},
-  "Min" "(" <segs_set: Segs_Obj> ")" => {
-    AstExpFuncMin::SegsSet(segs_set)
-  },
-  "Min" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {
-    AstExpFuncMin::SegsSetExp(segs_set, exp)
-  },
-  "Min" "(" <cb_set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFuncMin::BraceSet(cb_set)
-  },
-  "Min" "(" <cb_set: Brace_Set> "," <exp: Expression> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFuncMin::BraceSetExp(cb_set, exp)
-  },
-}
 
 IIf: AstExpFnIIf = {
   "IIf" "(" <bool_exp: BoolExpression> "," <exp_t: Expression> "," <exp_f: Expression> ")" => {

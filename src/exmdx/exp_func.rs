@@ -3,23 +3,22 @@ use futures::future::BoxFuture;
 use crate::mdx_ast::ToCellValue;
 use crate::mdx_ast::{AstExpression, Materializable};
 
-use crate::exmdx::ast::{AstSegsObj, AstSet};
+use crate::exmdx::ast::AstSet;
 
 use crate::exmdx::mdd::TupleVector;
 use crate::mdd::{CellValue, MultiDimensionalContext, MultiDimensionalEntity};
 
 use crate::calcul;
 
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstExpFuncSum {
-    Simple,
-    SegsSet(AstSegsObj),
-    SegsSetExp(AstSegsObj, AstExpression),
-    BraceSet(AstSet),
-    BraceSetExp(AstSet, AstExpression),
+pub enum AstNumFnSum {
+    Chain,
+    AstSet(AstSet),
+    AstSet_Exp(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstExpFuncSum {
+impl ToCellValue for AstNumFnSum {
     fn val<'a>(
         &'a self,
         slice_tuple: &'a TupleVector,
@@ -30,20 +29,20 @@ impl ToCellValue for AstExpFuncSum {
             let mut outer_param = outer_param;
             let mut exp_opt: Option<AstExpression> = None;
             match self {
-                AstExpFuncSum::Simple => {
+                AstNumFnSum::Chain => {
                     // do nothing
                 }
-                AstExpFuncSum::SegsSet(segs) => {
-                    outer_param = Some(segs.materialize(slice_tuple, context).await);
-                }
-                AstExpFuncSum::SegsSetExp(segs, exp) => {
-                    outer_param = Some(segs.materialize(slice_tuple, context).await);
-                    exp_opt = Some(exp.clone());
-                }
-                AstExpFuncSum::BraceSet(ast_set) => {
+                // AstNumFnSum::SegsSet(segs) => {
+                //     outer_param = Some(segs.materialize(slice_tuple, context).await);
+                // }
+                // AstNumFnSum::SegsSetExp(segs, exp) => {
+                //     outer_param = Some(segs.materialize(slice_tuple, context).await);
+                //     exp_opt = Some(exp.clone());
+                // }
+                AstNumFnSum::AstSet(ast_set) => {
                     outer_param = Some(ast_set.materialize(slice_tuple, context).await);
                 }
-                AstExpFuncSum::BraceSetExp(ast_set, exp) => {
+                AstNumFnSum::AstSet_Exp(ast_set, exp) => {
                     outer_param = Some(ast_set.materialize(slice_tuple, context).await);
                     exp_opt = Some(exp.clone());
                 }
@@ -82,16 +81,15 @@ impl ToCellValue for AstExpFuncSum {
     }
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstExpFuncMax {
-    Simple,
-    SegsSet(AstSegsObj),
-    SegsSetExp(AstSegsObj, AstExpression),
-    BraceSet(AstSet),
-    BraceSetExp(AstSet, AstExpression),
+pub enum AstNumFnMax {
+    Chain,
+    AstSet(AstSet),
+    AstSet_Exp(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstExpFuncMax {
+impl ToCellValue for AstNumFnMax {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
@@ -102,16 +100,15 @@ impl ToCellValue for AstExpFuncMax {
     }
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstExpFuncMin {
-    Simple,
-    SegsSet(AstSegsObj),
-    SegsSetExp(AstSegsObj, AstExpression),
-    BraceSet(AstSet),
-    BraceSetExp(AstSet, AstExpression),
+pub enum AstNumFnMin {
+    Chain,
+    AstSet(AstSet),
+    AstSet_Exp(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstExpFuncMin {
+impl ToCellValue for AstNumFnMin {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,

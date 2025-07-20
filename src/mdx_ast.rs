@@ -685,14 +685,14 @@ impl AstSetFunction {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFunction {
-    Avg(AstExpFnAvg),
-    Count(AstExpFnCount),
+    Avg(AstNumFnAvg),
+    Count(AstNumFnCount),
     IIf(AstExpFnIIf),
     LookupCube(AstExpFnLookupCube),
     Name(AstExpFnName),
-    Sum(AstExpFuncSum),
-    Max(AstExpFuncMax),
-    Min(AstExpFuncMin),
+    Sum(AstNumFnSum),
+    Max(AstNumFnMax),
+    Min(AstNumFnMin),
 }
 
 impl ToCellValue for AstExpFunction {
@@ -811,14 +811,15 @@ impl ToCellValue for AstExpFnName {
     }
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstExpFnAvg {
-    NoParam,
-    InnerParam(AstSet),
-    OuterParam(Set),
+pub enum AstNumFnAvg {
+    Chain,
+    AstSet(AstSet),
+    AstSet_Exp(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstExpFnAvg {
+impl ToCellValue for AstNumFnAvg {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
@@ -830,29 +831,37 @@ impl ToCellValue for AstExpFnAvg {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstExpFnCount {
-    NoParam,
-    InnerParam(AstSet),
-    OuterParam(Set),
+pub enum AstNumFnCount {
+    Chain,
+    AstSet(AstSet),
+    // OuterParam(Set),
 }
 
-impl ToCellValue for AstExpFnCount {
+impl ToCellValue for AstNumFnCount {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
-        _outer_param: Option<MultiDimensionalEntity>,
+        outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
-            let set = match self {
-                AstExpFnCount::InnerParam(_set) => {
-                    todo!("AstExpFnCount::val()")
-                }
-                AstExpFnCount::OuterParam(set) => set,
-                _ => panic!("AstExpFnCount::val()"),
-            };
 
-            CellValue::Double(set.tuples.len() as f64)
+
+            // let set = match self {
+            //     AstNumFnCount::InnerParam(_set) => {
+            //         todo!("AstNumFnCount::val()")
+            //     }
+            //     AstNumFnCount::OuterParam(set) => set,
+            //     _ => panic!("AstNumFnCount::val()"),
+            // };
+            // CellValue::Double(set.tuples.len() as f64)
+
+            if let Some(MultiDimensionalEntity::SetWrap(set)) = outer_param {
+                CellValue::Double(set.tuples.len() as f64)
+            } else {
+                CellValue::Str("count函数参数错误".to_string())
+            }
+
         })
     }
 }

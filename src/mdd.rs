@@ -3,8 +3,8 @@ use core::panic;
 use crate::mdx_ast::ToCellValue;
 use crate::meta_cache;
 
-use crate::mdx_ast::AstExpFnAvg;
-use crate::mdx_ast::AstExpFnCount;
+// use crate::mdx_ast::AstNumFnAvg;
+// use crate::mdx_ast::AstNumFnCount;
 use crate::mdx_ast::AstExpFunction;
 use crate::mdx_ast::{AstExpression, AstSeg};
 
@@ -278,21 +278,31 @@ impl MultiDimensionalEntityLocator for Set {
 
         match seg {
             AstSeg::ExpFunc(exp_fn) => match exp_fn {
-                AstExpFunction::Avg(_) => {
+                AstExpFunction::Avg(avg_fn) => {
                     if seg_list.len() > 1 {
                         panic!("Avg function can only have one segment. hsbt2839");
                     }
-                    let set_copy = self.clone();
-                    let avg_fn = AstExpFnAvg::OuterParam(set_copy);
-                    return MultiDimensionalEntity::ExpFn(AstExpFunction::Avg(avg_fn));
+
+                    let fn_result = avg_fn.val(slice_tuple, context, Some(MultiDimensionalEntity::SetWrap(self.clone()))).await;
+                    MultiDimensionalEntity::CellValue(fn_result)
+
+                    // // let set_copy = self.clone();
+                    // // let avg_fn = AstNumFnAvg::OuterParam(set_copy);
+                    // let outter_param = MultiDimensionalEntity::SetWrap(self.clone());
+                    // return MultiDimensionalEntity::ExpFnWithOutterParam(outter_param, avg_fn.clone());
                 }
-                AstExpFunction::Count(_) => {
+                AstExpFunction::Count(count_fn) => {
                     if seg_list.len() > 1 {
                         panic!("Count function can only have one segment. hs8533BJ");
                     }
-                    let set_copy = self.clone();
-                    let count_fn = AstExpFnCount::OuterParam(set_copy);
-                    return MultiDimensionalEntity::ExpFn(AstExpFunction::Count(count_fn));
+
+                    let fn_result = count_fn.val(slice_tuple, context, Some(MultiDimensionalEntity::SetWrap(self.clone()))).await;
+                    MultiDimensionalEntity::CellValue(fn_result)
+
+                    // // let set_copy = self.clone();
+                    // // let count_fn = AstNumFnCount::OuterParam(set_copy);
+                    // let outter_param = MultiDimensionalEntity::SetWrap(self.clone());
+                    // return MultiDimensionalEntity::ExpFnWithOutterParam(outter_param, count_fn.clone());
                 }
                 AstExpFunction::Sum(exp_fn_sum) => {
                     if seg_list.len() > 1 {
