@@ -582,6 +582,28 @@ Name: AstStrFnName = {
   },
 }
 
+BoolExpression: AstBoolExp = {
+  <term: BoolTerm> => {
+    AstBoolExp { terms: vec![term] }
+  },
+  <bool_exp: BoolExpression> "Or" <term: BoolTerm> => {
+    let mut bool_exp = bool_exp;
+    bool_exp.terms.push(term);
+    bool_exp
+  }
+}
+
+BoolTerm: AstBoolTerm = {
+  <fac: BoolFactory> => {
+    AstBoolTerm { factories: vec![fac] }
+  },
+  <term: BoolTerm> "And" <fac: BoolFactory> => {
+    let mut term = term;
+    term.factories.push(fac);
+    term
+  }
+}
+
 AxisPos: u64 = {
   <axpos: "unsigned_int"> => axpos,
   "Columns"     => 0,
@@ -614,27 +636,6 @@ AxisPos: u64 = {
 // code review mark <<<<<<<<<<<<<<<
 // code review mark <<<<<<<<<<
 // code review mark <<<<<
-
-BoolExpression: AstBoolExp = {
-  <bt: BoolTerm> => {
-    AstBoolExp::BoolTerm(bt)
-  },
-  "Not" <bt: BoolTerm> => {
-    AstBoolExp::NotBoolTerm(bt)
-  },
-  <bool_exp: BoolExpression> "Or" <bt: BoolTerm> => {
-    AstBoolExp::BoolExpOrBoolTerm(Box::new(bool_exp), bt)
-  }
-}
-
-BoolTerm: AstBoolTerm = {
-  <bf: BoolFactory> => {
-    AstBoolTerm::BoolFactory(bf)
-  },
-  <bt: BoolTerm> "And" <bf: BoolFactory> => {
-    AstBoolTerm::BoolTermAndBoolFactory(Box::new(bt), bf)
-  }
-}
 
 BoolFactory: AstBoolFactory = {
   <exp_left: Expression> "<" <exp_right: Expression> => {

@@ -890,10 +890,8 @@ impl ToCellValue for AstNumFnIIf {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstBoolExp {
-    BoolTerm(AstBoolTerm),
-    NotBoolTerm(AstBoolTerm),
-    BoolExpOrBoolTerm(Box<AstBoolExp>, AstBoolTerm),
+pub struct AstBoolExp {
+    pub terms: Vec<AstBoolTerm>,
 }
 
 impl ToBoolValue for AstBoolExp {
@@ -903,28 +901,22 @@ impl ToBoolValue for AstBoolExp {
         context: &'a mut MultiDimensionalContext,
     ) -> BoxFuture<'a, bool> {
         Box::pin(async move {
-            match self {
-                AstBoolExp::BoolTerm(bool_term) => bool_term.bool_val(slice_tuple, context).await,
-                AstBoolExp::NotBoolTerm(bool_term) => {
-                    !bool_term.bool_val(slice_tuple, context).await
-                }
-                AstBoolExp::BoolExpOrBoolTerm(bool_exp, bool_term) => {
-                    let exp_bool = bool_exp.bool_val(slice_tuple, context).await;
-                    if exp_bool {
-                        true
-                    } else {
-                        bool_term.bool_val(slice_tuple, context).await
-                    }
+            for bool_term in &self.terms {
+                let result = bool_term.bool_val(slice_tuple, context).await;
+                if result {
+                    return true;
                 }
             }
+            false
         })
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstBoolTerm {
-    BoolFactory(AstBoolFactory),
-    BoolTermAndBoolFactory(Box<AstBoolTerm>, AstBoolFactory),
+pub struct AstBoolTerm {
+    pub factories: Vec<AstBoolFactory>,
+    // BoolFactory(AstBoolFactory),
+    // BoolTermAndBoolFactory(Box<AstBoolTerm>, AstBoolFactory),
 }
 
 impl ToBoolValue for AstBoolTerm {
@@ -934,19 +926,13 @@ impl ToBoolValue for AstBoolTerm {
         context: &'a mut MultiDimensionalContext,
     ) -> BoxFuture<'a, bool> {
         Box::pin(async move {
-            match self {
-                AstBoolTerm::BoolFactory(bool_factory) => {
-                    bool_factory.bool_val(slice_tuple, context).await
-                }
-                AstBoolTerm::BoolTermAndBoolFactory(bool_term, bool_factory) => {
-                    let term_bool = bool_term.bool_val(slice_tuple, context).await;
-                    if term_bool {
-                        bool_factory.bool_val(slice_tuple, context).await
-                    } else {
-                        false
-                    }
+            for factory in &self.factories {
+                let result = factory.bool_val(slice_tuple, context).await;
+                if !result {
+                    return false; // 只要有一个为false，直接返回false
                 }
             }
+            true
         })
     }
 }
