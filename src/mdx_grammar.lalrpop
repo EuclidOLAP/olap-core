@@ -559,7 +559,7 @@ Min: AstNumFnMin = {
 }
 
 IIf: AstNumFnIIf = {
-  "IIf" "(" <bool_exp: BoolExpression> "," <true_exp: Expression> "," <false_exp: Expression> ")" => {
+  "IIf" "(" <bool_exp: Bool_Expression> "," <true_exp: Expression> "," <false_exp: Expression> ")" => {
     AstNumFnIIf { bool_exp, true_exp, false_exp }
   }
 }
@@ -582,22 +582,22 @@ Name: AstStrFnName = {
   },
 }
 
-BoolExpression: AstBoolExp = {
-  <term: BoolTerm> => {
+Bool_Expression: AstBoolExp = {
+  <term: Bool_Term> => {
     AstBoolExp { terms: vec![term] }
   },
-  <bool_exp: BoolExpression> "Or" <term: BoolTerm> => {
+  <bool_exp: Bool_Expression> "Or" <term: Bool_Term> => {
     let mut bool_exp = bool_exp;
     bool_exp.terms.push(term);
     bool_exp
   }
 }
 
-BoolTerm: AstBoolTerm = {
+Bool_Term: AstBoolTerm = {
   <fac: BoolFactory> => {
     AstBoolTerm { factories: vec![fac] }
   },
-  <term: BoolTerm> "And" <fac: BoolFactory> => {
+  <term: Bool_Term> "And" <fac: BoolFactory> => {
     let mut term = term;
     term.factories.push(fac);
     term
@@ -656,7 +656,7 @@ BoolFactory: AstBoolFactory = {
   <exp_left: Expression> ">=" <exp_right: Expression> => {
     AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">="), exp_right)
   },
-  "(" <bool_exp: BoolExpression> ")" => {
+  "(" <bool_exp: Bool_Expression> ")" => {
     AstBoolFactory::BoolExp(Box::new(bool_exp))
   },
   <bool_fn: BoolFunction> => {
