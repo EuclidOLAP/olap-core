@@ -358,8 +358,17 @@ impl AstSet {
                     _ => panic!("The entity is not a TupleWrap variant."),
                 };
             }
-            AstSet::SegsObj(_segs_obj) => {
-                panic!("AstSet::SegsObj is not implemented yet.")
+            AstSet::SegsObj(segs_obj) => {
+                let olap_entity = segs_obj.materialize(slice_tuple, context).await;
+                // println!("olap_entity: {:#?}", olap_entity);
+                match olap_entity {
+                    MultiDimensionalEntity::FormulaMemberWrap { dim_role_gid, exp } => {
+                        result = TupleVector {
+                            member_roles: vec![MemberRole::FormulaMember { dim_role_gid, exp }],
+                        };
+                    }
+                    _ => panic!("The entity is not a FormulaMemberWrap variant."),
+                }
             }
         }
         result
@@ -392,6 +401,16 @@ impl Materializable for AstSet {
                 AstSet::SegsObj(segs_obj) => {
                     let olap_entity = segs_obj.materialize(slice_tuple, context).await;
                     match olap_entity {
+                        MultiDimensionalEntity::FormulaMemberWrap { dim_role_gid, exp } => {
+                            return MultiDimensionalEntity::SetWrap(Set {
+                                tuples: vec![TupleVector {
+                                    member_roles: vec![MemberRole::FormulaMember {
+                                        dim_role_gid,
+                                        exp,
+                                    }],
+                                }],
+                            });
+                        }
                         MultiDimensionalEntity::SetWrap(set) => {
                             for tuple in set.tuples.iter() {
                                 tuple_vec.push(tuple.clone());
@@ -441,8 +460,10 @@ impl Materializable for AstTuple {
                     }
                     MultiDimensionalEntity::TupleWrap(TupleVector { member_roles })
                 }
-                AstTuple::SegsObj(_segs) => {
-                    panic!("AstTuple::SegsObj is not implemented yet.")
+                AstTuple::SegsObj(segs) => {
+                    AstTuple::SegsObjects(vec![segs.clone()])
+                        .materialize(slice_tuple, context)
+                        .await
                 }
             }
         })

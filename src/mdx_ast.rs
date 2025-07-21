@@ -679,7 +679,7 @@ pub enum AstExpFunction {
     Count(AstNumFnCount),
     IIf(AstNumFnIIf),
     LookupCube(AstExpFnLookupCube),
-    Name(AstExpFnName),
+    Name(AstStrFnName),
     Sum(AstNumFnSum),
     Max(AstNumFnMax),
     Min(AstNumFnMin),
@@ -694,16 +694,13 @@ impl ToCellValue for AstExpFunction {
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             match self {
-                AstExpFunction::Avg(avg_fn) => avg_fn.val(slice_tuple, context, None).await,
-                AstExpFunction::Count(count_fn) => count_fn.val(slice_tuple, context, None).await,
-                AstExpFunction::IIf(iif_fn) => iif_fn.val(slice_tuple, context, None).await,
+                AstExpFunction::Avg(avg_fn) => avg_fn.val(slice_tuple, context, outer_param).await,
+                AstExpFunction::Count(count_fn) => {
+                    count_fn.val(slice_tuple, context, outer_param).await
+                }
+                AstExpFunction::IIf(iif_fn) => iif_fn.val(slice_tuple, context, outer_param).await,
                 AstExpFunction::Name(name_fn) => {
-                    if let Some(olap_obj) = outer_param {
-                        let name_fn = AstExpFnName::OuterParam(Box::new(olap_obj));
-                        name_fn.val(slice_tuple, context, None).await
-                    } else {
-                        name_fn.val(slice_tuple, context, None).await
-                    }
+                    name_fn.val(slice_tuple, context, outer_param).await
                 }
                 AstExpFunction::LookupCube(lookup_cube) => {
                     lookup_cube.val(slice_tuple, context, outer_param).await
@@ -723,48 +720,38 @@ impl ToCellValue for AstExpFunction {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum AstExpFnName {
-    NoParam,
-    InnerParam(AstSegsObj),
-    OuterParam(Box<MultiDimensionalEntity>),
+pub enum AstStrFnName {
+    Chain,
+    SegsObj(AstSegsObj),
+    // OuterParam(Box<MultiDimensionalEntity>),
 }
 
-impl ToCellValue for AstExpFnName {
+impl ToCellValue for AstStrFnName {
     fn val<'a>(
         &'a self,
         slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
-        _outer_param: Option<MultiDimensionalEntity>,
+        outer_param: Option<MultiDimensionalEntity>,
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
-            //  CellValue::Str("avg函数有待实现".to_string())
-            match self {
-                AstExpFnName::InnerParam(segs) => {
-                    let olap_obj = segs.materialize(slice_tuple, context).await;
-                    if let MultiDimensionalEntity::MemberRoleWrap(member_role) = olap_obj {
-                        match member_role {
-                            MemberRole::BaseMember { member, .. } => {
-                                CellValue::Str(member.name.clone())
-                            }
-                            _ => CellValue::Str("name函数参数错误".to_string()),
-                        }
+            let param_olap_obj = match self {
+                AstStrFnName::SegsObj(segs) => segs.materialize(slice_tuple, context).await,
+                AstStrFnName::Chain => {
+                    if let Some(olap_obj) = outer_param {
+                        olap_obj
                     } else {
-                        CellValue::Str("name函数参数错误".to_string())
+                        panic!("[dsuc-0-fff2] AstStrFnName::val()")
                     }
                 }
-                AstExpFnName::OuterParam(entity) => {
-                    if let MultiDimensionalEntity::MemberRoleWrap(member_role) = entity.as_ref() {
-                        match member_role {
-                            MemberRole::BaseMember { member, .. } => {
-                                CellValue::Str(member.name.clone())
-                            }
-                            _ => CellValue::Str("name函数参数错误".to_string()),
-                        }
-                    } else {
-                        CellValue::Str("name函数参数错误".to_string())
-                    }
+            };
+
+            if let MultiDimensionalEntity::MemberRoleWrap(member_role) = param_olap_obj {
+                match member_role {
+                    MemberRole::BaseMember { member, .. } => CellValue::Str(member.name.clone()),
+                    _ => CellValue::Str("name函数参数错误".to_string()),
                 }
-                _ => panic!("[dsuc-0-8492] AstExpFnName::val()"),
+            } else {
+                CellValue::Str("name函数参数错误".to_string())
             }
         })
     }

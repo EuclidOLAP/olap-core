@@ -9,7 +9,7 @@ use crate::mdx_ast::{AstMemberFnCurrentMember};
 use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
 use crate::mdx_ast::{AstExpFunction};
 use crate::mdx_ast::{AstNumFnCount, AstNumFnAvg};
-use crate::mdx_ast::{AstExpFnName};
+use crate::mdx_ast::{AstStrFnName};
 use crate::mdx_ast::{AstExpFnLookupCube};
 use crate::mdx_ast::AstNumFnIIf;
 use crate::mdx_ast::AstBoolExp;
@@ -565,12 +565,21 @@ IIf: AstNumFnIIf = {
 }
 
 LookupCube: AstExpFnLookupCube = {
-    "LookupCube" "(" <exp: Expression> ")" => {
-      AstExpFnLookupCube::Chain(exp)
-    },
-    "LookupCube" "(" <cube_segs: Segs_Obj> "," <exp: Expression> ")" => {
-      AstExpFnLookupCube::CubeSegs_Exp(cube_segs, exp)
-    },
+  "LookupCube" "(" <exp: Expression> ")" => {
+    AstExpFnLookupCube::Chain(exp)
+  },
+  "LookupCube" "(" <cube_segs: Segs_Obj> "," <exp: Expression> ")" => {
+    AstExpFnLookupCube::CubeSegs_Exp(cube_segs, exp)
+  },
+}
+
+Name: AstStrFnName = {
+  "Name" ("(" ")")? => {
+    AstStrFnName::Chain
+  },
+  "Name" "(" <segs_obj: Segs_Obj> ")" => {
+    AstStrFnName::SegsObj(segs_obj)
+  },
 }
 
 AxisPos: u64 = {
@@ -605,18 +614,6 @@ AxisPos: u64 = {
 // code review mark <<<<<<<<<<<<<<<
 // code review mark <<<<<<<<<<
 // code review mark <<<<<
-
-Name: AstExpFnName = {
-  "Name" => {
-    AstExpFnName::NoParam
-  },
-  "Name" "(" ")" => {
-    AstExpFnName::NoParam
-  },
-  "Name" "(" <olap_obj_segs: Segs_Obj> ")" => {
-    AstExpFnName::InnerParam(olap_obj_segs)
-  },
-}
 
 BoolExpression: AstBoolExp = {
   <bt: BoolTerm> => {
