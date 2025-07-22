@@ -14,7 +14,7 @@ use crate::mdx_ast::{AstExpFnLookupCube};
 use crate::mdx_ast::AstNumFnIIf;
 use crate::mdx_ast::AstBoolExp;
 use crate::mdx_ast::AstBoolTerm;
-use crate::mdx_ast::AstBoolFactory;
+use crate::mdx_ast::{AstBoolFactory, AstBoolPrimary};
 use crate::mdx_ast::AstBoolFunction;
 use crate::mdx_ast::AstBoolFnIsLeaf;
 
@@ -594,14 +594,63 @@ Bool_Expression: AstBoolExp = {
 }
 
 Bool_Term: AstBoolTerm = {
-  <fac: BoolFactory> => {
+  <fac: Bool_Factory> => {
     AstBoolTerm { factories: vec![fac] }
   },
-  <term: Bool_Term> "And" <fac: BoolFactory> => {
+  <term: Bool_Term> "And" <fac: Bool_Factory> => {
     let mut term = term;
     term.factories.push(fac);
     term
   }
+}
+
+Bool_Factory: AstBoolFactory = {
+  <bool_pri: Bool_Primary> => {
+    AstBoolFactory::BoolPrimary(bool_pri)
+  },
+  "Not" <bool_pri: Bool_Primary> => {
+    AstBoolFactory::Not_BoolPrimary(bool_pri)
+  },
+}
+
+Bool_Primary: AstBoolPrimary = {
+  <exp_left: Expression> "<" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesExp(exp_left, String::from("<"), exp_right)
+  },
+  <exp_left: Expression> "<=" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesExp(exp_left, String::from("<="), exp_right)
+  },
+  <exp_left: Expression> "=" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesExp(exp_left, String::from("="), exp_right)
+  },
+  <exp_left: Expression> "<>" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesExp(exp_left, String::from("<>"), exp_right)
+  },
+  <exp_left: Expression> ">" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesExp(exp_left, String::from(">"), exp_right)
+  },
+  <exp_left: Expression> ">=" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesExp(exp_left, String::from(">="), exp_right)
+  },
+  "(" <bool_exp: Bool_Expression> ")" => {
+    AstBoolPrimary::BoolExp(bool_exp)
+    // AstBoolPrimary::BoolExp(Box::new(bool_exp))
+  },
+  <bool_fn: Bool_Function> => {
+    AstBoolPrimary::BoolFn(bool_fn)
+  }
+}
+
+Bool_Function: AstBoolFunction = {
+  <is_leaf: BoolFn_IsLeaf> => {
+    AstBoolFunction::IsLeaf(is_leaf)
+  }
+}
+
+BoolFn_IsLeaf: AstBoolFnIsLeaf = {
+  "IsLeaf" "(" <member_segs: Segs_Obj> ")" => {
+    AstBoolFnIsLeaf::Member_Segs(member_segs)
+  },
 }
 
 AxisPos: u64 = {
@@ -636,48 +685,3 @@ AxisPos: u64 = {
 // code review mark <<<<<<<<<<<<<<<
 // code review mark <<<<<<<<<<
 // code review mark <<<<<
-
-BoolFactory: AstBoolFactory = {
-  <exp_left: Expression> "<" <exp_right: Expression> => {
-    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<"), exp_right)
-  },
-  <exp_left: Expression> "<=" <exp_right: Expression> => {
-    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<="), exp_right)
-  },
-  <exp_left: Expression> "=" <exp_right: Expression> => {
-    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("="), exp_right)
-  },
-  <exp_left: Expression> "<>" <exp_right: Expression> => {
-    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<>"), exp_right)
-  },
-  <exp_left: Expression> ">" <exp_right: Expression> => {
-    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">"), exp_right)
-  },
-  <exp_left: Expression> ">=" <exp_right: Expression> => {
-    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">="), exp_right)
-  },
-  "(" <bool_exp: Bool_Expression> ")" => {
-    AstBoolFactory::BoolExp(Box::new(bool_exp))
-  },
-  <bool_fn: BoolFunction> => {
-    AstBoolFactory::BoolFn(bool_fn)
-  }
-}
-
-BoolFunction: AstBoolFunction = {
-  <is_leaf: BoolFnIsLeaf> => {
-    AstBoolFunction::IsLeaf(is_leaf)
-  }
-}
-
-BoolFnIsLeaf: AstBoolFnIsLeaf = {
-  // "IsLeaf" => {
-  //   AstBoolFnIsLeaf::new(None)
-  // },
-  // "IsLeaf" "(" ")" => {
-  //   AstBoolFnIsLeaf::new(None)
-  // },
-  "IsLeaf" "(" <member_segs: Segs_Obj> ")" => {
-    AstBoolFnIsLeaf::new(member_segs)
-  },
-}

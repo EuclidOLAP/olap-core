@@ -939,9 +939,11 @@ impl ToBoolValue for AstBoolTerm {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstBoolFactory {
-    ExpressionComparesAnother(AstExpression, String, AstExpression),
-    BoolExp(Box<AstBoolExp>),
-    BoolFn(AstBoolFunction),
+    BoolPrimary(AstBoolPrimary),
+    Not_BoolPrimary(AstBoolPrimary),
+    // ExpComparesExp(AstExpression, String, AstExpression),
+    // BoolExp(Box<AstBoolExp>),
+    // BoolFn(AstBoolFunction),
 }
 
 impl ToBoolValue for AstBoolFactory {
@@ -952,13 +954,36 @@ impl ToBoolValue for AstBoolFactory {
     ) -> BoxFuture<'a, bool> {
         Box::pin(async move {
             match self {
-                AstBoolFactory::ExpressionComparesAnother(exp1, op, exp2) => {
+                AstBoolFactory::BoolPrimary(bool_pri) => bool_pri.bool_val(slice_tuple, context).await,
+                AstBoolFactory::Not_BoolPrimary(bool_pri) => !bool_pri.bool_val(slice_tuple, context).await,
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstBoolPrimary {
+    ExpComparesExp(AstExpression, String, AstExpression),
+    BoolExp(AstBoolExp),
+    // BoolExp(Box<AstBoolExp>),
+    BoolFn(AstBoolFunction),
+}
+
+impl ToBoolValue for AstBoolPrimary {
+    fn bool_val<'a>(
+        &'a self,
+        slice_tuple: &'a TupleVector,
+        context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, bool> {
+        Box::pin(async move {
+            match self {
+                Self::ExpComparesExp(exp1, op, exp2) => {
                     let val1 = exp1.val(slice_tuple, context, None).await;
                     let val2 = exp2.val(slice_tuple, context, None).await;
                     val1.logical_cmp(op, &val2)
                 }
-                AstBoolFactory::BoolExp(bool_exp) => bool_exp.bool_val(slice_tuple, context).await,
-                AstBoolFactory::BoolFn(bool_fn) => bool_fn.bool_val(slice_tuple, context).await,
+                Self::BoolExp(bool_exp) => bool_exp.bool_val(slice_tuple, context).await,
+                Self::BoolFn(bool_fn) => bool_fn.bool_val(slice_tuple, context).await,
             }
         })
     }
@@ -986,15 +1011,15 @@ impl ToBoolValue for AstBoolFunction {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct AstBoolFnIsLeaf {
-    pub member_segs: AstSegsObj,
+pub enum AstBoolFnIsLeaf {
+    Member_Segs(AstSegsObj),
 }
 
-impl AstBoolFnIsLeaf {
-    pub fn new(member_segs: AstSegsObj) -> Self {
-        Self { member_segs }
-    }
-}
+// impl AstBoolFnIsLeaf {
+//     pub fn new(member_segs: AstSegsObj) -> Self {
+//         Self { member_segs }
+//     }
+// }
 
 impl ToBoolValue for AstBoolFnIsLeaf {
     fn bool_val<'a>(
@@ -1003,7 +1028,15 @@ impl ToBoolValue for AstBoolFnIsLeaf {
         context: &'a mut MultiDimensionalContext,
     ) -> BoxFuture<'a, bool> {
         Box::pin(async move {
-            let olap_obj = self.member_segs.materialize(slice_tuple, context).await;
+
+            let mem_role_segs = if let AstBoolFnIsLeaf::Member_Segs(mem_segs) = self {
+                mem_segs
+            } else {
+                panic!("[dsuBUI-fff2] AstBoolFnIsLeaf::bool_val()")
+            };
+
+            let olap_obj = mem_role_segs.materialize(slice_tuple, context).await;
+
             if let MultiDimensionalEntity::MemberRoleWrap(member_role) = olap_obj {
                 match member_role {
                     MemberRole::BaseMember { member, .. } => member.leaf,
@@ -1012,6 +1045,16 @@ impl ToBoolValue for AstBoolFnIsLeaf {
             } else {
                 panic!("[hsju6679] The entity is not a MemberRole variant.");
             }
+
+            // let olap_obj = self.member_segs.materialize(slice_tuple, context).await;
+            // if let MultiDimensionalEntity::MemberRoleWrap(member_role) = olap_obj {
+            //     match member_role {
+            //         MemberRole::BaseMember { member, .. } => member.leaf,
+            //         _ => true,
+            //     }
+            // } else {
+            //     panic!("[hsju6679] The entity is not a MemberRole variant.");
+            // }
         })
     }
 }
