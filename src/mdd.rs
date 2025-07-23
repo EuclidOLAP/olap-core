@@ -5,7 +5,7 @@ use crate::meta_cache;
 
 // use crate::mdx_ast::AstNumFnAvg;
 // use crate::mdx_ast::AstNumFnCount;
-use crate::mdx_ast::AstExpFunction;
+use crate::exmdx::exp_func::AstExpFunction;
 use crate::mdx_ast::{AstExpression, AstSeg};
 
 use crate::exmdx::ast::{AstCustomObject, AstSegsObj};
