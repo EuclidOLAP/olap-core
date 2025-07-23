@@ -937,6 +937,7 @@ impl ToBoolValue for AstBoolTerm {
     }
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstBoolFactory {
     BoolPrimary(AstBoolPrimary),
@@ -1010,6 +1011,7 @@ impl ToBoolValue for AstBoolFunction {
     }
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstBoolFnIsLeaf {
     Member_Segs(AstSegsObj),
@@ -1029,10 +1031,8 @@ impl ToBoolValue for AstBoolFnIsLeaf {
     ) -> BoxFuture<'a, bool> {
         Box::pin(async move {
 
-            let mem_role_segs = if let AstBoolFnIsLeaf::Member_Segs(mem_segs) = self {
-                mem_segs
-            } else {
-                panic!("[dsuBUI-fff2] AstBoolFnIsLeaf::bool_val()")
+            let mem_role_segs = match self {
+                AstBoolFnIsLeaf::Member_Segs(segs) => segs,
             };
 
             let olap_obj = mem_role_segs.materialize(slice_tuple, context).await;
