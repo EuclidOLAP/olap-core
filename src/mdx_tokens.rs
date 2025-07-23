@@ -119,8 +119,10 @@ pub enum Token {
     Min,
     #[regex("(?i)Count")]
     Count,
-    #[regex("(?i)Tunnel")]
-    Tunnel,
+    // #[regex("(?i)Tunnel")]
+    // Tunnel,
+    #[regex("(?i)LookupCube")]
+    LookupCube,
     #[regex("(?i)Abs")]
     #[regex("(?i)ClosingPeriod")]
     ClosingPeriod,

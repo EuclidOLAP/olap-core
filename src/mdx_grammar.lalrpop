@@ -2,25 +2,44 @@ use crate::mdx_tokens::{Token, LexicalError};
 
 use crate::mdx_ast::AstSeg;
 use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
-use crate::mdx_ast::AstFactory::{FactoryNum, FactoryStr, FactorySegs,FactoryTuple,FactoryExp};
 use crate::mdx_ast::{AstLevelFunction, AstLevelFnLevel, AstLevelFnLevels};
 use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent, AstMemberFnClosingPeriod, AstMemberFnOpeningPeriod};
 use crate::mdx_ast::{AstMemberFnCurrentMember};
 use crate::mdx_ast::{AstSetFunction, AstSetFnChildren};
-use crate::mdx_ast::{AstExpFunction, AstExpFnAvg, AstExpFnCount};
-use crate::mdx_ast::{AstExpFnName};
-use crate::mdx_ast::{AstExpFnLookupCube};
-use crate::mdx_ast::AstExpFnIIf;
-use crate::mdx_ast::AstBoolExp;
-use crate::mdx_ast::AstBoolTerm;
-use crate::mdx_ast::AstBoolFactory;
-use crate::mdx_ast::AstBoolFunction;
-use crate::mdx_ast::AstBoolFnIsLeaf;
 
-use crate::exmdx::ast::AstSegsObj;
-use crate::exmdx::ast::{AstMdxStatement, AstSet, AstTuple, AstAxis, AstCustomObject};
+// code review mark >>>>>
+// code review mark >>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-use crate::exmdx::exp_func::{AstExpFuncSum, AstExpFuncMax, AstExpFuncMin};
+use crate::exmdx::ast::{AstSegsObj, AstMdxStatement, AstSet, AstTuple, AstAxis, AstCustomObject};
+use crate::exmdx::exp_func::AstExpFunction;
+use crate::exmdx::exp_func::{AstNumFnSum, AstNumFnMax, AstNumFnMin};
+use crate::exmdx::exp_func::{AstNumFnCount, AstNumFnAvg, AstNumFnIIf};
+use crate::exmdx::exp_func::AstExpFnLookupCube;
+use crate::exmdx::exp_func::{AstStrFnName};
+
+use crate::exmdx::logic::{AstBoolExp, AstBoolTerm, AstBoolFactory, AstBoolPrimary, AstBoolFunction};
+use crate::exmdx::logic::{AstBoolFnIsLeaf};
 
 grammar;
 
@@ -38,8 +57,6 @@ extern {
     "on" => Token::On,
     "from" => Token::From,
     "where" => Token::Where,
-    "BracketedString" => Token::BracketedString(<String>),
-    "QuotedString" => Token::QuotedString(<String>),
 
     "Columns" => Token::Columns,
     "Rows" => Token::Rows,
@@ -47,21 +64,20 @@ extern {
     "Chapters" => Token::Chapters,
     "Sections" => Token::Sections,
 
-    "+" => Token::Plus,
-    "-" => Token::Minus,
-    "*" => Token::Multiplied,
-    "/" => Token::Divided,
-
-    "," => Token::Comma,
-    "&" => Token::Ampersand,
-    "." => Token::Dot,
-    "unsigned_int" => Token::Integer(<u64>),
-    "double" => Token::Double(<f64>),
-
     "(" => Token::RoundBracketLeft,
     ")" => Token::RoundBracketRight,
     "{" => Token::CurlyBraceLeft,
     "}" => Token::CurlyBraceRight,
+
+    "," => Token::Comma,
+    "&" => Token::Ampersand,
+    "." => Token::Dot,
+    ";" => Token::Semicolon,
+
+    "+" => Token::Plus,
+    "-" => Token::Minus,
+    "*" => Token::Multiplied,
+    "/" => Token::Divided,
 
     "<" => Token::LT,
     "<=" => Token::LE,
@@ -70,7 +86,11 @@ extern {
     ">" => Token::GT,
     ">=" => Token::GE,
 
-    ";" => Token::Semicolon,
+    "unsigned_int" => Token::Integer(<u64>),
+    "double" => Token::Double(<f64>),
+
+    "BracketedString" => Token::BracketedString(<String>),
+    "QuotedString" => Token::QuotedString(<String>),
 
     "Parent" => Token::Parent,
     "CurrentMember" => Token::CurrentMember,
@@ -79,18 +99,19 @@ extern {
 
     "Children" => Token::Children,
 
+    "Level" => Token::Level,
+    "Levels" => Token::Levels,
+
     "Avg" => Token::Avg,
     "Sum" => Token::Sum,
     "Max" => Token::Max,
     "Min" => Token::Min,
     "Count" => Token::Count,
-    "Tunnel" => Token::Tunnel,
+    // "Tunnel" => Token::Tunnel,
+    "LookupCube" => Token::LookupCube,
     "IIf" => Token::IIf,
 
     "Name" => Token::Name,
-
-    "Level" => Token::Level,
-    "Levels" => Token::Levels,
 
     "Not" => Token::Not,
     "Or" => Token::Or,
@@ -99,17 +120,6 @@ extern {
     "IsLeaf" => Token::IsLeaf,
   }
 }
-
-// code review mark <<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // MDX Function Reference
 // https://docs.oracle.com/en/database/other-databases/essbase/21/esscq/mdx-function-list.html
@@ -137,6 +147,27 @@ Slicing_Querying: (Vec<AstAxis>, AstSegsObj, Option<AstTuple>) = {
   },
 }
 
+Axes: Vec<AstAxis> = {
+  <axis: Axis> => {
+    vec![axis]
+  },
+  <axes: Axes> (",")? <axis: Axis> => {
+    let mut list = axes;
+    list.push(axis);
+    list
+  }
+}
+
+// COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
+Axis: AstAxis = {
+  <ast_set: Brace_Set> "on" <position: AxisPos> => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
+    AstAxis { ast_set, position }
+  },
+  <segs_obj: Segs_Obj> "on" <position: AxisPos> => {
+    AstAxis { ast_set: AstSet::SegsObj(segs_obj), position }
+  },
+}
+
 With_Custom_Objects: Vec<AstCustomObject> = {
   <cus_obj: Custom_Object> => {
     vec![cus_obj]
@@ -157,6 +188,66 @@ Custom_Object: AstCustomObject = {
   },
   "set" <cus_set_segs: Segs_Obj> "as" <segs_obj: Segs_Obj> => {
     AstCustomObject::CustomSet(cus_set_segs, AstSet::SegsObj(segs_obj))
+  },
+}
+
+Expression: AstExpression = {
+  <term: Term> => {
+    AstExpression {
+      terms: vec![('+', term)],
+    }
+  },
+  <exp: Expression> "+" <term: Term> => {
+    let mut exp = exp;
+    exp.terms.push(('+', term));
+    exp
+  },
+  <exp: Expression> "-" <term: Term> => {
+    let mut exp = exp;
+    exp.terms.push(('-', term));
+    exp
+  }
+}
+
+Term: AstTerm = {
+  <factory: Factory> => {
+    AstTerm {
+      factories: vec![('*', factory)],
+    }
+  },
+  <term: Term> "*" <factory: Factory> => {
+    let mut term = term;
+    term.factories.push(('*', factory));
+    term
+  },
+  <term: Term> "/" <factory: Factory> => {
+    let mut term = term;
+    term.factories.push(('/', factory));
+    term
+  }
+}
+
+Factory: AstFactory = {
+  <numeric: "double"> => {
+    AstFactory::Numeric(numeric)
+  },
+  <long_int: "unsigned_int"> => {
+    // let numeric: f64 = long_int as f64;
+    AstFactory::Numeric(long_int as f64)
+  },
+  <str: "QuotedString"> => {
+    AstFactory::String(str)
+  },
+  <segs_obj: Segs_Obj> => {
+    AstFactory::AstSegsObj(segs_obj)
+  },
+  "(" <segs_objs: Segs_Objects> "," <segs_obj: Segs_Obj> ")" => {
+    let mut segs_objs = segs_objs;
+    segs_objs.push(segs_obj);
+    AstFactory::AstTuple(AstTuple::SegsObjects(segs_objs))
+  },
+  "(" <exp: Expression> ")" => {
+    AstFactory::AstExpression(exp)
   },
 }
 
@@ -237,6 +328,325 @@ Seg: AstSeg = {
   },
 }
 
+Member_Func: AstMemberFunction = {
+  <memb_func: Parent> => {
+    AstMemberFunction::Parent(memb_func)
+  },
+  <memb_func: Closing_Period> => {
+    AstMemberFunction::ClosingPeriod(memb_func)
+  },
+  <memb_func: Opening_Period> => {
+    AstMemberFunction::OpeningPeriod(memb_func)
+  },
+  <memb_func: Current_Member> => {
+    AstMemberFunction::CurrentMember(memb_func)
+  },
+}
+
+Parent: AstMemberFnParent = {
+  "Parent" ("(" ")")? => {
+    AstMemberFnParent::Chain
+  },
+  "Parent" "(" <mem_segs: Segs_Obj> ")" => {
+    AstMemberFnParent::MemSegs(mem_segs)
+  },
+}
+
+Closing_Period: AstMemberFnClosingPeriod = {
+  "ClosingPeriod" ("(" ")")? => {
+    AstMemberFnClosingPeriod::Chain
+  },
+  "ClosingPeriod" "(" <level_segs: Segs_Obj> ")" => {
+    AstMemberFnClosingPeriod::LvSegs(level_segs)
+  },
+  "ClosingPeriod" "(" <level_segs: Segs_Obj> "," <member_segs: Segs_Obj> ")" => {
+    AstMemberFnClosingPeriod::LvSegs_MemSegs(level_segs, member_segs)
+  },
+}
+
+Opening_Period: AstMemberFnOpeningPeriod = {
+  "OpeningPeriod" ("(" ")")? => {
+    AstMemberFnOpeningPeriod::Chain
+  },
+  "OpeningPeriod" "(" <level_segs: Segs_Obj> ")" => {
+    AstMemberFnOpeningPeriod::LvSegs(level_segs)
+  },
+  "OpeningPeriod" "(" <level_segs: Segs_Obj> "," <member_segs: Segs_Obj> ")" => {
+    AstMemberFnOpeningPeriod::LvSegs_MemSegs(level_segs, member_segs)
+  },
+}
+
+Current_Member: AstMemberFnCurrentMember = {
+  "CurrentMember" ("(" ")")? => {
+    AstMemberFnCurrentMember::Chain
+  },
+  "CurrentMember" "(" <segs_obj: Segs_Obj> ")" => {
+    AstMemberFnCurrentMember::SegsObj(segs_obj)
+  },
+}
+
+Level_Func: AstLevelFunction = {
+  <lv_func: Level> => {
+    AstLevelFunction::Level(lv_func)
+  },
+  <lv_func: Levels> => {
+    AstLevelFunction::Levels(lv_func)
+  },
+}
+
+Level: AstLevelFnLevel = {
+  "Level" ("(" ")")? => {
+    AstLevelFnLevel::Chain
+  },
+  "Level" "(" <mem_segs: Segs_Obj> ")" => {
+    AstLevelFnLevel::MemSegs(mem_segs)
+  },
+}
+
+Levels: AstLevelFnLevels = {
+  "Levels" "(" <exp: Expression> ")" => {
+    AstLevelFnLevels::Chain_Exp(exp)
+  },
+  "Levels" "(" <segs_obj: Segs_Obj> "," <exp: Expression> ")" => {
+    AstLevelFnLevels::SegsObj_Exp(segs_obj, exp)
+  },
+}
+
+Set_Func: AstSetFunction = {
+  <set_func: Children> => {
+    AstSetFunction::Children(set_func)
+  },
+}
+
+Children: AstSetFnChildren = {
+  "Children" ("(" ")")? => {
+    AstSetFnChildren::Chain
+  },
+  "Children" "(" <mem_segs: Segs_Obj> ")" => {
+    AstSetFnChildren::MemSegs(mem_segs)
+  },
+}
+
+Exp_Func: AstExpFunction = {
+  <num_func: Avg> => {
+    AstExpFunction::Avg(num_func)
+  },
+  <num_func: Count> => {
+    AstExpFunction::Count(num_func)
+  },
+  <num_func: IIf> => {
+    AstExpFunction::IIf(num_func)
+  },
+  <num_func: Sum> => {
+    AstExpFunction::Sum(num_func)
+  },
+  <num_func: Max> => {
+    AstExpFunction::Max(num_func)
+  },
+  <num_func: Min> => {
+    AstExpFunction::Min(num_func)
+  },
+
+  <exp_func: LookupCube> => {
+    AstExpFunction::LookupCube(exp_func)
+  },
+
+  <str_func: Name> => {
+    AstExpFunction::Name(str_func)
+  },
+}
+
+Count: AstNumFnCount = {
+  "Count" ("(" ")")? => {
+    AstNumFnCount::Chain
+  },
+  "Count" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnCount::AstSet(ast_set)
+  },
+  "Count" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnCount::AstSet(AstSet::SegsObj(set_segs))
+  },
+}
+
+Avg: AstNumFnAvg = {
+  "Avg" ("(" ")")? => {
+    AstNumFnAvg::Chain
+  },
+  // "Avg" "(" <exp: Expression> ")" => {
+  //   AstNumFnAvg::Chain_Exp(exp)
+  // },
+  "Avg" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnAvg::AstSet(AstSet::SegsObj(set_segs))
+  },
+  "Avg" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnAvg::AstSet(ast_set)
+  },
+  "Avg" "(" <set_segs: Segs_Obj> "," <exp: Expression> ")" => {
+    AstNumFnAvg::AstSet_Exp(AstSet::SegsObj(set_segs), exp)
+  },
+  "Avg" "(" <ast_set: Brace_Set> "," <exp: Expression> ")" => {
+    AstNumFnAvg::AstSet_Exp(ast_set, exp)
+  },
+}
+
+Sum: AstNumFnSum = {
+  "Sum" ("(" ")")? => {
+    AstNumFnSum::Chain
+  },
+  // "Sum" "(" <exp: Expression> ")" => {
+  //   AstNumFnSum::Chain_Exp(exp)
+  // },
+  "Sum" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnSum::AstSet(AstSet::SegsObj(set_segs))
+  },
+  "Sum" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnSum::AstSet(ast_set)
+  },
+  "Sum" "(" <set_segs: Segs_Obj> "," <exp: Expression> ")" => {
+    AstNumFnSum::AstSet_Exp(AstSet::SegsObj(set_segs), exp)
+  },
+  "Sum" "(" <ast_set: Brace_Set> "," <exp: Expression> ")" => {
+    AstNumFnSum::AstSet_Exp(ast_set, exp)
+  },
+}
+
+Max: AstNumFnMax = {
+  "Max" ("(" ")")? => {
+    AstNumFnMax::Chain
+  },
+  // "Max" "(" <exp: Expression> ")" => {
+  //   AstNumFnMax::Chain_Exp(exp)
+  // },
+  "Max" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnMax::AstSet(AstSet::SegsObj(set_segs))
+  },
+  "Max" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnMax::AstSet(ast_set)
+  },
+  "Max" "(" <set_segs: Segs_Obj> "," <exp: Expression> ")" => {
+    AstNumFnMax::AstSet_Exp(AstSet::SegsObj(set_segs), exp)
+  },
+  "Max" "(" <ast_set: Brace_Set> "," <exp: Expression> ")" => {
+    AstNumFnMax::AstSet_Exp(ast_set, exp)
+  },
+}
+
+Min: AstNumFnMin = {
+  "Min" ("(" ")")? => {
+    AstNumFnMin::Chain
+  },
+  // "Min" "(" <exp: Expression> ")" => {
+  //   AstNumFnMin::Chain_Exp(exp)
+  // },
+  "Min" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnMin::AstSet(AstSet::SegsObj(set_segs))
+  },
+  "Min" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnMin::AstSet(ast_set)
+  },
+  "Min" "(" <set_segs: Segs_Obj> "," <exp: Expression> ")" => {
+    AstNumFnMin::AstSet_Exp(AstSet::SegsObj(set_segs), exp)
+  },
+  "Min" "(" <ast_set: Brace_Set> "," <exp: Expression> ")" => {
+    AstNumFnMin::AstSet_Exp(ast_set, exp)
+  },
+}
+
+IIf: AstNumFnIIf = {
+  "IIf" "(" <bool_exp: Bool_Expression> "," <true_exp: Expression> "," <false_exp: Expression> ")" => {
+    AstNumFnIIf { bool_exp, true_exp, false_exp }
+  }
+}
+
+LookupCube: AstExpFnLookupCube = {
+  "LookupCube" "(" <exp: Expression> ")" => {
+    AstExpFnLookupCube::Chain(exp)
+  },
+  "LookupCube" "(" <cube_segs: Segs_Obj> "," <exp: Expression> ")" => {
+    AstExpFnLookupCube::CubeSegs_Exp(cube_segs, exp)
+  },
+}
+
+Name: AstStrFnName = {
+  "Name" ("(" ")")? => {
+    AstStrFnName::Chain
+  },
+  "Name" "(" <segs_obj: Segs_Obj> ")" => {
+    AstStrFnName::SegsObj(segs_obj)
+  },
+}
+
+Bool_Expression: AstBoolExp = {
+  <term: Bool_Term> => {
+    AstBoolExp { terms: vec![term] }
+  },
+  <bool_exp: Bool_Expression> "Or" <term: Bool_Term> => {
+    let mut bool_exp = bool_exp;
+    bool_exp.terms.push(term);
+    bool_exp
+  }
+}
+
+Bool_Term: AstBoolTerm = {
+  <fac: Bool_Factory> => {
+    AstBoolTerm { factories: vec![fac] }
+  },
+  <term: Bool_Term> "And" <fac: Bool_Factory> => {
+    let mut term = term;
+    term.factories.push(fac);
+    term
+  }
+}
+
+Bool_Factory: AstBoolFactory = {
+  <bool_pri: Bool_Primary> => {
+    AstBoolFactory::BoolPrimary(bool_pri)
+  },
+  "Not" <bool_pri: Bool_Primary> => {
+    AstBoolFactory::Not_BoolPrimary(bool_pri)
+  },
+}
+
+Bool_Primary: AstBoolPrimary = {
+  <exp_left: Expression> "<" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesExp(exp_left, String::from("<"), exp_right)
+  },
+  <exp_left: Expression> "<=" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesExp(exp_left, String::from("<="), exp_right)
+  },
+  <exp_left: Expression> "=" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesExp(exp_left, String::from("="), exp_right)
+  },
+  <exp_left: Expression> "<>" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesExp(exp_left, String::from("<>"), exp_right)
+  },
+  <exp_left: Expression> ">" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesExp(exp_left, String::from(">"), exp_right)
+  },
+  <exp_left: Expression> ">=" <exp_right: Expression> => {
+    AstBoolPrimary::ExpComparesExp(exp_left, String::from(">="), exp_right)
+  },
+  "(" <bool_exp: Bool_Expression> ")" => {
+    AstBoolPrimary::BoolExp(bool_exp)
+    // AstBoolPrimary::BoolExp(Box::new(bool_exp))
+  },
+  <bool_fn: Bool_Function> => {
+    AstBoolPrimary::BoolFn(bool_fn)
+  }
+}
+
+Bool_Function: AstBoolFunction = {
+  <is_leaf: BoolFn_IsLeaf> => {
+    AstBoolFunction::IsLeaf(is_leaf)
+  }
+}
+
+BoolFn_IsLeaf: AstBoolFnIsLeaf = {
+  "IsLeaf" "(" <member_segs: Segs_Obj> ")" => {
+    AstBoolFnIsLeaf::Member_Segs(member_segs)
+  },
+}
+
 AxisPos: u64 = {
   <axpos: "unsigned_int"> => axpos,
   "Columns"     => 0,
@@ -246,425 +656,26 @@ AxisPos: u64 = {
   "Sections"    => 4,
 }
 
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>>>>>>>>>>>
-// code review mark >>>>>>>>>>
-
-Member_Func: AstMemberFunction = {
-  <parent: MemberFnParent> => {
-    AstMemberFunction::Parent(parent)
-  },
-  <cp: MemberFnClosingPeriod> => {
-    AstMemberFunction::ClosingPeriod(cp)
-  },
-  <op: MemberFnOpeningPeriod> => {
-    AstMemberFunction::OpeningPeriod(op)
-  },
-  <cur_mbr: MemberFnCurrentMember> => {
-    AstMemberFunction::CurrentMember(cur_mbr)
-  },
-
-  // << Member Functions >>
-}
-
-MemberFnParent: AstMemberFnParent = {
-  "Parent" => {
-    AstMemberFnParent::NoParam
-  },
-  "Parent" "(" ")" => {
-    AstMemberFnParent::NoParam
-  },
-  "Parent" "(" <segments: Segs_Obj> ")" => {
-    AstMemberFnParent::HasParam(segments)
-  },
-}
-
-MemberFnClosingPeriod: AstMemberFnClosingPeriod = {
-  "ClosingPeriod" => {
-    AstMemberFnClosingPeriod::NoParam
-  },
-  "ClosingPeriod" "(" ")" => {
-    AstMemberFnClosingPeriod::NoParam
-  },
-  "ClosingPeriod" "(" <level_segs: Segs_Obj> ")" => {
-    AstMemberFnClosingPeriod::OneParam(level_segs)
-  },
-  "ClosingPeriod" "(" <level_segs: Segs_Obj> "," <member_segs: Segs_Obj> ")" => {
-    AstMemberFnClosingPeriod::TwoParams(level_segs, member_segs)
-  },
-}
-
-MemberFnOpeningPeriod: AstMemberFnOpeningPeriod = {
-  "OpeningPeriod" => {
-    AstMemberFnOpeningPeriod::NoParam
-  },
-  "OpeningPeriod" "(" ")" => {
-    AstMemberFnOpeningPeriod::NoParam
-  },
-  "OpeningPeriod" "(" <level_segs: Segs_Obj> ")" => {
-    AstMemberFnOpeningPeriod::OneParam(level_segs)
-  },
-  "OpeningPeriod" "(" <level_segs: Segs_Obj> "," <member_segs: Segs_Obj> ")" => {
-    AstMemberFnOpeningPeriod::TwoParams(level_segs, member_segs)
-  },
-}
-
-MemberFnCurrentMember: AstMemberFnCurrentMember = {
-  "CurrentMember" => {
-    AstMemberFnCurrentMember::NoParam
-  },
-  "CurrentMember" "(" ")" => {
-    AstMemberFnCurrentMember::NoParam
-  },
-  "CurrentMember" "(" <segments: Segs_Obj> ")" => {
-    AstMemberFnCurrentMember::InnerParam(segments)
-  },
-}
-
-Level_Func: AstLevelFunction = {
-  <lv: LvFnLevel> => {
-    AstLevelFunction::Level(lv)
-  },
-  <lvs: LvFnLevels> => {
-    AstLevelFunction::Levels(lvs)
-  },
-}
-
-LvFnLevel: AstLevelFnLevel = {
-  "Level" => {
-    AstLevelFnLevel::NoParam
-  },
-  "Level" "(" ")" => {
-    AstLevelFnLevel::NoParam
-  },
-  "Level" "(" <segments: Segs_Obj> ")" => {
-    AstLevelFnLevel::OneParam(segments)
-  },
-}
-
-LvFnLevels: AstLevelFnLevels = {
-  "Levels" "(" <idx_exp: Expression> ")" => {
-    AstLevelFnLevels::new(None, idx_exp)
-  },
-  "Levels" "(" <dim_segs: Segs_Obj> "," <idx_exp: Expression> ")" => {
-    AstLevelFnLevels::new(Some(dim_segs), idx_exp)
-  },
-}
-
-Expression: AstExpression = {
-  <term:Term> => {
-    AstExpression {
-      terms: vec![(' ', term)],
-    }
-  },
-  <exp:Expression> "+" <term:Term> => {
-    let mut e = exp;
-    e.terms.push(('+', term));
-    e
-  },
-  <exp:Expression> "-" <term:Term> => {
-    let mut e = exp;
-    e.terms.push(('-', term));
-    e
-  }
-}
-
-Term: AstTerm = {
-  <factory:Factory> => {
-    AstTerm {
-      factories: vec![(' ', factory)],
-    }
-  },
-  <term:Term> "*" <factory:Factory> => {
-    let mut t = term;
-    t.factories.push(('*', factory));
-    t
-  },
-  <term:Term> "/" <factory:Factory> => {
-    let mut t = term;
-    t.factories.push(('/', factory));
-    t
-  }
-}
-
-Factory: AstFactory = {
-  <value:"double"> => {
-    FactoryNum(value)
-  },
-  <int_val: "unsigned_int"> => {
-    let double_val: f64 = int_val as f64;
-    FactoryNum(double_val)
-  },
-  <str:"QuotedString"> => {
-    FactoryStr(str)
-  },
-  <segs_wrap:Segs_Obj> => {
-    FactorySegs(segs_wrap)
-  },
-
-  // <tuple_wrap:TupleWrap_2> => {
-  //   FactoryTuple(tuple_wrap)
-  // },
-  "(" <seg_objs: Segs_Objects> "," <seg_obj: Segs_Obj> ")" => {
-    let mut seg_objs = seg_objs;
-    seg_objs.push(seg_obj);
-    FactoryTuple(AstTuple::SegsObjects(seg_objs))
-  },
-
-  "(" <exp:Expression> ")" => {
-    FactoryExp(exp)
-  },
-}
-
-Set_Func: AstSetFunction = {
-  <chir: SetFnChildrenSpec> => {
-    AstSetFunction::Children(chir)
-  },
-}
-
-SetFnChildrenSpec: AstSetFnChildren = {
-  "Children" => {
-    AstSetFnChildren::NoParam
-  },
-  "Children" "(" ")" => {
-    AstSetFnChildren::NoParam
-  },
-  "Children" "(" <segments: Segs_Obj> ")" => {
-    AstSetFnChildren::InnerParam(segments)
-  },
-}
-
-Exp_Func: AstExpFunction = {
-  <avg: ExpFnAvgSpec> => {
-    AstExpFunction::Avg(avg)
-  },
-  <count: ExpFnCountSpec> => {
-    AstExpFunction::Count(count)
-  },
-  <iif: ExpFnIIfSpec> => {
-    AstExpFunction::IIf(iif)
-  },
-  <lookup_cube: ExpFnLookupCubeSpec> => {
-    AstExpFunction::LookupCube(lookup_cube)
-  },
-  <name: ExpFnNameSpec> => {
-    AstExpFunction::Name(name)
-  },
-  <exp_fn: Exp_Func_Sum> => {
-    AstExpFunction::Sum(exp_fn)
-  },
-  <exp_fn: Exp_Func_Max> => {
-    AstExpFunction::Max(exp_fn)
-  },
-  <exp_fn: Exp_Func_Min> => {
-    AstExpFunction::Min(exp_fn)
-  },
-
-  // << Numeric Functions >>
-}
-
-ExpFnNameSpec: AstExpFnName = {
-  "Name" => {
-    AstExpFnName::NoParam
-  },
-  "Name" "(" ")" => {
-    AstExpFnName::NoParam
-  },
-  "Name" "(" <olap_obj_segs: Segs_Obj> ")" => {
-    AstExpFnName::InnerParam(olap_obj_segs)
-  },
-}
-
-ExpFnCountSpec: AstExpFnCount = {
-  "Count" => {
-    AstExpFnCount::NoParam
-  },
-  "Count" "(" ")" => {
-    AstExpFnCount::NoParam
-  },
-  "Count" "(" <set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFnCount::InnerParam(set)
-  },
-}
-
-ExpFnAvgSpec: AstExpFnAvg = {
-  "Avg" => {
-    AstExpFnAvg::NoParam
-  },
-  "Avg" "(" ")" => {
-    AstExpFnAvg::NoParam
-  },
-  "Avg" "(" <set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFnAvg::InnerParam(set)
-  },
-}
-
-Exp_Func_Sum: AstExpFuncSum = {
-  "Sum" ("(" ")")? => {
-    AstExpFuncSum::Simple
-  },
-  // "Sum" "(" <exp: Expression> ")" => {},
-  "Sum" "(" <segs_set: Segs_Obj> ")" => {
-    AstExpFuncSum::SegsSet(segs_set)
-  },
-  "Sum" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {
-    AstExpFuncSum::SegsSetExp(segs_set, exp)
-  },
-  "Sum" "(" <cb_set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFuncSum::BraceSet(cb_set)
-  },
-  "Sum" "(" <cb_set: Brace_Set> "," <exp: Expression> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFuncSum::BraceSetExp(cb_set, exp)
-  },
-}
-
-Exp_Func_Max: AstExpFuncMax = {
-  "Max" ("(" ")")? => {
-    AstExpFuncMax::Simple
-  },
-  // "Max" "(" <exp: Expression> ")" => {},
-  "Max" "(" <segs_set: Segs_Obj> ")" => {
-    AstExpFuncMax::SegsSet(segs_set)
-  },
-  "Max" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {
-    AstExpFuncMax::SegsSetExp(segs_set, exp)
-  },
-  "Max" "(" <cb_set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFuncMax::BraceSet(cb_set)
-  },
-  "Max" "(" <cb_set: Brace_Set> "," <exp: Expression> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFuncMax::BraceSetExp(cb_set, exp)
-  },
-}
-
-Exp_Func_Min: AstExpFuncMin = {
-  "Min" ("(" ")")? => {
-    AstExpFuncMin::Simple
-  },
-  // "Min" "(" <exp: Expression> ")" => {},
-  "Min" "(" <segs_set: Segs_Obj> ")" => {
-    AstExpFuncMin::SegsSet(segs_set)
-  },
-  "Min" "(" <segs_set: Segs_Obj> "," <exp: Expression> ")" => {
-    AstExpFuncMin::SegsSetExp(segs_set, exp)
-  },
-  "Min" "(" <cb_set: Brace_Set> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFuncMin::BraceSet(cb_set)
-  },
-  "Min" "(" <cb_set: Brace_Set> "," <exp: Expression> ")" => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstExpFuncMin::BraceSetExp(cb_set, exp)
-  },
-}
-
-ExpFnIIfSpec: AstExpFnIIf = {
-  "IIf" "(" <bool_exp: BoolExpression> "," <exp_t: Expression> "," <exp_f: Expression> ")" => {
-    AstExpFnIIf {
-      bool_exp,
-      exp_t,
-      exp_f,
-    }
-  }
-}
-
-ExpFnLookupCubeSpec: AstExpFnLookupCube = {
-    "Tunnel" "(" <cube_segs: Segs_Obj> "," <exp_on_another_cube: Expression> ")" => {
-      AstExpFnLookupCube::new(Some(cube_segs), exp_on_another_cube)
-    },
-    "Tunnel" "(" <exp_on_another_cube: Expression> ")" => {
-      AstExpFnLookupCube::new(None, exp_on_another_cube)
-    },
-}
-
-BoolExpression: AstBoolExp = {
-  <bt: BoolTerm> => {
-    AstBoolExp::BoolTerm(bt)
-  },
-  "Not" <bt: BoolTerm> => {
-    AstBoolExp::NotBoolTerm(bt)
-  },
-  <bool_exp: BoolExpression> "Or" <bt: BoolTerm> => {
-    AstBoolExp::BoolExpOrBoolTerm(Box::new(bool_exp), bt)
-  }
-}
-
-BoolTerm: AstBoolTerm = {
-  <bf: BoolFactory> => {
-    AstBoolTerm::BoolFactory(bf)
-  },
-  <bt: BoolTerm> "And" <bf: BoolFactory> => {
-    AstBoolTerm::BoolTermAndBoolFactory(Box::new(bt), bf)
-  }
-}
-
-BoolFactory: AstBoolFactory = {
-  <exp_left: Expression> "<" <exp_right: Expression> => {
-    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<"), exp_right)
-  },
-  <exp_left: Expression> "<=" <exp_right: Expression> => {
-    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<="), exp_right)
-  },
-  <exp_left: Expression> "=" <exp_right: Expression> => {
-    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("="), exp_right)
-  },
-  <exp_left: Expression> "<>" <exp_right: Expression> => {
-    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from("<>"), exp_right)
-  },
-  <exp_left: Expression> ">" <exp_right: Expression> => {
-    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">"), exp_right)
-  },
-  <exp_left: Expression> ">=" <exp_right: Expression> => {
-    AstBoolFactory::ExpressionComparesAnother(exp_left, String::from(">="), exp_right)
-  },
-  "(" <bool_exp: BoolExpression> ")" => {
-    AstBoolFactory::BoolExp(Box::new(bool_exp))
-  },
-  <bool_fn: BoolFunction> => {
-    AstBoolFactory::BoolFn(bool_fn)
-  }
-}
-
-BoolFunction: AstBoolFunction = {
-  <is_leaf: BoolFnIsLeaf> => {
-    AstBoolFunction::IsLeaf(is_leaf)
-  }
-}
-
-BoolFnIsLeaf: AstBoolFnIsLeaf = {
-  // "IsLeaf" => {
-  //   AstBoolFnIsLeaf::new(None)
-  // },
-  // "IsLeaf" "(" ")" => {
-  //   AstBoolFnIsLeaf::new(None)
-  // },
-  "IsLeaf" "(" <member_segs: Segs_Obj> ")" => {
-    AstBoolFnIsLeaf::new(member_segs)
-  },
-}
-
-// COLUMNS | ROWS | PAGES | CHAPTERS | SECTIONS | AXIS (<unsigned_integer>)
-Axis: AstAxis = {
-  <ast_set:Brace_Set> "on" <axpos:AxisPos> => { // <crace_set: Brace_Set> <set_segs: Segs_Obj>
-    AstAxis::SetDefinition {
-      ast_set,
-      pos: axpos,
-    }
-  }
-}
-
-Axes: Vec<AstAxis> = {
-  <axis:Axis> => {
-    vec![axis]
-  },
-  <axes:Axes> "," <axis:Axis> => {
-    let mut list = axes;
-    list.push(axis);
-    list
-  }
-}
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<<<<<<
+// code review mark <<<<<<<<<<
+// code review mark <<<<<

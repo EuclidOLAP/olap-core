@@ -358,8 +358,17 @@ impl AstSet {
                     _ => panic!("The entity is not a TupleWrap variant."),
                 };
             }
-            AstSet::SegsObj(_segs_obj) => {
-                panic!("AstSet::SegsObj is not implemented yet.")
+            AstSet::SegsObj(segs_obj) => {
+                let olap_entity = segs_obj.materialize(slice_tuple, context).await;
+                // println!("olap_entity: {:#?}", olap_entity);
+                match olap_entity {
+                    MultiDimensionalEntity::FormulaMemberWrap { dim_role_gid, exp } => {
+                        result = TupleVector {
+                            member_roles: vec![MemberRole::FormulaMember { dim_role_gid, exp }],
+                        };
+                    }
+                    _ => panic!("The entity is not a FormulaMemberWrap variant."),
+                }
             }
         }
         result
@@ -389,8 +398,28 @@ impl Materializable for AstSet {
                         }
                     }
                 }
-                _ => {
-                    panic!("AstSet::SegsObj is not implemented yet.")
+                AstSet::SegsObj(segs_obj) => {
+                    let olap_entity = segs_obj.materialize(slice_tuple, context).await;
+                    match olap_entity {
+                        MultiDimensionalEntity::FormulaMemberWrap { dim_role_gid, exp } => {
+                            return MultiDimensionalEntity::SetWrap(Set {
+                                tuples: vec![TupleVector {
+                                    member_roles: vec![MemberRole::FormulaMember {
+                                        dim_role_gid,
+                                        exp,
+                                    }],
+                                }],
+                            });
+                        }
+                        MultiDimensionalEntity::SetWrap(set) => {
+                            for tuple in set.tuples.iter() {
+                                tuple_vec.push(tuple.clone());
+                            }
+                        }
+                        _ => {
+                            panic!("The entity is not a SetWrap variant.");
+                        }
+                    }
                 }
             }
 
@@ -431,8 +460,10 @@ impl Materializable for AstTuple {
                     }
                     MultiDimensionalEntity::TupleWrap(TupleVector { member_roles })
                 }
-                AstTuple::SegsObj(_segs) => {
-                    panic!("AstTuple::SegsObj is not implemented yet.")
+                AstTuple::SegsObj(segs) => {
+                    AstTuple::SegsObjects(vec![segs.clone()])
+                        .materialize(slice_tuple, context)
+                        .await
                 }
             }
         })
@@ -446,8 +477,9 @@ pub enum AstCustomObject {
 }
 
 // #[derive(Clone, Debug, PartialEq)]
-pub enum AstAxis {
-    SetDefinition { ast_set: AstSet, pos: u64 },
+pub struct AstAxis {
+    pub ast_set: AstSet,
+    pub position: u64,
 }
 
 impl AstAxis {
@@ -456,11 +488,9 @@ impl AstAxis {
         slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> TupleVector {
-        match self {
-            AstAxis::SetDefinition { ast_set, pos: _ } => {
-                ast_set.generate_fiducial_tuple(slice_tuple, context).await
-            }
-        }
+        self.ast_set
+            .generate_fiducial_tuple(slice_tuple, context)
+            .await
     }
 
     async fn translate_to_axis(
@@ -470,22 +500,19 @@ impl AstAxis {
     ) -> Axis {
         let axis: Axis;
 
-        match self {
-            AstAxis::SetDefinition { ast_set, pos } => {
-                let olap_entity = ast_set.materialize(slice_tuple, context).await;
-                match olap_entity {
-                    MultiDimensionalEntity::SetWrap(set) => {
-                        axis = Axis {
-                            set,
-                            pos_num: *pos as u32,
-                        };
-                    }
-                    _ => {
-                        panic!("The entity is not a SetWrap variant.");
-                    }
-                }
+        let olap_entity = self.ast_set.materialize(slice_tuple, context).await;
+        match olap_entity {
+            MultiDimensionalEntity::SetWrap(set) => {
+                axis = Axis {
+                    set,
+                    pos_num: self.position as u32,
+                };
+            }
+            _ => {
+                panic!("The entity is not a SetWrap variant.");
             }
         }
+
         axis
     }
 }

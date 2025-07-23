@@ -1,15 +1,13 @@
 use core::panic;
 
-use crate::mdx_grammar::MdxStatementParser;
-use crate::mdx_lexer::Lexer as MdxLexer;
-
 use futures::future::BoxFuture;
 
-use crate::exmdx::ast::{AstSegsObj, AstSet, AstTuple};
+use crate::exmdx::ast::{AstSegsObj, AstTuple};
 
 use crate::exmdx::exp_func::*;
 
 use crate::exmdx::mdd::TupleVector;
+
 use crate::mdd;
 use crate::mdd::CellValue;
 use crate::mdd::MultiDimensionalContext;
@@ -135,11 +133,11 @@ impl ToCellValue for AstExpression {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstFactory {
-    FactoryNum(f64),
-    FactoryStr(String),
-    FactorySegs(AstSegsObj),
-    FactoryTuple(AstTuple),
-    FactoryExp(AstExpression),
+    Numeric(f64),
+    String(String),
+    AstSegsObj(AstSegsObj),
+    AstTuple(AstTuple),
+    AstExpression(AstExpression),
 }
 
 impl ToCellValue for AstFactory {
@@ -151,33 +149,34 @@ impl ToCellValue for AstFactory {
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             match self {
-                AstFactory::FactoryNum(num) => CellValue::Double(*num),
-                AstFactory::FactoryStr(str) => CellValue::Str(String::from(str)),
-                AstFactory::FactorySegs(segs) => match segs.materialize(slice_tuple, context).await
-                {
-                    MultiDimensionalEntity::MemberRoleWrap(mr) => {
-                        let ovc_tp = slice_tuple.merge(&TupleVector {
-                            member_roles: vec![mr],
-                        });
+                AstFactory::Numeric(num) => CellValue::Double(*num),
+                AstFactory::String(str) => CellValue::Str(String::from(str)),
+                AstFactory::AstSegsObj(segs) => {
+                    match segs.materialize(slice_tuple, context).await {
+                        MultiDimensionalEntity::MemberRoleWrap(mr) => {
+                            let ovc_tp = slice_tuple.merge(&TupleVector {
+                                member_roles: vec![mr],
+                            });
 
-                        let ovc = TupleVector {
-                            member_roles: ovc_tp.member_roles,
-                        };
+                            let ovc = TupleVector {
+                                member_roles: ovc_tp.member_roles,
+                            };
 
-                        let cell_values = calculate(vec![ovc], context).await;
-                        cell_values.first().unwrap().clone()
+                            let cell_values = calculate(vec![ovc], context).await;
+                            cell_values.first().unwrap().clone()
+                        }
+                        MultiDimensionalEntity::FormulaMemberWrap {
+                            dim_role_gid: _,
+                            exp,
+                        } => exp.val(slice_tuple, context, None).await,
+                        // MultiDimensionalEntity::ExpFn(exp_fn) => {
+                        //     exp_fn.val(slice_tuple, context, None).await
+                        // }
+                        MultiDimensionalEntity::CellValue(cell_value) => cell_value.clone(),
+                        _ => panic!("The entity is not a CellValue variant."),
                     }
-                    MultiDimensionalEntity::FormulaMemberWrap {
-                        dim_role_gid: _,
-                        exp,
-                    } => exp.val(slice_tuple, context, None).await,
-                    MultiDimensionalEntity::ExpFn(exp_fn) => {
-                        exp_fn.val(slice_tuple, context, None).await
-                    }
-                    MultiDimensionalEntity::CellValue(cell_value) => cell_value.clone(),
-                    _ => panic!("The entity is not a CellValue variant."),
-                },
-                AstFactory::FactoryTuple(tuple) => {
+                }
+                AstFactory::AstTuple(tuple) => {
                     match tuple.materialize(slice_tuple, context).await {
                         MultiDimensionalEntity::TupleWrap(olap_tuple) => {
                             let ovc = TupleVector {
@@ -189,7 +188,7 @@ impl ToCellValue for AstFactory {
                         _ => panic!("The entity is not a TupleWrap variant."),
                     }
                 }
-                AstFactory::FactoryExp(exp) => exp.val(slice_tuple, context, None).await,
+                AstFactory::AstExpression(exp) => exp.val(slice_tuple, context, None).await,
             }
         })
     }
@@ -228,10 +227,11 @@ impl ToCellValue for AstTerm {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[allow(non_camel_case_types)]
 pub enum AstMemberFnClosingPeriod {
-    NoParam,
-    OneParam(AstSegsObj),
-    TwoParams(AstSegsObj, AstSegsObj),
+    Chain,
+    LvSegs(AstSegsObj),
+    LvSegs_MemSegs(AstSegsObj, AstSegsObj),
 }
 
 impl AstMemberFnClosingPeriod {
@@ -262,10 +262,11 @@ impl AstMemberFnClosingPeriod {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[allow(non_camel_case_types)]
 pub enum AstMemberFnOpeningPeriod {
-    NoParam,
-    OneParam(AstSegsObj),
-    TwoParams(AstSegsObj, AstSegsObj),
+    Chain,
+    LvSegs(AstSegsObj),
+    LvSegs_MemSegs(AstSegsObj, AstSegsObj),
 }
 
 impl AstMemberFnOpeningPeriod {
@@ -296,9 +297,10 @@ impl AstMemberFnOpeningPeriod {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[allow(non_camel_case_types)]
 pub enum AstMemberFnCurrentMember {
-    NoParam,
-    InnerParam(AstSegsObj),
+    Chain,
+    SegsObj(AstSegsObj),
 }
 
 impl AstMemberFnCurrentMember {
@@ -313,7 +315,7 @@ impl AstMemberFnCurrentMember {
         if let Some(outer_param) = outer_param {
             param = outer_param;
         } else {
-            if let AstMemberFnCurrentMember::InnerParam(ast_segs) = self {
+            if let AstMemberFnCurrentMember::SegsObj(ast_segs) = self {
                 param = ast_segs.materialize(slice_tuple, context).await;
             } else {
                 panic!("[34BH85BHE] Invalid parameter combination. Only inner_param should be Some, and outer_param should be None.")
@@ -344,9 +346,10 @@ impl AstMemberFnCurrentMember {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[allow(non_camel_case_types)]
 pub enum AstMemberFnParent {
-    NoParam,
-    HasParam(AstSegsObj),
+    Chain,
+    MemSegs(AstSegsObj),
 }
 
 impl AstMemberFnParent {
@@ -405,14 +408,14 @@ impl AstMemberFunction {
                     .await
             }
             // parent()
-            AstMemberFunction::Parent(AstMemberFnParent::NoParam) => {
+            AstMemberFunction::Parent(AstMemberFnParent::Chain) => {
                 AstMemberFnParent::do_get_member(left_outer_param, context).await
             }
-            AstMemberFunction::Parent(AstMemberFnParent::HasParam(_segs)) => {
+            AstMemberFunction::Parent(AstMemberFnParent::MemSegs(_segs)) => {
                 todo!("AstMemberFunction::get_member()")
             }
             // ClosingPeriod()
-            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::NoParam) => {
+            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::Chain) => {
                 AstMemberFnClosingPeriod::do_get_member(
                     left_outer_param,
                     None,
@@ -422,7 +425,7 @@ impl AstMemberFunction {
                 )
                 .await
             }
-            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::OneParam(level_segs)) => {
+            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::LvSegs(level_segs)) => {
                 AstMemberFnClosingPeriod::do_get_member(
                     left_outer_param,
                     Some(level_segs),
@@ -432,7 +435,7 @@ impl AstMemberFunction {
                 )
                 .await
             }
-            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::TwoParams(
+            AstMemberFunction::ClosingPeriod(AstMemberFnClosingPeriod::LvSegs_MemSegs(
                 level_segs,
                 member_segs,
             )) => {
@@ -446,7 +449,7 @@ impl AstMemberFunction {
                 .await
             }
             // OpeningPeriod()
-            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::NoParam) => {
+            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::Chain) => {
                 AstMemberFnOpeningPeriod::do_get_member(
                     left_outer_param,
                     None,
@@ -456,7 +459,7 @@ impl AstMemberFunction {
                 )
                 .await
             }
-            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::OneParam(level_segs)) => {
+            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::LvSegs(level_segs)) => {
                 AstMemberFnOpeningPeriod::do_get_member(
                     left_outer_param,
                     Some(level_segs),
@@ -466,7 +469,7 @@ impl AstMemberFunction {
                 )
                 .await
             }
-            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::TwoParams(
+            AstMemberFunction::OpeningPeriod(AstMemberFnOpeningPeriod::LvSegs_MemSegs(
                 level_segs,
                 member_segs,
             )) => {
@@ -513,8 +516,8 @@ impl AstLevelFunction {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstLevelFnLevel {
-    NoParam,
-    OneParam(AstSegsObj),
+    Chain,
+    MemSegs(AstSegsObj),
 }
 
 impl AstLevelFnLevel {
@@ -536,7 +539,7 @@ impl AstLevelFnLevel {
             return self.do_get_level_role(mr);
         }
 
-        if let AstLevelFnLevel::OneParam(ast_segs) = self {
+        if let AstLevelFnLevel::MemSegs(ast_segs) = self {
             if let MultiDimensionalEntity::MemberRoleWrap(mr) =
                 ast_segs.materialize(slice_tuple, context).await
             {
@@ -548,16 +551,19 @@ impl AstLevelFnLevel {
     }
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct AstLevelFnLevels {
-    dim_segs: Option<AstSegsObj>,
-    idx_exp: AstExpression,
+pub enum AstLevelFnLevels {
+    Chain_Exp(AstExpression),
+    SegsObj_Exp(AstSegsObj, AstExpression),
+    // dim_segs: Option<AstSegsObj>,
+    // idx_exp: AstExpression,
 }
 
 impl AstLevelFnLevels {
-    pub fn new(dim_segs: Option<AstSegsObj>, idx_exp: AstExpression) -> Self {
-        Self { dim_segs, idx_exp }
-    }
+    // pub fn new(dim_segs: Option<AstSegsObj>, idx_exp: AstExpression) -> Self {
+    //     Self { dim_segs, idx_exp }
+    // }
 
     async fn get_level_role(
         &self,
@@ -571,9 +577,9 @@ impl AstLevelFnLevels {
         if let Some(MultiDimensionalEntity::DimensionRoleWrap(dr)) = left_outer_param {
             def_hierarchy_gid = dr.default_hierarchy_gid;
             param_dim_role = Some(dr);
-        } else if let Some(ast_segs) = &self.dim_segs {
+        } else if let Self::SegsObj_Exp(segs_obj, _) = self {
             if let MultiDimensionalEntity::DimensionRoleWrap(dr) =
-                ast_segs.materialize(slice_tuple, context).await
+                segs_obj.materialize(slice_tuple, context).await
             {
                 def_hierarchy_gid = dr.default_hierarchy_gid;
                 param_dim_role = Some(dr);
@@ -588,7 +594,12 @@ impl AstLevelFnLevels {
 
         let param_dim_role = param_dim_role.unwrap();
 
-        let cell_val = self.idx_exp.val(slice_tuple, context, None).await;
+        let idx_exp = match self {
+            AstLevelFnLevels::Chain_Exp(exp) => exp,
+            AstLevelFnLevels::SegsObj_Exp(_, exp) => exp,
+        };
+
+        let cell_val = idx_exp.val(slice_tuple, context, None).await;
         if let CellValue::Double(idx) = cell_val {
             let lv_val = idx as u32;
 
@@ -602,8 +613,8 @@ impl AstLevelFnLevels {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstSetFnChildren {
-    NoParam,
-    InnerParam(AstSegsObj),
+    Chain,
+    MemSegs(AstSegsObj),
 }
 
 impl AstSetFnChildren {
@@ -650,374 +661,13 @@ impl AstSetFunction {
         context: &mut MultiDimensionalContext,
     ) -> Set {
         match self {
-            AstSetFunction::Children(AstSetFnChildren::NoParam) => {
+            AstSetFunction::Children(AstSetFnChildren::Chain) => {
                 AstSetFnChildren::do_get_set(left_unique_param, context).await
             }
-            AstSetFunction::Children(AstSetFnChildren::InnerParam(segs)) => {
+            AstSetFunction::Children(AstSetFnChildren::MemSegs(segs)) => {
                 let mem_role = segs.materialize(slice_tuple, context).await;
                 AstSetFnChildren::do_get_set(Some(mem_role), context).await
             } // _ => todo!("AstSetFunction::get_set() [SHUA-927381]"),
         }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum AstExpFunction {
-    Avg(AstExpFnAvg),
-    Count(AstExpFnCount),
-    IIf(AstExpFnIIf),
-    LookupCube(AstExpFnLookupCube),
-    Name(AstExpFnName),
-    Sum(AstExpFuncSum),
-    Max(AstExpFuncMax),
-    Min(AstExpFuncMin),
-}
-
-impl ToCellValue for AstExpFunction {
-    fn val<'a>(
-        &'a self,
-        slice_tuple: &'a TupleVector,
-        context: &'a mut MultiDimensionalContext,
-        outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move {
-            match self {
-                AstExpFunction::Avg(avg_fn) => avg_fn.val(slice_tuple, context, None).await,
-                AstExpFunction::Count(count_fn) => count_fn.val(slice_tuple, context, None).await,
-                AstExpFunction::IIf(iif_fn) => iif_fn.val(slice_tuple, context, None).await,
-                AstExpFunction::Name(name_fn) => {
-                    if let Some(olap_obj) = outer_param {
-                        let name_fn = AstExpFnName::OuterParam(Box::new(olap_obj));
-                        name_fn.val(slice_tuple, context, None).await
-                    } else {
-                        name_fn.val(slice_tuple, context, None).await
-                    }
-                }
-                AstExpFunction::LookupCube(eval_fn) => {
-                    let the_cube;
-                    if let Some(cube) = &eval_fn.cube {
-                        the_cube = cube.clone();
-                    } else if let Some(ast_segs) = &eval_fn.cube_segs {
-                        match ast_segs.materialize(slice_tuple, context).await {
-                            MultiDimensionalEntity::Cube(cube) => {
-                                the_cube = cube.clone();
-                            }
-                            _ => panic!("[dsuc-0-8492] AstExpFunction::val()"),
-                        }
-                    } else {
-                        panic!("[dsuc-0-::-8492] AstExpFunction::val()")
-                    }
-
-                    let exp = eval_fn.exp.clone();
-
-                    let mdx_with_str = meta_cache::mdx_formula_members_fragment(&the_cube);
-                    let tunnel_mdx = format!(
-                        "with\n{}\nSelect {{ ( &0 ) }} on rows\nfrom &{}",
-                        mdx_with_str, the_cube.gid
-                    );
-                    let tunnel_ast = MdxStatementParser::new()
-                        .parse(MdxLexer::new(&tunnel_mdx))
-                        .unwrap();
-                    let mut tunnel_context = tunnel_ast.gen_md_context().await;
-
-                    exp.val(
-                        &tunnel_context.query_slice_tuple.clone(),
-                        &mut tunnel_context,
-                        None,
-                    )
-                    .await
-                }
-                AstExpFunction::Sum(exp_fn_sum) => {
-                    exp_fn_sum.val(slice_tuple, context, outer_param).await
-                }
-                AstExpFunction::Max(exp_fn_max) => {
-                    exp_fn_max.val(slice_tuple, context, outer_param).await
-                }
-                AstExpFunction::Min(exp_fn_min) => {
-                    exp_fn_min.val(slice_tuple, context, outer_param).await
-                }
-            }
-        })
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum AstExpFnName {
-    NoParam,
-    InnerParam(AstSegsObj),
-    OuterParam(Box<MultiDimensionalEntity>),
-}
-
-impl ToCellValue for AstExpFnName {
-    fn val<'a>(
-        &'a self,
-        slice_tuple: &'a TupleVector,
-        context: &'a mut MultiDimensionalContext,
-        _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move {
-            //  CellValue::Str("avg函数有待实现".to_string())
-            match self {
-                AstExpFnName::InnerParam(segs) => {
-                    let olap_obj = segs.materialize(slice_tuple, context).await;
-                    if let MultiDimensionalEntity::MemberRoleWrap(member_role) = olap_obj {
-                        match member_role {
-                            MemberRole::BaseMember { member, .. } => {
-                                CellValue::Str(member.name.clone())
-                            }
-                            _ => CellValue::Str("name函数参数错误".to_string()),
-                        }
-                    } else {
-                        CellValue::Str("name函数参数错误".to_string())
-                    }
-                }
-                AstExpFnName::OuterParam(entity) => {
-                    if let MultiDimensionalEntity::MemberRoleWrap(member_role) = entity.as_ref() {
-                        match member_role {
-                            MemberRole::BaseMember { member, .. } => {
-                                CellValue::Str(member.name.clone())
-                            }
-                            _ => CellValue::Str("name函数参数错误".to_string()),
-                        }
-                    } else {
-                        CellValue::Str("name函数参数错误".to_string())
-                    }
-                }
-                _ => panic!("[dsuc-0-8492] AstExpFnName::val()"),
-            }
-        })
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum AstExpFnAvg {
-    NoParam,
-    InnerParam(AstSet),
-    OuterParam(Set),
-}
-
-impl ToCellValue for AstExpFnAvg {
-    fn val<'a>(
-        &'a self,
-        _slice_tuple: &'a TupleVector,
-        _context: &'a mut MultiDimensionalContext,
-        _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Str("avg函数有待实现".to_string()) })
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum AstExpFnCount {
-    NoParam,
-    InnerParam(AstSet),
-    OuterParam(Set),
-}
-
-impl ToCellValue for AstExpFnCount {
-    fn val<'a>(
-        &'a self,
-        _slice_tuple: &'a TupleVector,
-        _context: &'a mut MultiDimensionalContext,
-        _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move {
-            let set = match self {
-                AstExpFnCount::InnerParam(_set) => {
-                    todo!("AstExpFnCount::val()")
-                }
-                AstExpFnCount::OuterParam(set) => set,
-                _ => panic!("AstExpFnCount::val()"),
-            };
-
-            CellValue::Double(set.tuples.len() as f64)
-        })
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct AstExpFnLookupCube {
-    pub cube_segs: Option<AstSegsObj>,
-    pub cube: Option<mdd::Cube>,
-    pub exp: AstExpression,
-}
-
-impl AstExpFnLookupCube {
-    pub fn new(cube_segs: Option<AstSegsObj>, exp: AstExpression) -> Self {
-        Self {
-            cube_segs,
-            cube: None,
-            exp,
-        }
-    }
-
-    pub fn set_cube(&mut self, cube: mdd::Cube) {
-        self.cube = Some(cube);
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct AstExpFnIIf {
-    pub bool_exp: AstBoolExp,
-    pub exp_t: AstExpression,
-    pub exp_f: AstExpression,
-}
-
-impl ToCellValue for AstExpFnIIf {
-    fn val<'a>(
-        &'a self,
-        slice_tuple: &'a TupleVector,
-        context: &'a mut MultiDimensionalContext,
-        _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move {
-            let bool_val = self.bool_exp.bool_val(slice_tuple, context).await;
-            if bool_val {
-                self.exp_t.val(slice_tuple, context, None).await
-            } else {
-                self.exp_f.val(slice_tuple, context, None).await
-            }
-        })
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum AstBoolExp {
-    BoolTerm(AstBoolTerm),
-    NotBoolTerm(AstBoolTerm),
-    BoolExpOrBoolTerm(Box<AstBoolExp>, AstBoolTerm),
-}
-
-impl ToBoolValue for AstBoolExp {
-    fn bool_val<'a>(
-        &'a self,
-        slice_tuple: &'a TupleVector,
-        context: &'a mut MultiDimensionalContext,
-    ) -> BoxFuture<'a, bool> {
-        Box::pin(async move {
-            match self {
-                AstBoolExp::BoolTerm(bool_term) => bool_term.bool_val(slice_tuple, context).await,
-                AstBoolExp::NotBoolTerm(bool_term) => {
-                    !bool_term.bool_val(slice_tuple, context).await
-                }
-                AstBoolExp::BoolExpOrBoolTerm(bool_exp, bool_term) => {
-                    let exp_bool = bool_exp.bool_val(slice_tuple, context).await;
-                    if exp_bool {
-                        true
-                    } else {
-                        bool_term.bool_val(slice_tuple, context).await
-                    }
-                }
-            }
-        })
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum AstBoolTerm {
-    BoolFactory(AstBoolFactory),
-    BoolTermAndBoolFactory(Box<AstBoolTerm>, AstBoolFactory),
-}
-
-impl ToBoolValue for AstBoolTerm {
-    fn bool_val<'a>(
-        &'a self,
-        slice_tuple: &'a TupleVector,
-        context: &'a mut MultiDimensionalContext,
-    ) -> BoxFuture<'a, bool> {
-        Box::pin(async move {
-            match self {
-                AstBoolTerm::BoolFactory(bool_factory) => {
-                    bool_factory.bool_val(slice_tuple, context).await
-                }
-                AstBoolTerm::BoolTermAndBoolFactory(bool_term, bool_factory) => {
-                    let term_bool = bool_term.bool_val(slice_tuple, context).await;
-                    if term_bool {
-                        bool_factory.bool_val(slice_tuple, context).await
-                    } else {
-                        false
-                    }
-                }
-            }
-        })
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum AstBoolFactory {
-    ExpressionComparesAnother(AstExpression, String, AstExpression),
-    BoolExp(Box<AstBoolExp>),
-    BoolFn(AstBoolFunction),
-}
-
-impl ToBoolValue for AstBoolFactory {
-    fn bool_val<'a>(
-        &'a self,
-        slice_tuple: &'a TupleVector,
-        context: &'a mut MultiDimensionalContext,
-    ) -> BoxFuture<'a, bool> {
-        Box::pin(async move {
-            match self {
-                AstBoolFactory::ExpressionComparesAnother(exp1, op, exp2) => {
-                    let val1 = exp1.val(slice_tuple, context, None).await;
-                    let val2 = exp2.val(slice_tuple, context, None).await;
-                    val1.logical_cmp(op, &val2)
-                }
-                AstBoolFactory::BoolExp(bool_exp) => bool_exp.bool_val(slice_tuple, context).await,
-                AstBoolFactory::BoolFn(bool_fn) => bool_fn.bool_val(slice_tuple, context).await,
-            }
-        })
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum AstBoolFunction {
-    IsLeaf(AstBoolFnIsLeaf),
-}
-
-impl ToBoolValue for AstBoolFunction {
-    fn bool_val<'a>(
-        &'a self,
-        slice_tuple: &'a TupleVector,
-        context: &'a mut MultiDimensionalContext,
-    ) -> BoxFuture<'a, bool> {
-        Box::pin(async move {
-            match self {
-                AstBoolFunction::IsLeaf(is_leaf_fn) => {
-                    is_leaf_fn.bool_val(slice_tuple, context).await
-                }
-            }
-        })
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct AstBoolFnIsLeaf {
-    pub member_segs: AstSegsObj,
-}
-
-impl AstBoolFnIsLeaf {
-    pub fn new(member_segs: AstSegsObj) -> Self {
-        Self { member_segs }
-    }
-}
-
-impl ToBoolValue for AstBoolFnIsLeaf {
-    fn bool_val<'a>(
-        &'a self,
-        slice_tuple: &'a TupleVector,
-        context: &'a mut MultiDimensionalContext,
-    ) -> BoxFuture<'a, bool> {
-        Box::pin(async move {
-            let olap_obj = self.member_segs.materialize(slice_tuple, context).await;
-            if let MultiDimensionalEntity::MemberRoleWrap(member_role) = olap_obj {
-                match member_role {
-                    MemberRole::BaseMember { member, .. } => member.leaf,
-                    _ => true,
-                }
-            } else {
-                panic!("[hsju6679] The entity is not a MemberRole variant.");
-            }
-        })
     }
 }
