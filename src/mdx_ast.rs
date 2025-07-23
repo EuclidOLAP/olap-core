@@ -138,11 +138,11 @@ impl ToCellValue for AstExpression {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstFactory {
-    FactoryNum(f64),
-    FactoryStr(String),
-    FactorySegs(AstSegsObj),
-    FactoryTuple(AstTuple),
-    FactoryExp(AstExpression),
+    Numeric(f64),
+    String(String),
+    AstSegsObj(AstSegsObj),
+    AstTuple(AstTuple),
+    AstExpression(AstExpression),
 }
 
 impl ToCellValue for AstFactory {
@@ -154,9 +154,9 @@ impl ToCellValue for AstFactory {
     ) -> BoxFuture<'a, CellValue> {
         Box::pin(async move {
             match self {
-                AstFactory::FactoryNum(num) => CellValue::Double(*num),
-                AstFactory::FactoryStr(str) => CellValue::Str(String::from(str)),
-                AstFactory::FactorySegs(segs) => match segs.materialize(slice_tuple, context).await
+                AstFactory::Numeric(num) => CellValue::Double(*num),
+                AstFactory::String(str) => CellValue::Str(String::from(str)),
+                AstFactory::AstSegsObj(segs) => match segs.materialize(slice_tuple, context).await
                 {
                     MultiDimensionalEntity::MemberRoleWrap(mr) => {
                         let ovc_tp = slice_tuple.merge(&TupleVector {
@@ -180,7 +180,7 @@ impl ToCellValue for AstFactory {
                     MultiDimensionalEntity::CellValue(cell_value) => cell_value.clone(),
                     _ => panic!("The entity is not a CellValue variant."),
                 },
-                AstFactory::FactoryTuple(tuple) => {
+                AstFactory::AstTuple(tuple) => {
                     match tuple.materialize(slice_tuple, context).await {
                         MultiDimensionalEntity::TupleWrap(olap_tuple) => {
                             let ovc = TupleVector {
@@ -192,7 +192,7 @@ impl ToCellValue for AstFactory {
                         _ => panic!("The entity is not a TupleWrap variant."),
                     }
                 }
-                AstFactory::FactoryExp(exp) => exp.val(slice_tuple, context, None).await,
+                AstFactory::AstExpression(exp) => exp.val(slice_tuple, context, None).await,
             }
         })
     }

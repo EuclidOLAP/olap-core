@@ -2,7 +2,6 @@ use crate::mdx_tokens::{Token, LexicalError};
 
 use crate::mdx_ast::AstSeg;
 use crate::mdx_ast::{AstFactory, AstTerm, AstExpression};
-use crate::mdx_ast::AstFactory::{FactoryNum, FactoryStr, FactorySegs,FactoryTuple,FactoryExp};
 use crate::mdx_ast::{AstLevelFunction, AstLevelFnLevel, AstLevelFnLevels};
 use crate::mdx_ast::{AstMemberFunction, AstMemberFnParent, AstMemberFnClosingPeriod, AstMemberFnOpeningPeriod};
 use crate::mdx_ast::{AstMemberFnCurrentMember};
@@ -231,25 +230,25 @@ Term: AstTerm = {
 
 Factory: AstFactory = {
   <numeric: "double"> => {
-    FactoryNum(numeric)
+    AstFactory::Numeric(numeric)
   },
   <long_int: "unsigned_int"> => {
     // let numeric: f64 = long_int as f64;
-    FactoryNum(long_int as f64)
+    AstFactory::Numeric(long_int as f64)
   },
   <str: "QuotedString"> => {
-    FactoryStr(str)
+    AstFactory::String(str)
   },
   <segs_obj: Segs_Obj> => {
-    FactorySegs(segs_obj)
+    AstFactory::AstSegsObj(segs_obj)
   },
   "(" <segs_objs: Segs_Objects> "," <segs_obj: Segs_Obj> ")" => {
     let mut segs_objs = segs_objs;
     segs_objs.push(segs_obj);
-    FactoryTuple(AstTuple::SegsObjects(segs_objs))
+    AstFactory::AstTuple(AstTuple::SegsObjects(segs_objs))
   },
   "(" <exp: Expression> ")" => {
-    FactoryExp(exp)
+    AstFactory::AstExpression(exp)
   },
 }
 
