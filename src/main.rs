@@ -15,7 +15,7 @@ use crate::exmdx::mdd::TupleVector;
 
 pub mod calcul;
 pub mod cfg;
-pub mod mdx_ast;
+// pub mod mdx_ast;
 pub mod mdx_lexer;
 pub mod mdx_tokens;
 
@@ -38,11 +38,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     meta_cache::init().await;
 
-    // 定义服务端监听地址
     // let addr = "127.0.0.1:50052".parse().unwrap();
     let addr = "0.0.0.0:50052".parse().unwrap();
 
-    // 创建 Greeter 服务实例
     let olap_api_server = EuclidOLAPService::default();
 
     println!(">>> EuclidOLAP Server is listening on {} <<<", addr);
@@ -50,7 +48,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 启动 gRPC 服务端
     Server::builder()
         .add_service(OlapApiServer::new(olap_api_server)) // 添加 Greeter 服务
-        .serve(addr) // 启动服务端
+        .serve(addr)
         .await?;
 
     Ok(())
@@ -63,9 +61,8 @@ pub struct EuclidOLAPService {}
 impl OlapApi for EuclidOLAPService {
     async fn execute_operation(
         &self,
-        request: Request<OlapRequest>, // 从客户端接收的请求
+        request: Request<OlapRequest>,
     ) -> Result<Response<OlapResponse>, Status> {
-        // 从请求中解析操作类型和语句
         let olap_request = request.into_inner();
         let operation_type = olap_request.operation_type;
         let statement = olap_request.statement;

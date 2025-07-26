@@ -1,6 +1,6 @@
 // calculation module
 
-use crate::mdx_ast::ToCellValue;
+use crate::exmdx::ast::ToCellValue;
 
 use crate::exmdx::mdd::TupleVector;
 use crate::mdd::MemberRole;
@@ -13,7 +13,6 @@ pub async fn calculate(
     context: &mut MultiDimensionalContext,
 ) -> Vec<CellValue> {
     // Base OlapVectorCoordinates and Formula OlapVectorCoordinates
-    // 分别存储索引和坐标数据
     let mut base_indices: Vec<usize> = Vec::new();
     let mut frml_indices: Vec<usize> = Vec::new();
     let mut base_cords: Vec<TupleVector> = Vec::new();
@@ -75,24 +74,7 @@ async fn calculate_formula_vectors(
 
     'outer_loop: for cord in coordinates {
         for mr in cord.member_roles.iter().rev() {
-            // if let MemberRole::FormulaMember { dim_role_gid: _, exp } = mr {
-            //     // VCE C langueage
-            //     // Expression *exp = mr->member_formula->exp;
-            //     // Expression_evaluate(md_ctx, exp, cube, cal_tp, gd);
-
-            //     let exp = exp.clone();
-            //     values
-            //         .push(exp.val(&Tuple { member_roles: cord.member_roles }, context, None).await);
-            //     continue 'outer_loop;
-            // }
-
             if let MemberRole::FormulaMember { dim_role_gid, exp } = mr {
-                // VCE C langueage
-                // Expression *exp = mr->member_formula->exp;
-                // Expression_evaluate(md_ctx, exp, cube, cal_tp, gd);
-
-                // todo dim_role_gid是有用的，需要获得对应的默认维度成员角色，将其嵌入到cord中，形成新的slice_tuple
-                // 然后调用AstExpression::val()方法，计算出结果值
                 let dim_role = context
                     .grpc_client
                     .get_dimension_role_by_gid(*dim_role_gid)
@@ -113,7 +95,6 @@ async fn calculate_formula_vectors(
                 }
                 .merge(&one_mr_tup);
 
-                // todo 同一个表达式应该在不同的上下文下计算得不同的值，貌似不需要clone啊
                 let exp = exp.clone();
 
                 values.push(exp.val(&slice_tuple, context, None).await);

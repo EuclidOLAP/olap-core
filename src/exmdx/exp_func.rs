@@ -1,9 +1,7 @@
 use futures::future::BoxFuture;
 
-use crate::mdx_ast::{AstExpression, Materializable};
-use crate::mdx_ast::{ToBoolValue, ToCellValue};
-
 use crate::exmdx::ast::AstSet;
+use crate::exmdx::ast::ToCellValue;
 
 use crate::exmdx::mdd::TupleVector;
 use crate::mdd::{CellValue, MultiDimensionalContext, MultiDimensionalEntity};
@@ -15,13 +13,15 @@ use core::panic;
 use crate::mdx_grammar::MdxStatementParser;
 use crate::mdx_lexer::Lexer as MdxLexer;
 
-use crate::exmdx::ast::AstSegsObj;
+use crate::exmdx::ast::{AstSegsObj, Materializable};
 
-use crate::exmdx::logic::AstBoolExp;
+use crate::exmdx::logic::{AstBoolExp, ToBoolValue};
 
 use crate::mdd::MemberRole;
 
 use crate::meta_cache;
+
+use crate::exmdx::ast::AstExpression;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstExpFunction {
