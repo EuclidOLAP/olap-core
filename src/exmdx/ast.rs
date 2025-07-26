@@ -1,10 +1,7 @@
 use futures::future::BoxFuture;
 
-use crate::mdx_ast::AstExpression;
-use crate::mdx_ast::AstSeg;
-use crate::mdx_ast::Materializable;
-
 use crate::exmdx::mdd::TupleVector;
+use crate::mdd::CellValue;
 use crate::mdd::GidType;
 use crate::mdd::MemberRole;
 use crate::mdd::MultiDimensionalContext;
@@ -12,11 +9,37 @@ use crate::mdd::MultiDimensionalEntity;
 use crate::mdd::MultiDimensionalEntityLocator;
 use crate::mdd::{Axis, Cube, Set};
 
+use crate::exmdx::exp_func::AstExpFunction;
+use crate::exmdx::mem_func::AstMemberFunction;
+
+use crate::calcul::calculate;
+
+use crate::exmdx::lv_func::AstLevelFunction;
+
+use crate::exmdx::set_func::AstSetFunction;
+
 use core::panic;
 use std::collections::HashMap;
 
 use crate::cfg::get_cfg;
 use crate::olapmeta_grpc_client::GrpcClient;
+
+pub trait Materializable {
+    fn materialize<'a>(
+        &'a self,
+        slice_tuple: &'a TupleVector,
+        context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, MultiDimensionalEntity>;
+}
+
+pub trait ToCellValue {
+    fn val<'a>(
+        &'a self,
+        slice_tuple: &'a TupleVector,
+        context: &'a mut MultiDimensionalContext,
+        outer_param: Option<MultiDimensionalEntity>,
+    ) -> BoxFuture<'a, CellValue>;
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct AstSegsObj {
@@ -125,6 +148,59 @@ impl Materializable for AstSegsObj {
                 }
                 _ => {
                     panic!("In method AstSegsObj::materialize(): head_entity is not a DimensionRoleWrap!");
+                }
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstSeg {
+    Gid(u64),
+    Str(String),
+    GidStr(u64, String),
+    MemberFunc(AstMemberFunction),
+    SetFunc(AstSetFunction),
+    ExpFunc(AstExpFunction),
+    LevelFunc(AstLevelFunction),
+}
+
+impl AstSeg {
+    pub fn get_gid(&self) -> Option<u64> {
+        match self {
+            AstSeg::Gid(gid) => Some(*gid),
+            AstSeg::GidStr(gid, _) => Some(*gid),
+            _ => None,
+        }
+    }
+}
+
+impl Materializable for AstSeg {
+    fn materialize<'a>(
+        &'a self,
+        slice_tuple: &'a TupleVector,
+        context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, MultiDimensionalEntity> {
+        Box::pin(async move {
+            match self {
+                AstSeg::Gid(gid) => context.find_entity_by_gid(*gid).await,
+                AstSeg::Str(seg_str) => context.find_entity_by_str(seg_str).await,
+                AstSeg::GidStr(gid, _) => context.find_entity_by_gid(*gid).await,
+                // MemberFunction(AstMemberFunction),
+                AstSeg::MemberFunc(member_fn) => {
+                    member_fn.get_member(None, slice_tuple, context).await
+                }
+                AstSeg::LevelFunc(lv_fn) => {
+                    let lv_role = lv_fn.get_level_role(None, slice_tuple, context).await;
+                    MultiDimensionalEntity::LevelRole(lv_role)
+                }
+                AstSeg::ExpFunc(exp_fn) => {
+                    let exp_val = exp_fn.val(slice_tuple, context, None).await;
+                    MultiDimensionalEntity::CellValue(exp_val)
+                }
+                AstSeg::SetFunc(set_fn) => {
+                    let set = set_fn.get_set(None, slice_tuple, context).await;
+                    MultiDimensionalEntity::SetWrap(set)
                 }
             }
         })
@@ -514,5 +590,132 @@ impl AstAxis {
         }
 
         axis
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstExpression {
+    pub terms: Vec<(char, AstTerm)>,
+}
+
+impl ToCellValue for AstExpression {
+    fn val<'a>(
+        &'a self,
+        slice_tuple: &'a TupleVector,
+        context: &'a mut MultiDimensionalContext,
+        _outer_param: Option<MultiDimensionalEntity>,
+    ) -> BoxFuture<'a, CellValue> {
+        Box::pin(async move {
+            let mut result = CellValue::Invalid;
+            for (index, (op, term)) in self.terms.iter().enumerate() {
+                if index == 0 {
+                    result = Box::pin(term.val(slice_tuple, context, None)).await;
+                    continue;
+                }
+
+                let term_value = Box::pin(term.val(slice_tuple, context, None)).await;
+                match *op {
+                    '+' => result = result + term_value,
+                    '-' => result = result - term_value,
+                    _ => panic!("Invalid operator in AstExpression: {}", op),
+                }
+            }
+            result
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstFactory {
+    Numeric(f64),
+    String(String),
+    AstSegsObj(AstSegsObj),
+    AstTuple(AstTuple),
+    AstExpression(AstExpression),
+}
+
+impl ToCellValue for AstFactory {
+    fn val<'a>(
+        &'a self,
+        slice_tuple: &'a TupleVector,
+        context: &'a mut MultiDimensionalContext,
+        _outer_param: Option<MultiDimensionalEntity>,
+    ) -> BoxFuture<'a, CellValue> {
+        Box::pin(async move {
+            match self {
+                AstFactory::Numeric(num) => CellValue::Double(*num),
+                AstFactory::String(str) => CellValue::Str(String::from(str)),
+                AstFactory::AstSegsObj(segs) => {
+                    match segs.materialize(slice_tuple, context).await {
+                        MultiDimensionalEntity::MemberRoleWrap(mr) => {
+                            let ovc_tp = slice_tuple.merge(&TupleVector {
+                                member_roles: vec![mr],
+                            });
+
+                            let ovc = TupleVector {
+                                member_roles: ovc_tp.member_roles,
+                            };
+
+                            let cell_values = calculate(vec![ovc], context).await;
+                            cell_values.first().unwrap().clone()
+                        }
+                        MultiDimensionalEntity::FormulaMemberWrap {
+                            dim_role_gid: _,
+                            exp,
+                        } => exp.val(slice_tuple, context, None).await,
+                        // MultiDimensionalEntity::ExpFn(exp_fn) => {
+                        //     exp_fn.val(slice_tuple, context, None).await
+                        // }
+                        MultiDimensionalEntity::CellValue(cell_value) => cell_value.clone(),
+                        _ => panic!("The entity is not a CellValue variant."),
+                    }
+                }
+                AstFactory::AstTuple(tuple) => {
+                    match tuple.materialize(slice_tuple, context).await {
+                        MultiDimensionalEntity::TupleWrap(olap_tuple) => {
+                            let ovc = TupleVector {
+                                member_roles: slice_tuple.merge(&olap_tuple).member_roles,
+                            };
+                            let cell_values = calculate(vec![ovc], context).await;
+                            cell_values.first().unwrap().clone()
+                        }
+                        _ => panic!("The entity is not a TupleWrap variant."),
+                    }
+                }
+                AstFactory::AstExpression(exp) => exp.val(slice_tuple, context, None).await,
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstTerm {
+    pub factories: Vec<(char, AstFactory)>,
+}
+
+impl ToCellValue for AstTerm {
+    fn val<'a>(
+        &'a self,
+        slice_tuple: &'a TupleVector,
+        context: &'a mut MultiDimensionalContext,
+        _outer_param: Option<MultiDimensionalEntity>,
+    ) -> BoxFuture<'a, CellValue> {
+        Box::pin(async move {
+            let mut result = CellValue::Invalid;
+            for (index, (op, factory)) in self.factories.iter().enumerate() {
+                if index == 0 {
+                    result = factory.val(slice_tuple, context, None).await;
+                    continue;
+                }
+
+                let factory_value = factory.val(slice_tuple, context, None).await;
+                match *op {
+                    '*' => result = result * factory_value,
+                    '/' => result = result / factory_value,
+                    _ => panic!("Invalid operator in AstTerm: {}", op),
+                }
+            }
+            result
+        })
     }
 }

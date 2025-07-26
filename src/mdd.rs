@@ -1,12 +1,10 @@
 use core::panic;
 
-use crate::mdx_ast::ToCellValue;
+use crate::exmdx::ast::ToCellValue;
 use crate::meta_cache;
 
-// use crate::mdx_ast::AstNumFnAvg;
-// use crate::mdx_ast::AstNumFnCount;
+use crate::exmdx::ast::{AstExpression, AstSeg};
 use crate::exmdx::exp_func::AstExpFunction;
-use crate::mdx_ast::{AstExpression, AstSeg};
 
 use crate::exmdx::ast::{AstCustomObject, AstSegsObj};
 use crate::exmdx::mdd::TupleVector;

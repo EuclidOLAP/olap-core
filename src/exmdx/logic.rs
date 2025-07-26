@@ -4,11 +4,19 @@ use futures::future::BoxFuture;
 
 use crate::exmdx::ast::AstSegsObj;
 
+use crate::exmdx::ast::Materializable;
+use crate::exmdx::ast::{AstExpression, ToCellValue};
 use crate::exmdx::mdd::TupleVector;
 use crate::mdd::MultiDimensionalContext;
 use crate::mdd::{MemberRole, MultiDimensionalEntity};
 
-use crate::mdx_ast::{AstExpression, Materializable, ToBoolValue, ToCellValue};
+pub trait ToBoolValue {
+    fn bool_val<'a>(
+        &'a self,
+        slice_tuple: &'a TupleVector,
+        context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, bool>;
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct AstBoolExp {
