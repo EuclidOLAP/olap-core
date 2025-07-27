@@ -11,6 +11,8 @@ use crate::exmdx::set_func::{AstSetFunction, AstSetFnChildren};
 use crate::exmdx::ast::{AstSeg, AstSegsObj, AstMdxStatement, AstSet, AstTuple, AstAxis, AstCustomObject};
 use crate::exmdx::ast::{AstFactory, AstTerm, AstExpression};
 
+use crate::exmdx::ast::{AstCaseStatement, AstCaseItems};
+
 use crate::exmdx::exp_func::AstExpFunction;
 use crate::exmdx::exp_func::{AstNumFnSum, AstNumFnMax, AstNumFnMin};
 use crate::exmdx::exp_func::{AstNumFnCount, AstNumFnAvg, AstNumFnIIf};
@@ -18,7 +20,7 @@ use crate::exmdx::exp_func::AstExpFnLookupCube;
 use crate::exmdx::exp_func::{AstStrFnName};
 
 use crate::exmdx::logic::{AstBoolExp, AstBoolTerm, AstBoolFactory, AstBoolPrimary, AstBoolFunction};
-use crate::exmdx::logic::{AstBoolFnIsLeaf};
+use crate::exmdx::logic::{AstBoolFnIsLeaf, AstBoolFnIsEmpty, AstBoolFnIsAncestor, AstBoolFnIsGeneration, AstBoolFnIsSibling};
 
 grammar;
 
@@ -92,11 +94,21 @@ extern {
 
     "Name" => Token::Name,
 
+    "Case" => Token::Case,
+    "When" => Token::When,
+    "Then" => Token::Then,
+    "Else" => Token::Else,
+    "End" => Token::End,
+
     "Not" => Token::Not,
     "Or" => Token::Or,
     "And" => Token::And,
 
     "IsLeaf" => Token::IsLeaf,
+    "IsEmpty" => Token::IsEmpty,
+    "IsAncestor" => Token::IsAncestor,
+    "IsGeneration" => Token::IsGeneration,
+    "IsSibling" => Token::IsSibling,
   }
 }
 
@@ -227,6 +239,9 @@ Factory: AstFactory = {
   },
   "(" <exp: Expression> ")" => {
     AstFactory::AstExpression(exp)
+  },
+  <case_stat: Case_Statement> => {
+    AstFactory::AstCaseStatement(case_stat)
   },
 }
 
@@ -555,6 +570,53 @@ Name: AstStrFnName = {
   },
 }
 
+Case_Statement: AstCaseStatement = {
+  "Case" <case_items: Case_Items> "Else" <else_result_exp: Expression> "End" => {
+    AstCaseStatement{
+      case_items,
+      def_result: Some(else_result_exp),
+    }
+  },
+  "Case" <case_items: Case_Items> "End" => {
+    AstCaseStatement{
+      case_items,
+      def_result: None,
+    }
+  },
+}
+
+Case_Items: AstCaseItems = {
+  <sim: Simple_Case> => {
+    let (input_exp, exps_pairs) = sim;
+    AstCaseItems::Simple_Case(input_exp, exps_pairs)
+  },
+  <sea: Searched_Case> => {
+    AstCaseItems::Searched_Case(sea)
+  },
+}
+
+Simple_Case: (AstExpression, Vec<(AstExpression, AstExpression)>) = {
+  <input_exp: Expression> "When" <when_exp: Expression> "Then" <then_exp: Expression> => {
+    (input_exp, vec![(when_exp, then_exp)])
+  },
+  <sim_case: Simple_Case> (",")? "When" <when_exp: Expression> "Then" <then_exp: Expression> => {
+    let mut sim_case = sim_case;
+    sim_case.1.push((when_exp, then_exp));
+    sim_case
+  },
+}
+
+Searched_Case: Vec<(AstBoolExp, AstExpression)> = {
+  <when_exp: Bool_Expression> "Then" <then_exp: Expression> => {
+    vec![(when_exp, then_exp)]
+  },
+  <sea_case: Searched_Case> (",")? "When" <when_exp: Bool_Expression> "Then" <then_exp: Expression> => {
+    let mut sea_case = sea_case;
+    sea_case.push((when_exp, then_exp));
+    sea_case
+  },
+}
+
 Bool_Expression: AstBoolExp = {
   <term: Bool_Term> => {
     AstBoolExp { terms: vec![term] }
@@ -617,12 +679,48 @@ Bool_Primary: AstBoolPrimary = {
 Bool_Function: AstBoolFunction = {
   <is_leaf: BoolFn_IsLeaf> => {
     AstBoolFunction::IsLeaf(is_leaf)
-  }
+  },
+  <bool_fn: BoolFn_IsEmpty> => {
+    AstBoolFunction::IsEmpty(bool_fn)
+  },
+  <bool_fn: BoolFn_IsAncestor> => {
+    AstBoolFunction::IsAncestor(bool_fn)
+  },
+  <bool_fn: BoolFn_IsGeneration> => {
+    AstBoolFunction::IsGeneration(bool_fn)
+  },
+  <bool_fn: BoolFn_IsSibling> => {
+    AstBoolFunction::IsSibling(bool_fn)
+  },
 }
 
 BoolFn_IsLeaf: AstBoolFnIsLeaf = {
   "IsLeaf" "(" <member_segs: Segs_Obj> ")" => {
     AstBoolFnIsLeaf::Member_Segs(member_segs)
+  },
+}
+
+BoolFn_IsEmpty: AstBoolFnIsEmpty = {
+  "IsEmpty" "(" <val_exp: Expression> ")" => {
+    AstBoolFnIsEmpty{ val_exp }
+  },
+}
+
+BoolFn_IsAncestor: AstBoolFnIsAncestor = {
+  "IsAncestor" "(" <mem_segs1: Segs_Obj> "," <mem_segs2: Segs_Obj> ")" => {
+    AstBoolFnIsAncestor{ mem_segs1, mem_segs2 }
+  },
+}
+
+BoolFn_IsGeneration: AstBoolFnIsGeneration = {
+  "IsGeneration" "(" <mem_segs: Segs_Obj> "," <gen_num: Expression> ")" => {
+    AstBoolFnIsGeneration{ mem_segs, gen_num }
+  },
+}
+
+BoolFn_IsSibling: AstBoolFnIsSibling = {
+  "IsSibling" "(" <mem_segs1: Segs_Obj> "," <mem_segs2: Segs_Obj> ")" => {
+    AstBoolFnIsSibling{ mem_segs1, mem_segs2 }
   },
 }
 

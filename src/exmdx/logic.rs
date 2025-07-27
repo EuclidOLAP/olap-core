@@ -126,6 +126,10 @@ impl ToBoolValue for AstBoolPrimary {
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstBoolFunction {
     IsLeaf(AstBoolFnIsLeaf),
+    IsEmpty(AstBoolFnIsEmpty),
+    IsAncestor(AstBoolFnIsAncestor),
+    IsGeneration(AstBoolFnIsGeneration),
+    IsSibling(AstBoolFnIsSibling),
 }
 
 impl ToBoolValue for AstBoolFunction {
@@ -136,9 +140,21 @@ impl ToBoolValue for AstBoolFunction {
     ) -> BoxFuture<'a, bool> {
         Box::pin(async move {
             match self {
-                AstBoolFunction::IsLeaf(is_leaf_fn) => {
+                Self::IsLeaf(is_leaf_fn) => {
                     is_leaf_fn.bool_val(slice_tuple, context).await
-                }
+                },
+                Self::IsEmpty(is_empty_fn) => {
+                    is_empty_fn.bool_val(slice_tuple, context).await
+                },
+                Self::IsAncestor(is_ancestor_fn) => {
+                    is_ancestor_fn.bool_val(slice_tuple, context).await
+                },
+                Self::IsGeneration(is_generation_fn) => {
+                    is_generation_fn.bool_val(slice_tuple, context).await
+                },
+                Self::IsSibling(is_sibling_fn) => {
+                    is_sibling_fn.bool_val(slice_tuple, context).await
+                },
             }
         })
     }
@@ -187,6 +203,77 @@ impl ToBoolValue for AstBoolFnIsLeaf {
             // } else {
             //     panic!("[hsju6679] The entity is not a MemberRole variant.");
             // }
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstBoolFnIsEmpty {
+    pub val_exp: AstExpression,
+}
+
+impl ToBoolValue for AstBoolFnIsEmpty {
+    fn bool_val<'a>(
+        &'a self,
+        _slice_tuple: &'a TupleVector,
+        _context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, bool> {
+        Box::pin(async move {
+            false
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstBoolFnIsAncestor {
+    pub mem_segs1: AstSegsObj,
+    pub mem_segs2: AstSegsObj,
+}
+
+impl ToBoolValue for AstBoolFnIsAncestor {
+    fn bool_val<'a>(
+        &'a self,
+        _slice_tuple: &'a TupleVector,
+        _context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, bool> {
+        Box::pin(async move {
+            false
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstBoolFnIsGeneration {
+    pub mem_segs: AstSegsObj,
+    pub gen_num: AstExpression,
+}
+
+impl ToBoolValue for AstBoolFnIsGeneration {
+    fn bool_val<'a>(
+        &'a self,
+        _slice_tuple: &'a TupleVector,
+        _context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, bool> {
+        Box::pin(async move {
+            false
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstBoolFnIsSibling {
+    pub mem_segs1: AstSegsObj,
+    pub mem_segs2: AstSegsObj,
+}
+
+impl ToBoolValue for AstBoolFnIsSibling {
+    fn bool_val<'a>(
+        &'a self,
+        _slice_tuple: &'a TupleVector,
+        _context: &'a mut MultiDimensionalContext,
+    ) -> BoxFuture<'a, bool> {
+        Box::pin(async move {
+            false
         })
     }
 }

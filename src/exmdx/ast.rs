@@ -14,6 +14,7 @@ use crate::exmdx::mem_func::AstMemberFunction;
 
 use crate::calcul::calculate;
 
+use crate::exmdx::logic::AstBoolExp;
 use crate::exmdx::lv_func::AstLevelFunction;
 
 use crate::exmdx::set_func::AstSetFunction;
@@ -632,6 +633,7 @@ pub enum AstFactory {
     AstSegsObj(AstSegsObj),
     AstTuple(AstTuple),
     AstExpression(AstExpression),
+    AstCaseStatement(AstCaseStatement),
 }
 
 impl ToCellValue for AstFactory {
@@ -683,6 +685,9 @@ impl ToCellValue for AstFactory {
                     }
                 }
                 AstFactory::AstExpression(exp) => exp.val(slice_tuple, context, None).await,
+                AstFactory::AstCaseStatement(case_stmt) => {
+                    case_stmt.val(slice_tuple, context, None).await
+                }
             }
         })
     }
@@ -716,6 +721,32 @@ impl ToCellValue for AstTerm {
                 }
             }
             result
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct AstCaseStatement {
+    pub case_items: AstCaseItems,
+    pub def_result: Option<AstExpression>,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstCaseItems {
+    Simple_Case(AstExpression, Vec<(AstExpression, AstExpression)>),
+    Searched_Case(Vec<(AstBoolExp, AstExpression)>),
+}
+
+impl ToCellValue for AstCaseStatement {
+    fn val<'a>(
+        &'a self,
+        _slice_tuple: &'a TupleVector,
+        _context: &'a mut MultiDimensionalContext,
+        _outer_param: Option<MultiDimensionalEntity>,
+    ) -> BoxFuture<'a, CellValue> {
+        Box::pin(async move {
+            CellValue::Null
         })
     }
 }

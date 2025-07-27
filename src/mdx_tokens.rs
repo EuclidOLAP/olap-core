@@ -108,6 +108,18 @@ pub enum Token {
     #[regex("(?i)Children")]
     Children,
 
+    // CASE Statement
+    #[regex("(?i)Case")]
+    Case,
+    #[regex("(?i)When")]
+    When,
+    #[regex("(?i)Then")]
+    Then,
+    #[regex("(?i)Else")]
+    Else,
+    #[regex("(?i)End")]
+    End,
+
     // Expression functions
     #[regex("(?i)Avg")]
     Avg,
@@ -160,8 +172,17 @@ pub enum Token {
     #[token(">=")] // Greater Than or Equal To
     GE,
 
+    // Logical Functions
     #[regex("(?i)IsLeaf")]
     IsLeaf,
+    #[regex("(?i)IsEmpty")]
+    IsEmpty,
+    #[regex("(?i)IsAncestor")]
+    IsAncestor,
+    #[regex("(?i)IsGeneration")]
+    IsGeneration,
+    #[regex("(?i)IsSibling")]
+    IsSibling,
 
     #[regex("(?i)Name")]
     Name,
