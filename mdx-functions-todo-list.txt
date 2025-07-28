@@ -179,30 +179,6 @@
 	DefaultMember		[E] [M] [O]
 
 
-<< Numeric Functions >>
-	CoalesceEmpty		[E] [I] [M] [O]
-	Count (Set)			[E] [M]
-	IIf					[E] [M] [O]
-	LookupCube			[E] [M]
-	Sum					[E] [I] [M] [O]
-	Avg					[E] [I] [M] [O]
-	Max					[E] [I] [M] [O]
-	Min					[E] [I] [M] [O]
-	Aggregate			[E] [I] [M] [O]
-	Median				[E] [I] [M] [O]
-	Rank				[E] [I] [M] [O]
-	Abs					[E] [I] [O]
-	Correlation			[E] [I] [M]
-	Covariance			[E] [I] [M]
-	LinRegIntercept		[E] [I] [M]
-	LinRegR2			[E] [I] [M]
-	LinRegSlope			[E] [I] [M]
-	LinRegVariance		[E] [I] [M]
-	Stdev				[E] [I] [M]
-	Var					[E] [I] [M]
-	Ordinal				[E] [M] [O]
-
-
 << Set Functions >>
 	BottomPercent	[E] [I] [M]
 	Children		[E] [I] [M]

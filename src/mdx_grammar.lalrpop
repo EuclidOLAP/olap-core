@@ -18,6 +18,7 @@ use crate::exmdx::exp_func::{AstNumFnSum, AstNumFnMax, AstNumFnMin};
 use crate::exmdx::exp_func::{AstNumFnCount, AstNumFnAvg, AstNumFnIIf};
 use crate::exmdx::exp_func::AstExpFnLookupCube;
 use crate::exmdx::exp_func::{AstStrFnName};
+use crate::exmdx::exp_func::{AstNumFnAbs, AstNumFnAggregate, AstNumFnCoalesceEmpty, AstNumFnCorrelation, AstNumFnCovariance, AstNumFnLinRegIntercept, AstNumFnLinRegR2, AstNumFnLinRegSlope, AstNumFnLinRegVariance, AstNumFnMedian, AstNumFnOrdinal, AstNumFnRank, AstNumFnStdev, AstNumFnVar};
 
 use crate::exmdx::logic::{AstBoolExp, AstBoolTerm, AstBoolFactory, AstBoolPrimary, AstBoolFunction};
 use crate::exmdx::logic::{AstBoolFnIsLeaf, AstBoolFnIsEmpty, AstBoolFnIsAncestor, AstBoolFnIsGeneration, AstBoolFnIsSibling};
@@ -88,9 +89,24 @@ extern {
     "Max" => Token::Max,
     "Min" => Token::Min,
     "Count" => Token::Count,
+    "IIf" => Token::IIf,
+    "CoalesceEmpty" => Token::CoalesceEmpty,
+    "Aggregate" => Token::Aggregate,
+    "Median" => Token::Median,
+    "Rank" => Token::Rank,
+    "Abs" => Token::Abs,
+    "Correlation" => Token::Correlation,
+    "Covariance" => Token::Covariance,
+    "LinRegIntercept" => Token::LinRegIntercept,
+    "LinRegR2" => Token::LinRegR2,
+    "LinRegSlope" => Token::LinRegSlope,
+    "LinRegVariance" => Token::LinRegVariance,
+    "Stdev" => Token::Stdev,
+    "Var" => Token::Var,
+    "Ordinal" => Token::Ordinal,
+
     // "Tunnel" => Token::Tunnel,
     "LookupCube" => Token::LookupCube,
-    "IIf" => Token::IIf,
 
     "Name" => Token::Name,
 
@@ -182,6 +198,17 @@ Custom_Object: AstCustomObject = {
   },
 }
 
+Expressions: Vec<AstExpression> = {
+  <exp: Expression> => {
+    vec![exp]
+  },
+  <expressions: Expressions> "," <exp: Expression> => {
+    let mut list = expressions;
+    list.push(exp);
+    list
+  },
+}
+
 Expression: AstExpression = {
   <term: Term> => {
     AstExpression {
@@ -254,6 +281,24 @@ Bracket_Tuple: AstTuple = {
 Brace_Set: AstSet = {
   "{" <tuples: Tuples> "}" => {
     AstSet::Tuples(tuples)
+  },
+}
+
+Tuple_Spec: AstTuple = {
+  <segs_obj: Segs_Obj> => {
+    AstTuple::SegsObj(segs_obj)
+  },
+  <ast_tup: Bracket_Tuple> => {
+    ast_tup
+  },
+}
+
+Set_Spec: AstSet = {
+  <ast_set: Brace_Set> => {
+    ast_set
+  },
+  <segs_obj: Segs_Obj> => {
+    AstSet::SegsObj(segs_obj)
   },
 }
 
@@ -440,6 +485,48 @@ Exp_Func: AstExpFunction = {
   <num_func: Min> => {
     AstExpFunction::Min(num_func)
   },
+  <num_func: CoalesceEmpty> => {
+    AstExpFunction::CoalesceEmpty(num_func)
+  },
+  <num_func: Aggregate> => {
+    AstExpFunction::Aggregate(num_func)
+  },
+  <num_func: Median> => {
+    AstExpFunction::Median(num_func)
+  },
+  <num_func: Rank> => {
+    AstExpFunction::Rank(num_func)
+  },
+  <num_func: Abs> => {
+    AstExpFunction::Abs(num_func)
+  },
+  <num_func: Correlation> => {
+    AstExpFunction::Correlation(num_func)
+  },
+  <num_func: Covariance> => {
+    AstExpFunction::Covariance(num_func)
+  },
+  <num_func: LinRegIntercept> => {
+    AstExpFunction::LinRegIntercept(num_func)
+  },
+  <num_func: LinRegR2> => {
+    AstExpFunction::LinRegR2(num_func)
+  },
+  <num_func: LinRegSlope> => {
+    AstExpFunction::LinRegSlope(num_func)
+  },
+  <num_func: LinRegVariance> => {
+    AstExpFunction::LinRegVariance(num_func)
+  },
+  <num_func: Stdev> => {
+    AstExpFunction::Stdev(num_func)
+  },
+  <num_func: Var> => {
+    AstExpFunction::Var(num_func)
+  },
+  <num_func: Ordinal> => {
+    AstExpFunction::Ordinal(num_func)
+  },
 
   <exp_func: LookupCube> => {
     AstExpFunction::LookupCube(exp_func)
@@ -550,6 +637,254 @@ IIf: AstNumFnIIf = {
   "IIf" "(" <bool_exp: Bool_Expression> "," <true_exp: Expression> "," <false_exp: Expression> ")" => {
     AstNumFnIIf { bool_exp, true_exp, false_exp }
   }
+}
+
+CoalesceEmpty: AstNumFnCoalesceEmpty = {
+  // Numeric syntax  
+  // CoalesceEmpty( Numeric_Expression1 [ ,Numeric_Expression2,...n] )  
+
+  // String syntax  
+  // CoalesceEmpty(String_Expression1 [ ,String_Expression2,...n] )
+
+  "CoalesceEmpty" "(" <exps: Expressions> ")" => {
+    AstNumFnCoalesceEmpty { exps }
+  },
+}
+
+Aggregate: AstNumFnAggregate = {
+  // Aggregate(Set_Expression [ ,Numeric_Expression ])
+
+  "Aggregate" ("(" ")")? => {
+    AstNumFnAggregate::Chain
+  },
+  // "Aggregate" "(" <num_exp: Expression> ")" => {
+  //   todo!("Aggregate(Numeric_Expression)")
+  // },
+
+  "Aggregate" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnAggregate::AstSet_AstExp(AstSet::SegsObj(set_segs), None)
+  },
+  "Aggregate" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnAggregate::AstSet_AstExp(ast_set, None)
+  },
+  "Aggregate" "(" <set_segs: Segs_Obj> "," <num_exp: Expression> ")" => {
+    AstNumFnAggregate::AstSet_AstExp(AstSet::SegsObj(set_segs), Some(num_exp))
+  },
+  "Aggregate" "(" <ast_set: Brace_Set> "," <num_exp: Expression> ")" => {
+    AstNumFnAggregate::AstSet_AstExp(ast_set, Some(num_exp))
+  },
+}
+
+Median: AstNumFnMedian = {
+  // Median(Set_Expression [ ,Numeric_Expression ] )
+
+  "Median" ("(" ")")? => {
+    AstNumFnMedian::Chain
+  },
+  // "Median" "(" <num_exp: Expression> ")" => {
+  //   todo!("Median(Numeric_Expression)")
+  // },
+
+  "Median" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnMedian::AstSet_AstExp(AstSet::SegsObj(set_segs), None)
+  },
+  "Median" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnMedian::AstSet_AstExp(ast_set, None)
+  },
+  "Median" "(" <set_segs: Segs_Obj> "," <num_exp: Expression> ")" => {
+    AstNumFnMedian::AstSet_AstExp(AstSet::SegsObj(set_segs), Some(num_exp))
+  },
+  "Median" "(" <ast_set: Brace_Set> "," <num_exp: Expression> ")" => {
+    AstNumFnMedian::AstSet_AstExp(ast_set, Some(num_exp))
+  },
+}
+
+Stdev: AstNumFnStdev = {
+  // Stdev(Set_Expression [ ,Numeric_Expression ] )
+
+  "Stdev" ("(" ")")? => {
+    AstNumFnStdev::Chain
+  },
+  // "Stdev" "(" <num_exp: Expression> ")" => {
+  //   todo!("Stdev(Numeric_Expression)")
+  // },
+
+  "Stdev" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnStdev::AstSet_AstExp(AstSet::SegsObj(set_segs), None)
+  },
+  "Stdev" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnStdev::AstSet_AstExp(ast_set, None)
+  },
+  "Stdev" "(" <set_segs: Segs_Obj> "," <num_exp: Expression> ")" => {
+    AstNumFnStdev::AstSet_AstExp(AstSet::SegsObj(set_segs), Some(num_exp))
+  },
+  "Stdev" "(" <ast_set: Brace_Set> "," <num_exp: Expression> ")" => {
+    AstNumFnStdev::AstSet_AstExp(ast_set, Some(num_exp))
+  },
+}
+
+Var: AstNumFnVar = {
+  // Var(Set_Expression [ ,Numeric_Expression ] )
+
+  "Var" ("(" ")")? => {
+    AstNumFnVar::Chain
+  },
+  // "Var" "(" <num_exp: Expression> ")" => {
+  //   todo!("Var(Numeric_Expression)")
+  // },
+
+  "Var" "(" <set_segs: Segs_Obj> ")" => {
+    AstNumFnVar::AstSet_AstExp(AstSet::SegsObj(set_segs), None)
+  },
+  "Var" "(" <ast_set: Brace_Set> ")" => {
+    AstNumFnVar::AstSet_AstExp(ast_set, None)
+  },
+  "Var" "(" <set_segs: Segs_Obj> "," <num_exp: Expression> ")" => {
+    AstNumFnVar::AstSet_AstExp(AstSet::SegsObj(set_segs), Some(num_exp))
+  },
+  "Var" "(" <ast_set: Brace_Set> "," <num_exp: Expression> ")" => {
+    AstNumFnVar::AstSet_AstExp(ast_set, Some(num_exp))
+  },
+}
+
+Rank: AstNumFnRank = {
+  // Tuple_Expression . Rank( Set_Expression [ ,Numeric Expression ] )
+  // "Rank" "(" <ast_set: Set_Spec> "," <num_exp: Expression> ")" => {
+  //   todo!("Rank(Tuple_Expression, Set_Expression [ ,Numeric Expression ] )")
+  // },
+  "Rank" "(" <ast_set: Set_Spec> ")" => {
+    AstNumFnRank::Chain_AstSet(ast_set)
+  },
+  // Rank(Tuple_Expression, Set_Expression [ ,Numeric Expression ] )
+  "Rank" "(" <ast_tup: Tuple_Spec> "," <ast_set: Set_Spec> "," <num_exp: Expression> ")" => {
+    AstNumFnRank::AstTuple_AstSet_AstExp(ast_tup, ast_set, num_exp)
+  },
+  "Rank" "(" <ast_tup: Tuple_Spec> "," <ast_set: Set_Spec> ")" => {
+    AstNumFnRank::AstTuple_AstSet(ast_tup, ast_set)
+  },
+}
+
+Abs: AstNumFnAbs = {
+  // Abs ( numeric_value_expression )
+  "Abs" ("(" ")")? => {
+    AstNumFnAbs::Chain
+  },
+  "Abs" "(" <num_exp: Expression> ")" => {
+    AstNumFnAbs::AstExp(num_exp)
+  },
+}
+
+Correlation: AstNumFnCorrelation = {
+  // Set_Expression . Correlation( Numeric_Expression_y [ ,Numeric_Expression_x ] )
+  // "Correlation" "(" <num_exp_y: Expression> "," <num_exp_x: Expression> ")" => {
+  //   todo!("Correlation(Set_Expression, Numeric_Expression_y [ ,Numeric_Expression_x ] )")
+  // },
+  "Correlation" "(" <num_exp_y: Expression> ")" => {
+    AstNumFnCorrelation::Chain_NumExpY(num_exp_y)
+  },
+  // Correlation( Set_Expression, Numeric_Expression_y [ ,Numeric_Expression_x ] )
+  "Correlation" "(" <ast_set: Set_Spec> "," <num_exp_y: Expression> "," <num_exp_x: Expression> ")" => {
+    AstNumFnCorrelation::AstSet_NumExpY_NumExpX(ast_set, num_exp_y, num_exp_x)
+  },
+  "Correlation" "(" <ast_set: Set_Spec> "," <num_exp_y: Expression> ")" => {
+    AstNumFnCorrelation::AstSet_NumExpY(ast_set, num_exp_y)
+  },
+}
+
+Covariance: AstNumFnCovariance = {
+  // Set_Expression . Covariance( Numeric_Expression_y [ ,Numeric_Expression_x ] )
+  // "Covariance" "(" <num_exp_y: Expression> "," <num_exp_x: Expression> ")" => {
+  //   todo!("Covariance(Set_Expression, Numeric_Expression_y [ ,Numeric_Expression_x ] )")
+  // },
+  "Covariance" "(" <num_exp_y: Expression> ")" => {
+    AstNumFnCovariance::Chain_NumExpY(num_exp_y)
+  },
+  // Covariance( Set_Expression, Numeric_Expression_y [ ,Numeric_Expression_x ] )
+  "Covariance" "(" <ast_set: Set_Spec> "," <num_exp_y: Expression> "," <num_exp_x: Expression> ")" => {
+    AstNumFnCovariance::AstSet_NumExpY_NumExpX(ast_set, num_exp_y, num_exp_x)
+  },
+  "Covariance" "(" <ast_set: Set_Spec> "," <num_exp_y: Expression> ")" => {
+    AstNumFnCovariance::AstSet_NumExpY(ast_set, num_exp_y)
+  },
+}
+
+LinRegIntercept: AstNumFnLinRegIntercept = {
+  // Set_Expression . LinRegIntercept( Numeric_Expression_y [ ,Numeric_Expression_x ] )
+  // "LinRegIntercept" "(" <num_exp_y: Expression> "," <num_exp_x: Expression> ")" => {
+  //   todo!("LinRegIntercept(Set_Expression, Numeric_Expression_y [ ,Numeric_Expression_x ] )")
+  // },
+  "LinRegIntercept" "(" <num_exp_y: Expression> ")" => {
+    AstNumFnLinRegIntercept::Chain_NumExpY(num_exp_y)
+  },
+  // LinRegIntercept( Set_Expression, Numeric_Expression_y [ ,Numeric_Expression_x ] )
+  "LinRegIntercept" "(" <ast_set: Set_Spec> "," <num_exp_y: Expression> "," <num_exp_x: Expression> ")" => {
+    AstNumFnLinRegIntercept::AstSet_NumExpY_NumExpX(ast_set, num_exp_y, num_exp_x)
+  },
+  "LinRegIntercept" "(" <ast_set: Set_Spec> "," <num_exp_y: Expression> ")" => {
+    AstNumFnLinRegIntercept::AstSet_NumExpY(ast_set, num_exp_y)
+  },
+}
+
+LinRegR2: AstNumFnLinRegR2 = {
+  // Set_Expression . LinRegR2( Numeric_Expression_y [ ,Numeric_Expression_x ] )
+  // "LinRegR2" "(" <num_exp_y: Expression> "," <num_exp_x: Expression> ")" => {
+  //   todo!("LinRegR2(Set_Expression, Numeric_Expression_y [ ,Numeric_Expression_x ] )")
+  // },
+  "LinRegR2" "(" <num_exp_y: Expression> ")" => {
+    AstNumFnLinRegR2::Chain_NumExpY(num_exp_y)
+  },
+  // LinRegR2( Set_Expression, Numeric_Expression_y [ ,Numeric_Expression_x ] )
+  "LinRegR2" "(" <ast_set: Set_Spec> "," <num_exp_y: Expression> "," <num_exp_x: Expression> ")" => {
+    AstNumFnLinRegR2::AstSet_NumExpY_NumExpX(ast_set, num_exp_y, num_exp_x)
+  },
+  "LinRegR2" "(" <ast_set: Set_Spec> "," <num_exp_y: Expression> ")" => {
+    AstNumFnLinRegR2::AstSet_NumExpY(ast_set, num_exp_y)
+  },
+}
+
+LinRegSlope: AstNumFnLinRegSlope = {
+  // Set_Expression . LinRegSlope( Numeric_Expression_y [ ,Numeric_Expression_x ] )
+  // "LinRegSlope" "(" <num_exp_y: Expression> "," <num_exp_x: Expression> ")" => {
+  //   todo!("LinRegSlope(Set_Expression, Numeric_Expression_y [ ,Numeric_Expression_x ] )")
+  // },
+  "LinRegSlope" "(" <num_exp_y: Expression> ")" => {
+    AstNumFnLinRegSlope::Chain_NumExpY(num_exp_y)
+  },
+  // LinRegSlope( Set_Expression, Numeric_Expression_y [ ,Numeric_Expression_x ] )
+  "LinRegSlope" "(" <ast_set: Set_Spec> "," <num_exp_y: Expression> "," <num_exp_x: Expression> ")" => {
+    AstNumFnLinRegSlope::AstSet_NumExpY_NumExpX(ast_set, num_exp_y, num_exp_x)
+  },
+  "LinRegSlope" "(" <ast_set: Set_Spec> "," <num_exp_y: Expression> ")" => {
+    AstNumFnLinRegSlope::AstSet_NumExpY(ast_set, num_exp_y)
+  },
+}
+
+LinRegVariance: AstNumFnLinRegVariance = {
+  // Set_Expression . LinRegVariance( Numeric_Expression_y [ ,Numeric_Expression_x ] )
+  // "LinRegVariance" "(" <num_exp_y: Expression> "," <num_exp_x: Expression> ")" => {
+  //   todo!("LinRegVariance(Set_Expression, Numeric_Expression_y [ ,Numeric_Expression_x ] )")
+  // },
+  "LinRegVariance" "(" <num_exp_y: Expression> ")" => {
+    AstNumFnLinRegVariance::Chain_NumExpY(num_exp_y)
+  },
+  // LinRegVariance( Set_Expression, Numeric_Expression_y [ ,Numeric_Expression_x ] )
+  "LinRegVariance" "(" <ast_set: Set_Spec> "," <num_exp_y: Expression> "," <num_exp_x: Expression> ")" => {
+    AstNumFnLinRegVariance::AstSet_NumExpY_NumExpX(ast_set, num_exp_y, num_exp_x)
+  },
+  "LinRegVariance" "(" <ast_set: Set_Spec> "," <num_exp_y: Expression> ")" => {
+    AstNumFnLinRegVariance::AstSet_NumExpY(ast_set, num_exp_y)
+  },
+}
+
+Ordinal: AstNumFnOrdinal = {
+  // Level_Expression . Ordinal
+  "Ordinal" ("(" ")")? => {
+    AstNumFnOrdinal::Chain
+  },
+  // Ordinal ( Level_Expression )
+  "Ordinal" "(" <lv_segs: Segs_Obj> ")" => {
+    AstNumFnOrdinal::LevelSegs(lv_segs)
+  },
 }
 
 LookupCube: AstExpFnLookupCube = {

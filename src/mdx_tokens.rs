@@ -120,7 +120,7 @@ pub enum Token {
     #[regex("(?i)End")]
     End,
 
-    // Expression functions
+    // Expression numeric functions
     #[regex("(?i)Avg")]
     Avg,
     #[regex("(?i)Sum")]
@@ -131,11 +131,47 @@ pub enum Token {
     Min,
     #[regex("(?i)Count")]
     Count,
+    #[regex("(?i)IIf")]
+    IIf,
+    #[regex("(?i)CoalesceEmpty")]
+    CoalesceEmpty,
+    #[regex("(?i)Aggregate")]
+    Aggregate,
+    #[regex("(?i)Median")]
+    Median,
+    #[regex("(?i)Rank")]
+    Rank,
+    #[regex("(?i)Abs")]
+    Abs,
+    #[regex("(?i)Correlation")]
+    Correlation,
+    #[regex("(?i)Covariance")]
+    Covariance,
+    #[regex("(?i)LinRegIntercept")]
+    LinRegIntercept,
+    #[regex("(?i)LinRegR2")]
+    LinRegR2,
+    #[regex("(?i)LinRegSlope")]
+    LinRegSlope,
+    #[regex("(?i)LinRegVariance")]
+    LinRegVariance,
+    #[regex("(?i)Stdev")]
+    Stdev,
+    #[regex("(?i)Var")]
+    Var,
+    #[regex("(?i)Ordinal")]
+    Ordinal,
+
+    // Expression tunnel functions
     // #[regex("(?i)Tunnel")]
     // Tunnel,
     #[regex("(?i)LookupCube")]
     LookupCube,
-    #[regex("(?i)Abs")]
+
+    // Expression string functions
+    #[regex("(?i)Name")]
+    Name,
+
     #[regex("(?i)ClosingPeriod")]
     ClosingPeriod,
 
@@ -147,9 +183,6 @@ pub enum Token {
 
     #[regex("(?i)Levels")]
     Levels,
-
-    #[regex("(?i)IIf")]
-    IIf,
 
     #[regex("(?i)Not")]
     Not,
@@ -183,9 +216,6 @@ pub enum Token {
     IsGeneration,
     #[regex("(?i)IsSibling")]
     IsSibling,
-
-    #[regex("(?i)Name")]
-    Name,
 }
 
 impl fmt::Display for Token {
