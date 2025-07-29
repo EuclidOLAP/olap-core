@@ -5,6 +5,7 @@ use crate::exmdx::lv_func::{AstLevelFnLevel, AstLevelFnLevels};
 
 use crate::exmdx::mem_func::AstMemberFunction;
 use crate::exmdx::mem_func::{AstMemberFnCurrentMember, AstMemberFnParent, AstMemberFnClosingPeriod, AstMemberFnOpeningPeriod};
+use crate::exmdx::mem_func::{AstMemberFnFirstChild, AstMemberFnFirstSibling, AstMemberFnLag, AstMemberFnLastChild, AstMemberFnLastSibling, AstMemberFnLead, AstMemberFnParallelPeriod, AstMemberFnPrevMember, AstMemberFnNextMember, AstMemberFnAncestor, AstMemberFnCousin, AstMemberFnDefaultMember};
 
 use crate::exmdx::set_func::{AstSetFunction, AstSetFnChildren};
 
@@ -69,6 +70,7 @@ extern {
     ">=" => Token::GE,
 
     "unsigned_int" => Token::Integer(<u64>),
+    "negative_int" => Token::NegativeInteger(<i64>),
     "double" => Token::Double(<f64>),
 
     "BracketedString" => Token::BracketedString(<String>),
@@ -78,6 +80,18 @@ extern {
     "CurrentMember" => Token::CurrentMember,
     "ClosingPeriod" => Token::ClosingPeriod,
     "OpeningPeriod" => Token::OpeningPeriod,
+    "FirstChild" => Token::FirstChild,
+    "FirstSibling" => Token::FirstSibling,
+    "Lag" => Token::Lag,
+    "LastChild" => Token::LastChild,
+    "LastSibling" => Token::LastSibling,
+    "Lead" => Token::Lead,
+    "ParallelPeriod" => Token::ParallelPeriod,
+    "PrevMember" => Token::PrevMember,
+    "NextMember" => Token::NextMember,
+    "Ancestor" => Token::Ancestor,
+    "Cousin" => Token::Cousin,
+    "DefaultMember" => Token::DefaultMember,
 
     "Children" => Token::Children,
 
@@ -380,6 +394,18 @@ Member_Func: AstMemberFunction = {
   <memb_func: Current_Member> => {
     AstMemberFunction::CurrentMember(memb_func)
   },
+  <member_func: FirstChild> => AstMemberFunction::FirstChild(member_func),
+  <member_func: FirstSibling> => AstMemberFunction::FirstSibling(member_func),
+  <member_func: Lag> => AstMemberFunction::Lag(member_func),
+  <member_func: LastChild> => AstMemberFunction::LastChild(member_func),
+  <member_func: LastSibling> => AstMemberFunction::LastSibling(member_func),
+  <member_func: Lead> => AstMemberFunction::Lead(member_func),
+  <member_func: ParallelPeriod> => AstMemberFunction::ParallelPeriod(member_func),
+  <member_func: PrevMember> => AstMemberFunction::PrevMember(member_func),
+  <member_func: NextMember> => AstMemberFunction::NextMember(member_func),
+  <member_func: Ancestor> => AstMemberFunction::Ancestor(member_func),
+  <member_func: Cousin> => AstMemberFunction::Cousin(member_func),
+  <member_func: DefaultMember> => AstMemberFunction::DefaultMember(member_func),
 }
 
 Parent: AstMemberFnParent = {
@@ -421,6 +447,153 @@ Current_Member: AstMemberFnCurrentMember = {
   },
   "CurrentMember" "(" <segs_obj: Segs_Obj> ")" => {
     AstMemberFnCurrentMember::SegsObj(segs_obj)
+  },
+}
+
+FirstChild: AstMemberFnFirstChild = {
+  // Member_Expression.FirstChild
+  "FirstChild" ("(" ")")? => {
+    AstMemberFnFirstChild::Chain
+  },
+  "FirstChild" "(" <mem_segs: Segs_Obj> ")" => {
+    AstMemberFnFirstChild::MemberSegs(mem_segs)
+  },
+}
+
+FirstSibling: AstMemberFnFirstSibling = {
+  // Member_Expression.FirstSibling
+  "FirstSibling" ("(" ")")? => {
+    AstMemberFnFirstSibling::Chain
+  },
+  "FirstSibling" "(" <mem_segs: Segs_Obj> ")" => {
+    AstMemberFnFirstSibling::MemberSegs(mem_segs)
+  },
+}
+
+Lag: AstMemberFnLag = {
+  // Member_Expression.Lag(Index)
+  "Lag" "(" <idx_exp: Expression> ")" => {
+    AstMemberFnLag::Chain_IndexExp(idx_exp)
+  },
+  "Lag" "(" <mem_segs: Segs_Obj> "," <idx_exp: Expression> ")" => {
+    AstMemberFnLag::MemberSegs_IndexExp(mem_segs, idx_exp)
+  },
+}
+
+LastChild: AstMemberFnLastChild = {
+  // Member_Expression.LastChild
+  "LastChild" ("(" ")")? => {
+    AstMemberFnLastChild::Chain
+  },
+  "LastChild" "(" <mem_segs: Segs_Obj> ")" => {
+    AstMemberFnLastChild::MemberSegs(mem_segs)
+  },
+}
+
+LastSibling: AstMemberFnLastSibling = {
+  // Member_Expression.LastSibling
+  "LastSibling" ("(" ")")? => {
+    AstMemberFnLastSibling::Chain
+  },
+  "LastSibling" "(" <mem_segs: Segs_Obj> ")" => {
+    AstMemberFnLastSibling::MemberSegs(mem_segs)
+  },
+}
+
+Lead: AstMemberFnLead = {
+  // Member_Expression.Lead( Index )
+  "Lead" "(" <idx_exp: Expression> ")" => {
+    AstMemberFnLead::Chain_IndexExp(idx_exp)
+  },
+  "Lead" "(" <mem_segs: Segs_Obj> "," <idx_exp: Expression> ")" => {
+    AstMemberFnLead::MemberSegs_IndexExp(mem_segs, idx_exp)
+  },
+}
+
+ParallelPeriod: AstMemberFnParallelPeriod = {
+  // ParallelPeriod( [ Level_Expression [ ,Index [ , Member_Expression ] ] ] )
+  "ParallelPeriod" ("(" ")")? => {
+    AstMemberFnParallelPeriod::Chain
+  },
+
+  // "ParallelPeriod" "(" <idx_exp: Expression> ")" => {
+  //   AstMemberFnParallelPeriod::Chain_IndexExp(idx_exp)
+  // },
+  // "ParallelPeriod" "(" <idx_exp: Expression> "," <mem_segs: Segs_Obj> ")" => {
+  //   AstMemberFnParallelPeriod::Chain_IndexExp_MemberSegs(idx_exp, mem_segs)
+  // },
+
+  // "ParallelPeriod" ("(" ")")? => {},
+  "ParallelPeriod" "(" <level_segs: Segs_Obj> ")" => {
+    AstMemberFnParallelPeriod::LevelSegs(level_segs)
+  },
+  "ParallelPeriod" "(" <level_segs: Segs_Obj> "," <idx_exp: Expression> ")" => {
+    AstMemberFnParallelPeriod::LevelSegs_IndexExp(level_segs, idx_exp)
+  },
+  "ParallelPeriod" "(" <level_segs: Segs_Obj> "," <idx_exp: Expression> "," <mem_segs: Segs_Obj> ")" => {
+    AstMemberFnParallelPeriod::LevelSegs_IndexExp_MemberSegs(level_segs, idx_exp, mem_segs)
+  },
+}
+
+PrevMember: AstMemberFnPrevMember = {
+  // Member_Expression.PrevMember
+  "PrevMember" ("(" ")")? => {
+    AstMemberFnPrevMember::Chain
+  },
+  "PrevMember" "(" <mem_segs: Segs_Obj> ")" => {
+    AstMemberFnPrevMember::MemberSegs(mem_segs)
+  },
+}
+
+NextMember: AstMemberFnNextMember = {
+  // Member_Expression.NextMember
+  "NextMember" ("(" ")")? => {
+    AstMemberFnNextMember::Chain
+  },
+  "NextMember" "(" <mem_segs: Segs_Obj> ")" => {
+    AstMemberFnNextMember::MemberSegs(mem_segs)
+  },
+}
+
+Ancestor: AstMemberFnAncestor = {
+  // Level syntax  
+  // Ancestor(Member_Expression, Level_Expression)  
+    
+  // Numeric syntax  
+  // Ancestor(Member_Expression, Distance)  
+
+  "Ancestor" "(" <level_segs: Segs_Obj> ")" => {
+    AstMemberFnAncestor::Chain_LevelSegs(level_segs)
+  },
+  "Ancestor" "(" <distance: "negative_int"> ")" => {
+    AstMemberFnAncestor::Chain_Distance(distance)
+  },
+
+  "Ancestor" "(" <mem_segs: Segs_Obj> "," <level_segs: Segs_Obj> ")" => {
+    AstMemberFnAncestor::MemberSegs_LevelSegs(mem_segs, level_segs)
+  },
+  "Ancestor" "(" <mem_segs: Segs_Obj> "," <distance: "negative_int"> ")" => {
+    AstMemberFnAncestor::MemberSegs_Distance(mem_segs, distance)
+  },
+}
+
+Cousin: AstMemberFnCousin = {
+  // Cousin( Member_Expression , Ancestor_Member_Expression )
+  "Cousin" "(" <anc_mem_segs: Segs_Obj> ")" => {
+    AstMemberFnCousin::Chain_AncestorMemberSegs(anc_mem_segs)
+  },
+  "Cousin" "(" <mem_segs: Segs_Obj> "," <anc_mem_segs: Segs_Obj> ")" => {
+    AstMemberFnCousin::MemberSegs_AncestorMemberSegs(mem_segs, anc_mem_segs)
+  },
+}
+
+DefaultMember: AstMemberFnDefaultMember = {
+  // Hierarchy_Expression.DefaultMember
+  "DefaultMember" ("(" ")")? => {
+    AstMemberFnDefaultMember::Chain
+  },
+  "DefaultMember" "(" <segs_obj: Segs_Obj> ")" => {
+    AstMemberFnDefaultMember::SegsObj(segs_obj)
   },
 }
 

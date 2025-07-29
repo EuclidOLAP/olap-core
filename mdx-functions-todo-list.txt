@@ -159,26 +159,6 @@
 ############################################################
 #                         Finished                         #
 ############################################################
-
-<< Member Functions >>
-	ClosingPeriod		[E] [I] [M] [O]
-	CurrentMember		[E] [I] [M] [O]
-	FirstChild			[E] [I] [M] [O]
-	FirstSibling		[E] [I] [M] [O]
-	Lag					[E] [I] [M] [O]
-	LastChild			[E] [I] [M] [O]
-	LastSibling			[E] [I] [M] [O]
-	Lead				[E] [I] [M] [O]
-	OpeningPeriod		[E] [I] [M] [O]
-	ParallelPeriod		[E] [I] [M] [O]
-	Parent				[E] [I] [M] [O]
-	PrevMember			[E] [I] [M] [O]
-	NextMember			[E] [I] [M] [O]
-	Ancestor			[E] [M] [O]
-	Cousin				[E] [M] [O]
-	DefaultMember		[E] [M] [O]
-
-
 << Set Functions >>
 	BottomPercent	[E] [I] [M]
 	Children		[E] [I] [M]

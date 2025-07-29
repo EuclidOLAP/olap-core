@@ -84,6 +84,8 @@ pub enum Token {
 
     #[regex("[0-9]+", |lex| lex.slice().parse())]
     Integer(u64),
+    #[regex(r"-[0-9]+", |lex| lex.slice().parse())]
+    NegativeInteger(i64),
     #[regex(r"[0-9]+\.[0-9]+", |lex| lex.slice().parse())]
     Double(f64),
 
@@ -103,6 +105,34 @@ pub enum Token {
     Parent,
     #[regex("(?i)CurrentMember")]
     CurrentMember,
+    #[regex("(?i)ClosingPeriod")]
+    ClosingPeriod,
+    #[regex("(?i)FirstChild")]
+    FirstChild,
+    #[regex("(?i)FirstSibling")]
+    FirstSibling,
+    #[regex("(?i)Lag")]
+    Lag,
+    #[regex("(?i)LastChild")]
+    LastChild,
+    #[regex("(?i)LastSibling")]
+    LastSibling,
+    #[regex("(?i)Lead")]
+    Lead,
+    #[regex("(?i)OpeningPeriod")]
+    OpeningPeriod,
+    #[regex("(?i)ParallelPeriod")]
+    ParallelPeriod,
+    #[regex("(?i)PrevMember")]
+    PrevMember,
+    #[regex("(?i)NextMember")]
+    NextMember,
+    #[regex("(?i)Ancestor")]
+    Ancestor,
+    #[regex("(?i)Cousin")]
+    Cousin,
+    #[regex("(?i)DefaultMember")]
+    DefaultMember,
 
     // Set functions
     #[regex("(?i)Children")]
@@ -171,12 +201,6 @@ pub enum Token {
     // Expression string functions
     #[regex("(?i)Name")]
     Name,
-
-    #[regex("(?i)ClosingPeriod")]
-    ClosingPeriod,
-
-    #[regex("(?i)OpeningPeriod")]
-    OpeningPeriod,
 
     #[regex("(?i)Level")]
     Level,
