@@ -43,6 +43,10 @@ pub enum Token {
     #[regex("(?i)where")]
     Where,
 
+    #[regex(r"[a-zA-Z_][a-zA-Z_0-9]*", |lex| {
+        String::from(lex.slice())
+    })]
+    Identifier(String),
     #[regex(r"\[(?:[^\]]|\]\])*\]", |lex| {
         let raw = lex.slice();
         raw[1..raw.len() - 1].replace("]]", "]")
@@ -62,6 +66,8 @@ pub enum Token {
     Multiplied,
     #[token("/")]
     Divided,
+    #[token("%")]
+    Percent,
 
     #[token("{")]
     CurlyBraceLeft,
@@ -137,6 +143,38 @@ pub enum Token {
     // Set functions
     #[regex("(?i)Children")]
     Children,
+    #[regex("(?i)BottomPercent")] BottomPercent,
+    #[regex("(?i)CrossJoin")] CrossJoin,
+    #[regex("(?i)Descendants")] Descendants,
+    #[regex("(?i)Except")] Except,
+    #[regex("(?i)Filter")] Filter,
+    #[regex("(?i)Intersect")] Intersect,
+    #[regex("(?i)Members")] Members,
+    #[regex("(?i)Order")] Order,
+    #[regex("(?i)Tail")] Tail,
+    #[regex("(?i)TopCount")] TopCount,
+    #[regex("(?i)TopPercent")] TopPercent,
+    #[regex("(?i)Union")] Union,
+    #[regex("(?i)Ytd")] Ytd,
+    #[regex("(?i)Qtd")] Qtd,
+    #[regex("(?i)Distinct")] Distinct,
+    #[regex("(?i)DrilldownLevel")] DrilldownLevel,
+    #[regex("(?i)DrilldownLevelBottom")] DrilldownLevelBottom,
+    #[regex("(?i)DrillDownLevelTop")] DrillDownLevelTop,
+    #[regex("(?i)DrillDownMember")] DrillDownMember,
+    #[regex("(?i)DrillDownMemberBottom")] DrillDownMemberBottom,
+    #[regex("(?i)DrillDownMemberTop")] DrillDownMemberTop,
+    #[regex("(?i)DrillupLevel")] DrillupLevel,
+    #[regex("(?i)DrillupMember")] DrillupMember,
+    #[regex("(?i)Ancestors")] Ancestors,
+    #[regex("(?i)BottomCount")] BottomCount,
+    #[regex("(?i)BottomSum")] BottomSum,
+    #[regex("(?i)TopSum")] TopSum,
+    #[regex("(?i)Extract")] Extract,
+    #[regex("(?i)PeriodsToDate")] PeriodsToDate,
+    #[regex("(?i)Generate")] Generate,
+    #[regex("(?i)Head")] Head,
+    #[regex("(?i)Subset")] Subset,
 
     // CASE Statement
     #[regex("(?i)Case")]

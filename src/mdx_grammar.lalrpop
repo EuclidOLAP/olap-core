@@ -8,6 +8,7 @@ use crate::exmdx::mem_func::{AstMemberFnCurrentMember, AstMemberFnParent, AstMem
 use crate::exmdx::mem_func::{AstMemberFnFirstChild, AstMemberFnFirstSibling, AstMemberFnLag, AstMemberFnLastChild, AstMemberFnLastSibling, AstMemberFnLead, AstMemberFnParallelPeriod, AstMemberFnPrevMember, AstMemberFnNextMember, AstMemberFnAncestor, AstMemberFnCousin, AstMemberFnDefaultMember};
 
 use crate::exmdx::set_func::{AstSetFunction, AstSetFnChildren};
+use crate::exmdx::set_func::{AstSetFnBottomPercent, AstSetFnCrossJoin, AstSetFnDescendants, AstSetFnExcept, AstSetFnFilter, AstSetFnIntersect, AstSetFnMembers, AstSetFnOrder, AstSetFnTail, AstSetFnTopCount, AstSetFnTopPercent, AstSetFnUnion, AstSetFnYtd, AstSetFnQtd, AstSetFnDistinct, AstSetFnDrilldownLevel, AstSetFnDrilldownLevelBottom, AstSetFnDrillDownLevelTop, AstSetFnDrillDownMember, AstSetFnDrillDownMemberBottom, AstSetFnDrillDownMemberTop, AstSetFnDrillupLevel, AstSetFnDrillupMember, AstSetFnAncestors, AstSetFnBottomCount, AstSetFnBottomSum, AstSetFnTopSum, AstSetFnExtract, AstSetFnPeriodsToDate, AstSetFnGenerate, AstSetFnHead, AstSetFnSubset};
 
 use crate::exmdx::ast::{AstSeg, AstSegsObj, AstMdxStatement, AstSet, AstTuple, AstAxis, AstCustomObject};
 use crate::exmdx::ast::{AstFactory, AstTerm, AstExpression};
@@ -61,6 +62,7 @@ extern {
     "-" => Token::Minus,
     "*" => Token::Multiplied,
     "/" => Token::Divided,
+    "%" => Token::Percent,
 
     "<" => Token::LT,
     "<=" => Token::LE,
@@ -73,9 +75,11 @@ extern {
     "negative_int" => Token::NegativeInteger(<i64>),
     "double" => Token::Double(<f64>),
 
+    "Identifier" => Token::Identifier(<String>),
     "BracketedString" => Token::BracketedString(<String>),
     "QuotedString" => Token::QuotedString(<String>),
 
+    // Member Functions
     "Parent" => Token::Parent,
     "CurrentMember" => Token::CurrentMember,
     "ClosingPeriod" => Token::ClosingPeriod,
@@ -93,11 +97,46 @@ extern {
     "Cousin" => Token::Cousin,
     "DefaultMember" => Token::DefaultMember,
 
+    // Set Functions
     "Children" => Token::Children,
+    "BottomPercent" => Token::BottomPercent,
+    "CrossJoin" => Token::CrossJoin,
+    "Descendants" => Token::Descendants,
+    "Except" => Token::Except,
+    "Filter" => Token::Filter,
+    "Intersect" => Token::Intersect,
+    "Members" => Token::Members,
+    "Order" => Token::Order,
+    "Tail" => Token::Tail,
+    "TopCount" => Token::TopCount,
+    "TopPercent" => Token::TopPercent,
+    "Union" => Token::Union,
+    "Ytd" => Token::Ytd,
+    "Qtd" => Token::Qtd,
+    "Distinct" => Token::Distinct,
+    "DrilldownLevel" => Token::DrilldownLevel,
+    "DrilldownLevelBottom" => Token::DrilldownLevelBottom,
+    "DrillDownLevelTop" => Token::DrillDownLevelTop,
+    "DrillDownMember" => Token::DrillDownMember,
+    "DrillDownMemberBottom" => Token::DrillDownMemberBottom,
+    "DrillDownMemberTop" => Token::DrillDownMemberTop,
+    "DrillupLevel" => Token::DrillupLevel,
+    "DrillupMember" => Token::DrillupMember,
+    "Ancestors" => Token::Ancestors,
+    "BottomCount" => Token::BottomCount,
+    "BottomSum" => Token::BottomSum,
+    "TopSum" => Token::TopSum,
+    "Extract" => Token::Extract,
+    "PeriodsToDate" => Token::PeriodsToDate,
+    "Generate" => Token::Generate,
+    "Head" => Token::Head,
+    "Subset" => Token::Subset,
 
+    // Level Functions
     "Level" => Token::Level,
     "Levels" => Token::Levels,
 
+    // Expression Numeric Functions
     "Avg" => Token::Avg,
     "Sum" => Token::Sum,
     "Max" => Token::Max,
@@ -119,9 +158,11 @@ extern {
     "Var" => Token::Var,
     "Ordinal" => Token::Ordinal,
 
+    // Tunnel Functions
     // "Tunnel" => Token::Tunnel,
     "LookupCube" => Token::LookupCube,
 
+    // Expression String Functions
     "Name" => Token::Name,
 
     "Case" => Token::Case,
@@ -134,6 +175,7 @@ extern {
     "Or" => Token::Or,
     "And" => Token::And,
 
+    // Boolean Functions
     "IsLeaf" => Token::IsLeaf,
     "IsEmpty" => Token::IsEmpty,
     "IsAncestor" => Token::IsAncestor,
@@ -315,6 +357,17 @@ Set_Spec: AstSet = {
     AstSet::SegsObj(segs_obj)
   },
 }
+
+// Set_Specifications: Vec<AstSet> = {
+//   <spec_1: Set_Spec> "," <spec_2: Set_Spec> => {
+//     vec![spec_1, spec_2]
+//   },
+//   <set_specs: Set_Specifications> "," <set_spec: Set_Spec> => {
+//     let mut list = set_specs;
+//     list.push(set_spec);
+//     list
+//   },
+// }
 
 Tuples: Vec<AstTuple> = {
   <tuple_segs: Segs_Obj> => {
@@ -628,6 +681,38 @@ Set_Func: AstSetFunction = {
   <set_func: Children> => {
     AstSetFunction::Children(set_func)
   },
+  <set_func: BottomPercent> => AstSetFunction::BottomPercent(set_func),
+  <set_func: CrossJoin> => AstSetFunction::CrossJoin(set_func),
+  <set_func: Descendants> => AstSetFunction::Descendants(set_func),
+  <set_func: Except> => AstSetFunction::Except(set_func),
+  <set_func: Filter> => AstSetFunction::Filter(set_func),
+  <set_func: Intersect> => AstSetFunction::Intersect(set_func),
+  <set_func: Members> => AstSetFunction::Members(set_func),
+  <set_func: Order> => AstSetFunction::Order(set_func),
+  <set_func: Tail> => AstSetFunction::Tail(set_func),
+  <set_func: TopCount> => AstSetFunction::TopCount(set_func),
+  <set_func: TopPercent> => AstSetFunction::TopPercent(set_func),
+  <set_func: Union> => AstSetFunction::Union(set_func),
+  <set_func: Ytd> => AstSetFunction::Ytd(set_func),
+  <set_func: Qtd> => AstSetFunction::Qtd(set_func),
+  <set_func: Distinct> => AstSetFunction::Distinct(set_func),
+  <set_func: DrilldownLevel> => AstSetFunction::DrilldownLevel(set_func),
+  <set_func: DrilldownLevelBottom> => AstSetFunction::DrilldownLevelBottom(set_func),
+  <set_func: DrillDownLevelTop> => AstSetFunction::DrillDownLevelTop(set_func),
+  <set_func: DrillDownMember> => AstSetFunction::DrillDownMember(set_func),
+  <set_func: DrillDownMemberBottom> => AstSetFunction::DrillDownMemberBottom(set_func),
+  <set_func: DrillDownMemberTop> => AstSetFunction::DrillDownMemberTop(set_func),
+  <set_func: DrillupLevel> => AstSetFunction::DrillupLevel(set_func),
+  <set_func: DrillupMember> => AstSetFunction::DrillupMember(set_func),
+  <set_func: Ancestors> => AstSetFunction::Ancestors(set_func),
+  <set_func: BottomCount> => AstSetFunction::BottomCount(set_func),
+  <set_func: BottomSum> => AstSetFunction::BottomSum(set_func),
+  <set_func: TopSum> => AstSetFunction::TopSum(set_func),
+  <set_func: Extract> => AstSetFunction::Extract(set_func),
+  <set_func: PeriodsToDate> => AstSetFunction::PeriodsToDate(set_func),
+  <set_func: Generate> => AstSetFunction::Generate(set_func),
+  <set_func: Head> => AstSetFunction::Head(set_func),
+  <set_func: Subset> => AstSetFunction::Subset(set_func),
 }
 
 Children: AstSetFnChildren = {
@@ -637,6 +722,446 @@ Children: AstSetFnChildren = {
   "Children" "(" <mem_segs: Segs_Obj> ")" => {
     AstSetFnChildren::MemSegs(mem_segs)
   },
+}
+
+BottomPercent: AstSetFnBottomPercent = {
+  // BottomPercent ( set, percentage, numeric_value_expression )
+
+
+  "BottomPercent" ("(" ")")? => AstSetFnBottomPercent::WillTodo,
+
+
+  // "BottomPercent" "(" <percentage_exp: Expression> "," <numeric_exp: Expression> ")" => {
+  //   AstSetFnBottomPercent::Chain_Percentage_NumericExp(ast_set, percentage_exp, numeric_exp)
+  // },
+  // "BottomPercent" "(" <ast_set: Set_Spec> "," <percentage_exp: Expression> "," <numeric_exp: Expression> ")" => {
+  //   AstSetFnBottomPercent::AstSet_Percentage_NumericExp(ast_set, percentage_exp, numeric_exp)
+  // },
+}
+
+CrossJoin: AstSetFnCrossJoin = {
+  // Standard syntax  
+  // Crossjoin(Set_Expression1 ,Set_Expression2 [,...n] )  
+  // Alternate syntax  
+  // Set_Expression1 * Set_Expression2 [* ...n]
+
+
+  "CrossJoin" ("(" ")")? => AstSetFnCrossJoin::WillTodo,
+
+
+  // "CrossJoin" "(" <set_specs: Set_Specifications> ")" => {
+  //   AstSetFnCrossJoin{ set_specs }
+  // },
+    
+  // <set_specs: CrossJoin_Alternate> => {
+  //   AstSetFnCrossJoin{ set_specs }
+  // },
+}
+
+// CrossJoin_Alternate: Vec<AstSet> = {
+//   <ast_set_1: Set_Spec> "*" <ast_set_2: Set_Spec> => {
+//     vec![ast_set_1, ast_set_2]
+//   },
+//   <set_specs: CrossJoin_Alternate> "*" <ast_set: Set_Spec> => {
+//     let mut list = set_specs;
+//     list.push(ast_set);
+//     list
+//   },
+// }
+
+// Flags: SELF, AFTER, BEFORE, BEFORE_AND_AFTER, SELF_AND_AFTER, SELF_AND_BEFORE, SELF_BEFORE_AFTER, LEAVES
+Descendants: AstSetFnDescendants = {
+  // Descendants ( member , [ { layer | index } [, Desc_flags ] ] )
+
+
+  "Descendants" ("(" ")")? => AstSetFnDescendants::WillTodo,
+
+
+  // "Descendants" ("(" ")")? => {},
+  // "Descendants" "(" <lv_segs: Segs_Obj> ")" => {},
+  // "Descendants" "(" <idx_exp: Expression> ")" => {},
+  // "Descendants" "(" <lv_segs: Segs_Obj> "," <flag: "Identifier"> ")" => {},
+  // "Descendants" "(" <idx_exp: Expression> "," <flag: "Identifier"> ")" => {},
+
+  // "Descendants" "(" <mem_segs: Segs_Obj> ")" => {},
+  // "Descendants" "(" <mem_segs: Segs_Obj> "," <lv_segs: Segs_Obj> ")" => {},
+  // "Descendants" "(" <mem_segs: Segs_Obj> "," <idx_exp: Expression> ")" => {},
+  // "Descendants" "(" <mem_segs: Segs_Obj> "," <lv_segs: Segs_Obj> "," <flag: "Identifier"> ")" => {},
+  // "Descendants" "(" <mem_segs: Segs_Obj> "," <idx_exp: Expression> "," <flag: "Identifier"> ")" => {},
+}
+
+Except: AstSetFnExcept = {
+  // Except ( set1, set2 [,ALL] )
+
+
+  "Except" ("(" ")")? => AstSetFnExcept::WillTodo,
+
+
+  // "Except" "(" <ast_set_1: Set_Spec> "," <ast_set_2: Set_Spec> ")" => {
+  //   AstSetFnExcept { ast_set_1, ast_set_2, all_flag: false }
+  // },
+  // "Except" "(" <ast_set_1: Set_Spec> "," <ast_set_2: Set_Spec> "," <all_flag: "Identifier"> ")" => {
+  //   AstSetFnExcept { ast_set_1, ast_set_2, all_flag: true }
+  // },
+}
+
+Filter: AstSetFnFilter = {
+  // Filter(Set_Expression, Logical_Expression )
+
+
+  "Filter" ("(" ")")? => AstSetFnFilter::WillTodo,
+
+
+  // "Filter" "(" <ast_set: Set_Spec> "," <bool_exp: Bool_Expression> ")" => {
+  //   AstSetFnFilter { ast_set, bool_exp }
+  // },
+}
+
+Intersect: AstSetFnIntersect = {
+  // Intersect(Set_Expression1 , Set_Expression2 [ , ALL ] )
+
+
+  "Intersect" ("(" ")")? => AstSetFnIntersect::WillTodo,
+
+
+  // "Intersect" "(" <ast_set_1: Set_Spec> "," <ast_set_2: Set_Spec> ")" => {
+  //   AstSetFnIntersect { ast_set_1, ast_set_2, all_flag: false }
+  // },
+  // "Intersect" "(" <ast_set_1: Set_Spec> "," <ast_set_2: Set_Spec> "," <all_flag: "Identifier"> ")" => {
+  //   AstSetFnIntersect { ast_set_1, ast_set_2, all_flag: true }
+  // },
+}
+
+Members: AstSetFnMembers = {
+  // Members ( dimension )
+  // Members ( layer )
+
+
+  "Members" ("(" ")")? => AstSetFnMembers::WillTodo,
+
+
+  // "Members" "(" <segs_obj: Segs_Obj> ")" => {
+  //   AstSetFnMembers::SegsObj(segs_obj)
+  // },
+}
+
+Order: AstSetFnOrder = {
+  // Order ( set, string_expr | numeric_value_expression [,BASC | BDESC] )
+
+
+  "Order" ("(" ")")? => AstSetFnOrder::WillTodo,
+
+
+  // "Order" "(" <ast_set: Set_Spec> "," <exp: Expression> ")" => {
+  //   AstSetFnOrder { ast_set, exp, flag: String::from("BASC") }
+  // },
+  // "Order" "(" <ast_set: Set_Spec> "," <exp: Expression> "," <flag: "Identifier"> ")" => {
+  //   AstSetFnOrder { ast_set, exp, flag }
+  // },
+}
+
+Tail: AstSetFnTail = {
+  // Tail(Set_Expression [ ,Count ] )
+
+
+  "Tail" ("(" ")")? => AstSetFnTail::WillTodo,
+
+
+  // "Tail" "(" <ast_set: Set_Spec> ")" => {
+  //   AstSetFnTail { ast_set, count_exp: None }
+  // },
+  // "Tail" "(" <ast_set: Set_Spec> "," <count: Expression> ")" => {
+  //   AstSetFnTail { ast_set, count_exp: Some(count) }
+  // },
+}
+
+TopCount: AstSetFnTopCount = {
+  // TopCount ( set , index [,numeric_value_expression ] )
+
+
+  "TopCount" ("(" ")")? => AstSetFnTopCount::WillTodo,
+
+
+  // "TopCount" "(" <ast_set: Set_Spec> "," <count: "unsigned_int"> ")" => {
+  //   AstSetFnTopCount { ast_set, count, exp: None }
+  // },
+  // "TopCount" "(" <ast_set: Set_Spec> "," <count: "unsigned_int"> "," <val_exp: Expression> ")" => {
+  //   AstSetFnTopCount { ast_set, count, exp: Some(val_exp) }
+  // },
+}
+
+TopPercent: AstSetFnTopPercent = {
+  // TopPercent ( set, percentage, numeric_value_expression )
+
+
+  "TopPercent" ("(" ")")? => AstSetFnTopPercent::WillTodo,
+
+
+  // "TopPercent" "(" <ast_set: Set_Spec> "," <percentage: "double"> ("%")? "," <numeric_exp: Expression> ")" => {
+  //   AstSetFnTopPercent { ast_set, percentage, numeric_exp }
+  // },
+}
+
+Union: AstSetFnUnion = {
+  // Standard syntax  
+  // Union(Set_Expression1, Set_Expression2 [,...n][, ALL])  
+  // Alternate syntax 1  
+  // Set_Expression1 + Set_Expression2 [+...n]  
+  // Alternate syntax 2  
+  // {Set_Expression1 , Set_Expression2 [,...n]}
+
+
+  "Union" ("(" ")")? => AstSetFnUnion::WillTodo,
+
+
+  // "Union" "(" <set_specs: Set_Specifications> ")" => {
+  //   AstSetFnUnion { set_specs, all_flag: false }
+  // },
+  // "Union" "(" <set_specs: Set_Specifications> "," <all: "Identifier"> ")" => {
+  //   AstSetFnUnion { set_specs, all_flag: true }
+  // },
+    
+  // // <union_fn: Union_Alternate_1> => {
+  // //   union_fn
+  // // },
+    
+  // "{" <set_specs: Set_Specifications> "}" => {
+  //   AstSetFnUnion { set_specs, all_flag: false }
+  // },
+}
+
+// Union_Alternate_1: Vec<AstSet> = {
+//   <ast_set_1: Set_Spec> "+" <ast_set_2: Set_Spec> => {
+//     vec![ast_set_1, ast_set_2]
+//   },
+//   <union_fn: Union_Alternate_1> "+" <ast_set: Set_Spec> => {
+//     let mut list = union_fn;
+//     list.push(ast_set);
+//     list
+//   },
+// }
+
+Ytd: AstSetFnYtd = {
+  // Ytd( [ Member_Expression ] )
+
+
+  "Ytd" ("(" ")")? => AstSetFnYtd::WillTodo,
+
+
+  // "Ytd" ("(" ")")? => {
+  //   AstSetFnYtd { member_segs: None }
+  // },
+  // "Ytd" "(" <mem_segs: Segs_Obj> ")" => {
+  //   AstSetFnYtd { member_segs: Some(mem_segs) }
+  // },
+}
+
+Qtd: AstSetFnQtd = {
+  // Qtd( [ Member_Expression ] )
+
+
+  "Qtd" ("(" ")")? => AstSetFnQtd::WillTodo,
+
+
+  // "Qtd" ("(" ")")? => {
+  //   AstSetFnQtd { member_segs: None }
+  // },
+  // "Qtd" "(" <mem_segs: Segs_Obj> ")" => {
+  //   AstSetFnQtd { member_segs: Some(mem_segs) }
+  // },
+}
+
+Distinct: AstSetFnDistinct = {
+  // Distinct(Set_Expression)
+
+
+  "Distinct" ("(" ")")? => AstSetFnDistinct::WillTodo,
+
+
+  // "Distinct" ("(" ")")? => {
+  //   AstSetFnDistinct::Chain
+  // },
+  // "Distinct" "(" <ast_set: Set_Spec> ")" => {
+  //   AstSetFnDistinct::AstSet(ast_set)
+  // },
+}
+
+DrilldownLevel: AstSetFnDrilldownLevel = {
+  // DrilldownLevel(Set_Expression [,[Level_Expression] ,[Index]] [,INCLUDE_CALC_MEMBERS])
+
+
+  "DrilldownLevel" ("(" ")")? => AstSetFnDrilldownLevel::WillTodo,
+
+
+  // "DrilldownLevel" "(" ")" => AstSetFnDrilldownLevel::_Todo,
+}
+
+DrilldownLevelBottom: AstSetFnDrilldownLevelBottom = {
+  // DrilldownLevelBottom(Set_Expression, Count [,[<Level_Expression>] [,[<Numeric_Expression>][,INCLUDE_CALC_MEMBERS]]])
+
+
+  "DrilldownLevelBottom" ("(" ")")? => AstSetFnDrilldownLevelBottom::WillTodo,
+
+
+  // "DrilldownLevelBottom" "(" ")" => AstSetFnDrilldownLevelBottom::_Todo,
+}
+
+DrillDownLevelTop: AstSetFnDrillDownLevelTop = {
+  // DrilldownLevelTop(<Set_Expression>, <Count> [,[<Level_Expression>] [,[<Numeric_Expression>][,INCLUDE_CALC_MEMBERS]]])
+
+
+  "DrillDownLevelTop" ("(" ")")? => AstSetFnDrillDownLevelTop::WillTodo,
+
+
+  // "DrillDownLevelTop" "(" ")" => AstSetFnDrillDownLevelTop::_Todo,
+}
+
+DrillDownMember: AstSetFnDrillDownMember = {
+  // DrilldownMember( set1, set2 [, RECURSIVE] )
+
+
+  "DrillDownMember" ("(" ")")? => AstSetFnDrillDownMember::WillTodo,
+
+
+  // "DrillDownMember" "(" ")" => AstSetFnDrillDownMember::_Todo,
+}
+
+DrillDownMemberBottom: AstSetFnDrillDownMemberBottom = {
+  // DrillDownMemberBottom(<Set_Expression1>, <Set_Expression2>, <Count> [,[<Numeric_Expression>] [,[<Hierarchy>]] [,[RECURSIVE][,INCLUDE_CALC_MEMBERS]]])
+
+
+  "DrillDownMemberBottom" ("(" ")")? => AstSetFnDrillDownMemberBottom::WillTodo,
+
+
+  // "DrillDownMemberBottom" "(" ")" => AstSetFnDrillDownMemberBottom::_Todo,
+}
+
+DrillDownMemberTop: AstSetFnDrillDownMemberTop = {
+  // DrillDownMemberTop(<Set_Expression1>, <Set_Expression2>, <Count> [,[<Numeric_Expression>] [,[<Hierarchy>]] [,[RECURSIVE][,INCLUDE_CALC_MEMBERS]]])
+
+
+  "DrillDownMemberTop" ("(" ")")? => AstSetFnDrillDownMemberTop::WillTodo,
+
+
+  // "DrillDownMemberTop" "(" ")" => AstSetFnDrillDownMemberTop::_Todo,
+}
+
+DrillupLevel: AstSetFnDrillupLevel = {
+  // DrillupLevel(Set_Expression [ , Level_Expression ] )
+
+
+  "DrillupLevel" ("(" ")")? => AstSetFnDrillupLevel::WillTodo,
+
+
+  // "DrillupLevel" "(" ")" => AstSetFnDrillupLevel::_Todo,
+}
+
+DrillupMember: AstSetFnDrillupMember = {
+  // DrillupMember(Set_Expression1, Set_Expression2)
+
+
+  "DrillupMember" ("(" ")")? => AstSetFnDrillupMember::WillTodo,
+
+
+  // "DrillupMember" "(" ")" => AstSetFnDrillupMember::_Todo,
+}
+
+Ancestors: AstSetFnAncestors = {
+  // Level syntax  
+  // Ancestors(Member_Expression, Level_Expression)  
+    
+  // Numeric syntax  
+  // Ancestors(Member_Expression, Distance)
+
+
+  "Ancestors" ("(" ")")? => AstSetFnAncestors::WillTodo,
+
+
+  // "Ancestors" "(" ")" => AstSetFnAncestors::_Todo,
+}
+
+BottomCount: AstSetFnBottomCount = {
+  // BottomCount(Set_Expression, Count [,Numeric_Expression])
+
+
+  "BottomCount" ("(" ")")? => AstSetFnBottomCount::WillTodo,
+
+
+  // "BottomCount" "(" ")" => AstSetFnBottomCount::_Todo,
+}
+
+BottomSum: AstSetFnBottomSum = {
+  // BottomSum(Set_Expression, Value, Numeric_Expression)
+
+
+  "BottomSum" ("(" ")")? => AstSetFnBottomSum::WillTodo,
+
+
+  // "BottomSum" "(" ")" => AstSetFnBottomSum::_Todo,
+}
+
+TopSum: AstSetFnTopSum = {
+  // TopSum(Set_Expression, Value, Numeric_Expression)
+
+
+  "TopSum" ("(" ")")? => AstSetFnTopSum::WillTodo,
+
+
+  // "TopSum" "(" ")" => AstSetFnTopSum::_Todo,
+}
+
+Extract: AstSetFnExtract = {
+  // Extract(Set_Expression, Hierarchy_Expression1 [,Hierarchy_Expression2, ...n] )
+
+
+  "Extract" ("(" ")")? => AstSetFnExtract::WillTodo,
+
+
+  // "Extract" "(" ")" => AstSetFnExtract::_Todo,
+}
+
+PeriodsToDate: AstSetFnPeriodsToDate = {
+  // PeriodsToDate( [ Level_Expression [ ,Member_Expression ] ] )
+
+
+  "PeriodsToDate" ("(" ")")? => AstSetFnPeriodsToDate::WillTodo,
+
+
+  // "PeriodsToDate" "(" ")" => AstSetFnPeriodsToDate::_Todo,
+}
+
+Generate: AstSetFnGenerate = {
+  // Set expression syntax  
+  // Generate( Set_Expression1 ,  Set_Expression2 [ , ALL ]  )  
+    
+  // String expression syntax  
+  // Generate( Set_Expression1 ,  String_Expression [ ,Delimiter ]  )
+
+
+  "Generate" ("(" ")")? => AstSetFnGenerate::WillTodo,
+
+
+  // "Generate" "(" ")" => AstSetFnGenerate::_Todo,
+}
+
+Head: AstSetFnHead = {
+  // Head(Set_Expression [ ,Count ] )
+
+
+  "Head" ("(" ")")? => AstSetFnHead::WillTodo,
+
+
+  // "Head" "(" ")" => AstSetFnHead::_Todo,
+}
+
+Subset: AstSetFnSubset = {
+  // Subset(Set_Expression, Start [ ,Count ] )
+
+
+  "Subset" ("(" ")")? => AstSetFnSubset::WillTodo,
+
+
+  // "Subset" "(" ")" => AstSetFnSubset::_Todo,
 }
 
 Exp_Func: AstExpFunction = {
