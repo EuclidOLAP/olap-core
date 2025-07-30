@@ -1,17 +1,17 @@
 // calculation module
 
-use crate::exmdx::ast::ToCellValue;
+use crate::exmdx::ast::ToVectorValue;
 
 use crate::exmdx::mdd::TupleVector;
 use crate::mdd::MemberRole;
-use crate::mdd::{CellValue, MultiDimensionalContext};
+use crate::mdd::{VectorValue, MultiDimensionalContext};
 
 use crate::agg_service_client::basic_aggregates;
 
 pub async fn calculate(
     vs: Vec<TupleVector>,
     context: &mut MultiDimensionalContext,
-) -> Vec<CellValue> {
+) -> Vec<VectorValue> {
     // Base OlapVectorCoordinates and Formula OlapVectorCoordinates
     let mut base_indices: Vec<usize> = Vec::new();
     let mut frml_indices: Vec<usize> = Vec::new();
@@ -37,21 +37,21 @@ pub async fn calculate(
     let (_cube_gid, base_vals, base_null_flags) = basic_aggregates(base_cords, context).await;
 
     // let combined: Vec<(f64, bool)> = base_vals.into_iter() .zip(base_null_flags.into_iter()) .collect();
-    let base_combined: Vec<(CellValue, usize)> = base_vals
+    let base_combined: Vec<(VectorValue, usize)> = base_vals
         .into_iter()
         .zip(base_null_flags.into_iter())
         .zip(base_indices.into_iter())
         .map(|((val, flag), idx)| {
             if flag {
-                (CellValue::Null, idx)
+                (VectorValue::Null, idx)
             } else {
-                (CellValue::Double(val), idx)
+                (VectorValue::Double(val), idx)
             }
         })
         .collect();
 
     let calc_cell_vals = calculate_formula_vectors(frml_cords, context).await;
-    let calc_combined: Vec<(CellValue, usize)> = calc_cell_vals
+    let calc_combined: Vec<(VectorValue, usize)> = calc_cell_vals
         .into_iter()
         .zip(frml_indices.into_iter())
         .collect();
@@ -69,8 +69,8 @@ pub async fn calculate(
 async fn calculate_formula_vectors(
     coordinates: Vec<TupleVector>,
     context: &mut MultiDimensionalContext,
-) -> Vec<CellValue> {
-    let mut values: Vec<CellValue> = Vec::new();
+) -> Vec<VectorValue> {
+    let mut values: Vec<VectorValue> = Vec::new();
 
     'outer_loop: for cord in coordinates {
         for mr in cord.member_roles.iter().rev() {

@@ -1,10 +1,10 @@
 use futures::future::BoxFuture;
 
-use crate::exmdx::ast::ToCellValue;
+use crate::exmdx::ast::ToVectorValue;
 use crate::exmdx::ast::{AstSet, AstTuple};
 
 use crate::exmdx::mdd::TupleVector;
-use crate::mdd::{CellValue, MultiDimensionalContext, MultiDimensionalEntity};
+use crate::mdd::{VectorValue, MultiDimensionalContext, MultiDimensionalEntity};
 
 use crate::calcul;
 
@@ -49,13 +49,13 @@ pub enum AstExpFunction {
     Var(AstNumFnVar),
 }
 
-impl ToCellValue for AstExpFunction {
+impl ToVectorValue for AstExpFunction {
     fn val<'a>(
         &'a self,
         slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
+    ) -> BoxFuture<'a, VectorValue> {
         Box::pin(async move {
             match self {
                 AstExpFunction::Avg(avg_fn) => avg_fn.val(slice_tuple, context, outer_param).await,
@@ -126,13 +126,13 @@ pub enum AstStrFnName {
     // OuterParam(Box<MultiDimensionalEntity>),
 }
 
-impl ToCellValue for AstStrFnName {
+impl ToVectorValue for AstStrFnName {
     fn val<'a>(
         &'a self,
         slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
+    ) -> BoxFuture<'a, VectorValue> {
         Box::pin(async move {
             let param_olap_obj = match self {
                 AstStrFnName::SegsObj(segs) => segs.materialize(slice_tuple, context).await,
@@ -147,11 +147,11 @@ impl ToCellValue for AstStrFnName {
 
             if let MultiDimensionalEntity::MemberRoleWrap(member_role) = param_olap_obj {
                 match member_role {
-                    MemberRole::BaseMember { member, .. } => CellValue::Str(member.name.clone()),
-                    _ => CellValue::Str("name函数参数错误".to_string()),
+                    MemberRole::BaseMember { member, .. } => VectorValue::Str(member.name.clone()),
+                    _ => VectorValue::Str("name函数参数错误".to_string()),
                 }
             } else {
-                CellValue::Str("name函数参数错误".to_string())
+                VectorValue::Str("name函数参数错误".to_string())
             }
         })
     }
@@ -165,14 +165,14 @@ pub enum AstNumFnAvg {
     AstSet_Exp(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstNumFnAvg {
+impl ToVectorValue for AstNumFnAvg {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Str("avg函数有待实现".to_string()) })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Str("avg函数有待实现".to_string()) })
     }
 }
 
@@ -183,18 +183,18 @@ pub enum AstNumFnCount {
     // OuterParam(Set),
 }
 
-impl ToCellValue for AstNumFnCount {
+impl ToVectorValue for AstNumFnCount {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
+    ) -> BoxFuture<'a, VectorValue> {
         Box::pin(async move {
             if let Some(MultiDimensionalEntity::SetWrap(set)) = outer_param {
-                CellValue::Double(set.tuples.len() as f64)
+                VectorValue::Double(set.tuples.len() as f64)
             } else {
-                CellValue::Str("count函数参数错误".to_string())
+                VectorValue::Str("count函数参数错误".to_string())
             }
         })
     }
@@ -207,13 +207,13 @@ pub enum AstExpFnLookupCube {
     CubeSegs_Exp(AstSegsObj, AstExpression),
 }
 
-impl ToCellValue for AstExpFnLookupCube {
+impl ToVectorValue for AstExpFnLookupCube {
     fn val<'a>(
         &'a self,
         slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
+    ) -> BoxFuture<'a, VectorValue> {
         Box::pin(async move {
             let param_cube;
             let param_exp;
@@ -271,13 +271,13 @@ pub struct AstNumFnIIf {
     pub false_exp: AstExpression,
 }
 
-impl ToCellValue for AstNumFnIIf {
+impl ToVectorValue for AstNumFnIIf {
     fn val<'a>(
         &'a self,
         slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
+    ) -> BoxFuture<'a, VectorValue> {
         Box::pin(async move {
             let bool_val = self.bool_exp.bool_val(slice_tuple, context).await;
             if bool_val {
@@ -297,13 +297,13 @@ pub enum AstNumFnSum {
     AstSet_Exp(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstNumFnSum {
+impl ToVectorValue for AstNumFnSum {
     fn val<'a>(
         &'a self,
         slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
+    ) -> BoxFuture<'a, VectorValue> {
         Box::pin(async move {
             let mut outer_param = outer_param;
             let mut exp_opt: Option<AstExpression> = None;
@@ -350,7 +350,7 @@ impl ToCellValue for AstNumFnSum {
                 }
             }
 
-            let sum: CellValue = cell_vals
+            let sum: VectorValue = cell_vals
                 .iter()
                 .skip(1) // 跳过第 0 个元素
                 .fold(cell_vals[0].clone(), |acc, val| acc + val.clone());
@@ -368,14 +368,14 @@ pub enum AstNumFnMax {
     AstSet_Exp(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstNumFnMax {
+impl ToVectorValue for AstNumFnMax {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Str(String::from("// todo: Max()")) })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Str(String::from("// todo: Max()")) })
     }
 }
 
@@ -387,14 +387,14 @@ pub enum AstNumFnMin {
     AstSet_Exp(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstNumFnMin {
+impl ToVectorValue for AstNumFnMin {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Str(String::from("// todo: Min()")) })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Str(String::from("// todo: Min()")) })
     }
 }
 #[allow(non_camel_case_types)]
@@ -404,14 +404,14 @@ pub enum AstNumFnAbs {
     AstExp(AstExpression),
 }
 
-impl ToCellValue for AstNumFnAbs {
+impl ToVectorValue for AstNumFnAbs {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }
 #[allow(non_camel_case_types)]
@@ -421,14 +421,14 @@ pub enum AstNumFnAggregate {
     AstSet_AstExp(AstSet, Option<AstExpression>),
 }
 
-impl ToCellValue for AstNumFnAggregate {
+impl ToVectorValue for AstNumFnAggregate {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }
 #[allow(non_camel_case_types)]
@@ -437,14 +437,14 @@ pub struct AstNumFnCoalesceEmpty {
     pub exps: Vec<AstExpression>,
 }
 
-impl ToCellValue for AstNumFnCoalesceEmpty {
+impl ToVectorValue for AstNumFnCoalesceEmpty {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }
 #[allow(non_camel_case_types)]
@@ -455,14 +455,14 @@ pub enum AstNumFnCorrelation {
     AstSet_NumExpY(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstNumFnCorrelation {
+impl ToVectorValue for AstNumFnCorrelation {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }
 #[allow(non_camel_case_types)]
@@ -473,14 +473,14 @@ pub enum AstNumFnCovariance {
     AstSet_NumExpY(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstNumFnCovariance {
+impl ToVectorValue for AstNumFnCovariance {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }
 #[allow(non_camel_case_types)]
@@ -491,14 +491,14 @@ pub enum AstNumFnLinRegIntercept {
     AstSet_NumExpY(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstNumFnLinRegIntercept {
+impl ToVectorValue for AstNumFnLinRegIntercept {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }
 #[allow(non_camel_case_types)]
@@ -509,14 +509,14 @@ pub enum AstNumFnLinRegR2 {
     AstSet_NumExpY(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstNumFnLinRegR2 {
+impl ToVectorValue for AstNumFnLinRegR2 {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }
 #[allow(non_camel_case_types)]
@@ -527,14 +527,14 @@ pub enum AstNumFnLinRegSlope {
     AstSet_NumExpY(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstNumFnLinRegSlope {
+impl ToVectorValue for AstNumFnLinRegSlope {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }
 #[allow(non_camel_case_types)]
@@ -545,14 +545,14 @@ pub enum AstNumFnLinRegVariance {
     AstSet_NumExpY(AstSet, AstExpression),
 }
 
-impl ToCellValue for AstNumFnLinRegVariance {
+impl ToVectorValue for AstNumFnLinRegVariance {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }
 #[allow(non_camel_case_types)]
@@ -562,14 +562,14 @@ pub enum AstNumFnMedian {
     AstSet_AstExp(AstSet, Option<AstExpression>),
 }
 
-impl ToCellValue for AstNumFnMedian {
+impl ToVectorValue for AstNumFnMedian {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }
 #[allow(non_camel_case_types)]
@@ -579,14 +579,14 @@ pub enum AstNumFnOrdinal {
     LevelSegs(AstSegsObj),
 }
 
-impl ToCellValue for AstNumFnOrdinal {
+impl ToVectorValue for AstNumFnOrdinal {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }
 #[allow(non_camel_case_types)]
@@ -597,14 +597,14 @@ pub enum AstNumFnRank {
     AstTuple_AstSet(AstTuple, AstSet),
 }
 
-impl ToCellValue for AstNumFnRank {
+impl ToVectorValue for AstNumFnRank {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }
 #[allow(non_camel_case_types)]
@@ -614,14 +614,14 @@ pub enum AstNumFnStdev {
     AstSet_AstExp(AstSet, Option<AstExpression>),
 }
 
-impl ToCellValue for AstNumFnStdev {
+impl ToVectorValue for AstNumFnStdev {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }
 #[allow(non_camel_case_types)]
@@ -631,13 +631,13 @@ pub enum AstNumFnVar {
     AstSet_AstExp(AstSet, Option<AstExpression>),
 }
 
-impl ToCellValue for AstNumFnVar {
+impl ToVectorValue for AstNumFnVar {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
-        Box::pin(async move { CellValue::Null })
+    ) -> BoxFuture<'a, VectorValue> {
+        Box::pin(async move { VectorValue::Null })
     }
 }

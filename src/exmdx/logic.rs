@@ -5,7 +5,7 @@ use futures::future::BoxFuture;
 use crate::exmdx::ast::AstSegsObj;
 
 use crate::exmdx::ast::Materializable;
-use crate::exmdx::ast::{AstExpression, ToCellValue};
+use crate::exmdx::ast::{AstExpression, ToVectorValue};
 use crate::exmdx::mdd::TupleVector;
 use crate::mdd::MultiDimensionalContext;
 use crate::mdd::{MemberRole, MultiDimensionalEntity};

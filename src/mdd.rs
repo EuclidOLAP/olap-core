@@ -1,6 +1,6 @@
 use core::panic;
 
-use crate::exmdx::ast::ToCellValue;
+use crate::exmdx::ast::ToVectorValue;
 use crate::meta_cache;
 
 use crate::exmdx::ast::{AstExpression, AstSeg};
@@ -55,7 +55,7 @@ pub enum MultiDimensionalEntity {
         dim_role_gid: u64,
         exp: AstExpression,
     },
-    CellValue(CellValue),
+    VectorValue(VectorValue),
     Cube(Cube),
     // Dimension(Dimension), // 维度实体
     // Hierarchy(Hierarchy), // 层次实体
@@ -63,86 +63,86 @@ pub enum MultiDimensionalEntity {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum CellValue {
+pub enum VectorValue {
     Double(f64),
     Str(String),
     Null,
     Invalid,
 }
 
-// CellValue + CellValue
-impl ops::Add for CellValue {
-    type Output = CellValue;
+// VectorValue + VectorValue
+impl ops::Add for VectorValue {
+    type Output = VectorValue;
 
-    fn add(self, other: CellValue) -> CellValue {
+    fn add(self, other: VectorValue) -> VectorValue {
         match (self, other) {
-            (CellValue::Double(num_1), CellValue::Double(num_2)) => {
-                CellValue::Double(num_1 + num_2)
+            (VectorValue::Double(num_1), VectorValue::Double(num_2)) => {
+                VectorValue::Double(num_1 + num_2)
             }
-            (CellValue::Double(num_1), CellValue::Str(str_2)) => {
-                CellValue::Str(format!("{}{}", num_1, str_2))
+            (VectorValue::Double(num_1), VectorValue::Str(str_2)) => {
+                VectorValue::Str(format!("{}{}", num_1, str_2))
             }
-            (CellValue::Str(str_1), CellValue::Double(num_2)) => {
-                CellValue::Str(format!("{}{}", str_1, num_2))
+            (VectorValue::Str(str_1), VectorValue::Double(num_2)) => {
+                VectorValue::Str(format!("{}{}", str_1, num_2))
             }
-            (CellValue::Str(str_1), CellValue::Str(str_2)) => {
-                CellValue::Str(format!("{}{}", str_1, str_2))
+            (VectorValue::Str(str_1), VectorValue::Str(str_2)) => {
+                VectorValue::Str(format!("{}{}", str_1, str_2))
             }
-            _ => CellValue::Invalid,
+            _ => VectorValue::Invalid,
         }
     }
 }
 
-// CellValue - CellValue
-impl ops::Sub for CellValue {
-    type Output = CellValue;
+// VectorValue - VectorValue
+impl ops::Sub for VectorValue {
+    type Output = VectorValue;
 
-    fn sub(self, other: CellValue) -> CellValue {
+    fn sub(self, other: VectorValue) -> VectorValue {
         match (self, other) {
-            (CellValue::Double(num_1), CellValue::Double(num_2)) => {
-                CellValue::Double(num_1 - num_2)
+            (VectorValue::Double(num_1), VectorValue::Double(num_2)) => {
+                VectorValue::Double(num_1 - num_2)
             }
-            _ => CellValue::Invalid,
+            _ => VectorValue::Invalid,
         }
     }
 }
 
-// CellValue * CellValue
-impl ops::Mul for CellValue {
-    type Output = CellValue;
+// VectorValue * VectorValue
+impl ops::Mul for VectorValue {
+    type Output = VectorValue;
 
-    fn mul(self, other: CellValue) -> CellValue {
+    fn mul(self, other: VectorValue) -> VectorValue {
         match (self, other) {
-            (CellValue::Double(num_1), CellValue::Double(num_2)) => {
-                CellValue::Double(num_1 * num_2)
+            (VectorValue::Double(num_1), VectorValue::Double(num_2)) => {
+                VectorValue::Double(num_1 * num_2)
             }
-            _ => CellValue::Invalid,
+            _ => VectorValue::Invalid,
         }
     }
 }
 
-// CellValue / CellValue
-impl ops::Div for CellValue {
-    type Output = CellValue;
+// VectorValue / VectorValue
+impl ops::Div for VectorValue {
+    type Output = VectorValue;
 
-    fn div(self, other: CellValue) -> CellValue {
+    fn div(self, other: VectorValue) -> VectorValue {
         match (self, other) {
-            (CellValue::Double(num_1), CellValue::Double(num_2)) => {
+            (VectorValue::Double(num_1), VectorValue::Double(num_2)) => {
                 if num_2 == 0.0 {
-                    CellValue::Invalid
+                    VectorValue::Invalid
                 } else {
-                    CellValue::Double(num_1 / num_2)
+                    VectorValue::Double(num_1 / num_2)
                 }
             }
-            _ => CellValue::Invalid,
+            _ => VectorValue::Invalid,
         }
     }
 }
 
-impl CellValue {
-    pub fn logical_cmp(&self, op: &String, other: &CellValue) -> bool {
+impl VectorValue {
+    pub fn logical_cmp(&self, op: &String, other: &VectorValue) -> bool {
         match (self, other) {
-            (CellValue::Double(a), CellValue::Double(b)) => match op.as_str() {
+            (VectorValue::Double(a), VectorValue::Double(b)) => match op.as_str() {
                 "<" => a < b,
                 "<=" => a <= b,
                 "=" => a == b,
@@ -151,7 +151,7 @@ impl CellValue {
                 ">=" => a >= b,
                 _ => false,
             },
-            (CellValue::Str(a), CellValue::Str(b)) => match op.as_str() {
+            (VectorValue::Str(a), VectorValue::Str(b)) => match op.as_str() {
                 "<" => a < b,
                 "<=" => a <= b,
                 "=" => a == b,
@@ -287,7 +287,7 @@ impl MultiDimensionalEntityLocator for Set {
                             Some(MultiDimensionalEntity::SetWrap(self.clone())),
                         )
                         .await;
-                    MultiDimensionalEntity::CellValue(fn_result)
+                    MultiDimensionalEntity::VectorValue(fn_result)
 
                     // // let set_copy = self.clone();
                     // // let avg_fn = AstNumFnAvg::OuterParam(set_copy);
@@ -306,7 +306,7 @@ impl MultiDimensionalEntityLocator for Set {
                             Some(MultiDimensionalEntity::SetWrap(self.clone())),
                         )
                         .await;
-                    MultiDimensionalEntity::CellValue(fn_result)
+                    MultiDimensionalEntity::VectorValue(fn_result)
 
                     // // let set_copy = self.clone();
                     // // let count_fn = AstNumFnCount::OuterParam(set_copy);
@@ -324,7 +324,7 @@ impl MultiDimensionalEntityLocator for Set {
                             Some(MultiDimensionalEntity::SetWrap(self.clone())),
                         )
                         .await;
-                    MultiDimensionalEntity::CellValue(value)
+                    MultiDimensionalEntity::VectorValue(value)
                 }
                 AstExpFunction::Max(exp_fn_max) => {
                     if seg_list.len() > 1 {
@@ -337,7 +337,7 @@ impl MultiDimensionalEntityLocator for Set {
                             Some(MultiDimensionalEntity::SetWrap(self.clone())),
                         )
                         .await;
-                    MultiDimensionalEntity::CellValue(value)
+                    MultiDimensionalEntity::VectorValue(value)
                 }
                 AstExpFunction::Min(exp_fn_min) => {
                     if seg_list.len() > 1 {
@@ -350,7 +350,7 @@ impl MultiDimensionalEntityLocator for Set {
                             Some(MultiDimensionalEntity::SetWrap(self.clone())),
                         )
                         .await;
-                    MultiDimensionalEntity::CellValue(value)
+                    MultiDimensionalEntity::VectorValue(value)
                 }
                 _ => {
                     todo!("[bhsHC957] Set::locate_entity() Unsupported ExpFn function.")
@@ -478,7 +478,7 @@ impl MultiDimensionalEntityLocator for MemberRole {
                         Some(MultiDimensionalEntity::MemberRoleWrap(self.clone())),
                     )
                     .await;
-                MultiDimensionalEntity::CellValue(cell_val)
+                MultiDimensionalEntity::VectorValue(cell_val)
             }
             _ => panic!("Panic in MemberRole::locate_entity() .. 67HUSran .."),
         }
@@ -677,7 +677,7 @@ impl MultiDimensionalEntityLocator for Cube {
                     Some(MultiDimensionalEntity::Cube(self.clone())),
                 )
                 .await;
-            return MultiDimensionalEntity::CellValue(cell_val);
+            return MultiDimensionalEntity::VectorValue(cell_val);
         } else {
             unimplemented!("[nsbk8562] Cube::locate_entity() not implemented yet.")
         }

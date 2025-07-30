@@ -4,7 +4,7 @@ use crate::exmdx::ast::AstSegsObj;
 
 use crate::exmdx::mdd::TupleVector;
 
-use crate::mdd::CellValue;
+use crate::mdd::VectorValue;
 use crate::mdd::MultiDimensionalContext;
 use crate::mdd::{DimensionRole, Level, LevelRole};
 use crate::mdd::{MemberRole, MultiDimensionalEntity};
@@ -12,7 +12,7 @@ use crate::mdd::{MemberRole, MultiDimensionalEntity};
 use crate::meta_cache;
 
 use crate::exmdx::ast::Materializable;
-use crate::exmdx::ast::{AstExpression, ToCellValue};
+use crate::exmdx::ast::{AstExpression, ToVectorValue};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstLevelFunction {
@@ -128,7 +128,7 @@ impl AstLevelFnLevels {
         };
 
         let cell_val = idx_exp.val(slice_tuple, context, None).await;
-        if let CellValue::Double(idx) = cell_val {
+        if let VectorValue::Double(idx) = cell_val {
             let lv_val = idx as u32;
 
             let olap_obj_level: Level = meta_cache::get_hierarchy_level(def_hierarchy_gid, lv_val);
