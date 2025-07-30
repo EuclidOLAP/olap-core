@@ -413,6 +413,12 @@ Seg: AstSeg = {
   "&" <int: "unsigned_int"> => {
     AstSeg::Gid(int)
   },
+  "&" <int: "unsigned_int"> <id_str: "Identifier"> => {
+    AstSeg::GidStr(int, id_str)
+  },
+  <id_str: "Identifier"> => {
+    AstSeg::Str(id_str)
+  },
   "&" <int: "unsigned_int"> <bra_str: "BracketedString"> => {
     AstSeg::GidStr(int, bra_str)
   },
