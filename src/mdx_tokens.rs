@@ -43,6 +43,10 @@ pub enum Token {
     #[regex("(?i)where")]
     Where,
 
+    #[regex(r"[a-zA-Z_][a-zA-Z_0-9]*", |lex| {
+        String::from(lex.slice())
+    })]
+    Identifier(String),
     #[regex(r"\[(?:[^\]]|\]\])*\]", |lex| {
         let raw = lex.slice();
         raw[1..raw.len() - 1].replace("]]", "]")
@@ -62,6 +66,8 @@ pub enum Token {
     Multiplied,
     #[token("/")]
     Divided,
+    #[token("%")]
+    Percent,
 
     #[token("{")]
     CurlyBraceLeft,
@@ -84,6 +90,8 @@ pub enum Token {
 
     #[regex("[0-9]+", |lex| lex.slice().parse())]
     Integer(u64),
+    #[regex(r"-[0-9]+", |lex| lex.slice().parse())]
+    NegativeInteger(i64),
     #[regex(r"[0-9]+\.[0-9]+", |lex| lex.slice().parse())]
     Double(f64),
 
@@ -103,12 +111,84 @@ pub enum Token {
     Parent,
     #[regex("(?i)CurrentMember")]
     CurrentMember,
+    #[regex("(?i)ClosingPeriod")]
+    ClosingPeriod,
+    #[regex("(?i)FirstChild")]
+    FirstChild,
+    #[regex("(?i)FirstSibling")]
+    FirstSibling,
+    #[regex("(?i)Lag")]
+    Lag,
+    #[regex("(?i)LastChild")]
+    LastChild,
+    #[regex("(?i)LastSibling")]
+    LastSibling,
+    #[regex("(?i)Lead")]
+    Lead,
+    #[regex("(?i)OpeningPeriod")]
+    OpeningPeriod,
+    #[regex("(?i)ParallelPeriod")]
+    ParallelPeriod,
+    #[regex("(?i)PrevMember")]
+    PrevMember,
+    #[regex("(?i)NextMember")]
+    NextMember,
+    #[regex("(?i)Ancestor")]
+    Ancestor,
+    #[regex("(?i)Cousin")]
+    Cousin,
+    #[regex("(?i)DefaultMember")]
+    DefaultMember,
 
     // Set functions
     #[regex("(?i)Children")]
     Children,
+    #[regex("(?i)BottomPercent")] BottomPercent,
+    #[regex("(?i)CrossJoin")] CrossJoin,
+    #[regex("(?i)Descendants")] Descendants,
+    #[regex("(?i)Except")] Except,
+    #[regex("(?i)Filter")] Filter,
+    #[regex("(?i)Intersect")] Intersect,
+    #[regex("(?i)Members")] Members,
+    #[regex("(?i)Order")] Order,
+    #[regex("(?i)Tail")] Tail,
+    #[regex("(?i)TopCount")] TopCount,
+    #[regex("(?i)TopPercent")] TopPercent,
+    #[regex("(?i)Union")] Union,
+    #[regex("(?i)Ytd")] Ytd,
+    #[regex("(?i)Qtd")] Qtd,
+    #[regex("(?i)Distinct")] Distinct,
+    #[regex("(?i)DrilldownLevel")] DrilldownLevel,
+    #[regex("(?i)DrilldownLevelBottom")] DrilldownLevelBottom,
+    #[regex("(?i)DrillDownLevelTop")] DrillDownLevelTop,
+    #[regex("(?i)DrillDownMember")] DrillDownMember,
+    #[regex("(?i)DrillDownMemberBottom")] DrillDownMemberBottom,
+    #[regex("(?i)DrillDownMemberTop")] DrillDownMemberTop,
+    #[regex("(?i)DrillupLevel")] DrillupLevel,
+    #[regex("(?i)DrillupMember")] DrillupMember,
+    #[regex("(?i)Ancestors")] Ancestors,
+    #[regex("(?i)BottomCount")] BottomCount,
+    #[regex("(?i)BottomSum")] BottomSum,
+    #[regex("(?i)TopSum")] TopSum,
+    #[regex("(?i)Extract")] Extract,
+    #[regex("(?i)PeriodsToDate")] PeriodsToDate,
+    #[regex("(?i)Generate")] Generate,
+    #[regex("(?i)Head")] Head,
+    #[regex("(?i)Subset")] Subset,
 
-    // Expression functions
+    // CASE Statement
+    #[regex("(?i)Case")]
+    Case,
+    #[regex("(?i)When")]
+    When,
+    #[regex("(?i)Then")]
+    Then,
+    #[regex("(?i)Else")]
+    Else,
+    #[regex("(?i)End")]
+    End,
+
+    // Expression numeric functions
     #[regex("(?i)Avg")]
     Avg,
     #[regex("(?i)Sum")]
@@ -119,25 +199,52 @@ pub enum Token {
     Min,
     #[regex("(?i)Count")]
     Count,
+    #[regex("(?i)IIf")]
+    IIf,
+    #[regex("(?i)CoalesceEmpty")]
+    CoalesceEmpty,
+    #[regex("(?i)Aggregate")]
+    Aggregate,
+    #[regex("(?i)Median")]
+    Median,
+    #[regex("(?i)Rank")]
+    Rank,
+    #[regex("(?i)Abs")]
+    Abs,
+    #[regex("(?i)Correlation")]
+    Correlation,
+    #[regex("(?i)Covariance")]
+    Covariance,
+    #[regex("(?i)LinRegIntercept")]
+    LinRegIntercept,
+    #[regex("(?i)LinRegR2")]
+    LinRegR2,
+    #[regex("(?i)LinRegSlope")]
+    LinRegSlope,
+    #[regex("(?i)LinRegVariance")]
+    LinRegVariance,
+    #[regex("(?i)Stdev")]
+    Stdev,
+    #[regex("(?i)Var")]
+    Var,
+    #[regex("(?i)Ordinal")]
+    Ordinal,
+
+    // Expression tunnel functions
     // #[regex("(?i)Tunnel")]
     // Tunnel,
     #[regex("(?i)LookupCube")]
     LookupCube,
-    #[regex("(?i)Abs")]
-    #[regex("(?i)ClosingPeriod")]
-    ClosingPeriod,
 
-    #[regex("(?i)OpeningPeriod")]
-    OpeningPeriod,
+    // Expression string functions
+    #[regex("(?i)Name")]
+    Name,
 
     #[regex("(?i)Level")]
     Level,
 
     #[regex("(?i)Levels")]
     Levels,
-
-    #[regex("(?i)IIf")]
-    IIf,
 
     #[regex("(?i)Not")]
     Not,
@@ -160,11 +267,17 @@ pub enum Token {
     #[token(">=")] // Greater Than or Equal To
     GE,
 
+    // Logical Functions
     #[regex("(?i)IsLeaf")]
     IsLeaf,
-
-    #[regex("(?i)Name")]
-    Name,
+    #[regex("(?i)IsEmpty")]
+    IsEmpty,
+    #[regex("(?i)IsAncestor")]
+    IsAncestor,
+    #[regex("(?i)IsGeneration")]
+    IsGeneration,
+    #[regex("(?i)IsSibling")]
+    IsSibling,
 }
 
 impl fmt::Display for Token {
