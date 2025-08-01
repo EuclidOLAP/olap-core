@@ -4,8 +4,8 @@ use crate::exmdx::ast::AstSegsObj;
 
 use crate::exmdx::mdd::TupleVector;
 
-use crate::mdd::VectorValue;
 use crate::mdd::MultiDimensionalContext;
+use crate::mdd::VectorValue;
 use crate::mdd::{DimensionRole, Level, LevelRole};
 use crate::mdd::{MemberRole, MultiDimensionalEntity};
 
@@ -18,6 +18,8 @@ use crate::exmdx::ast::{AstExpression, ToVectorValue};
 pub enum AstLevelFunction {
     Level(AstLevelFnLevel),
     Levels(AstLevelFnLevels),
+    Generation(AstLevelFnGeneration),
+    Generations(AstLevelFnGenerations),
 }
 
 impl AstLevelFunction {
@@ -38,6 +40,7 @@ impl AstLevelFunction {
                     .get_level_role(left_outer_param, slice_tuple, context)
                     .await
             }
+            _ => panic!("[003BHE] The entity is not a LevelFunction variant."),
         }
     }
 }
@@ -137,4 +140,18 @@ impl AstLevelFnLevels {
             panic!("[klu704] AstLevelFnLevel::do_get_level_role()");
         }
     }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstLevelFnGeneration {
+    Chain,
+    MemberRoleSegs(AstSegsObj),
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstLevelFnGenerations {
+    Chain_IndexExp(AstExpression),
+    OlapObj_IndexExp(AstSegsObj, AstExpression),
 }

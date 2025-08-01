@@ -21,11 +21,6 @@
 	Hierarchy		(M)
 
 
-<< Level Functions >>
-	Generation		(O)
-	Generations		(O)
-
-
 << Logical Functions >>
 	Contains		(O)
 	Is		(O)

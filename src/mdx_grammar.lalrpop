@@ -5,7 +5,7 @@
 use crate::mdx_tokens::{Token, LexicalError};
 
 use crate::exmdx::lv_func::AstLevelFunction;
-use crate::exmdx::lv_func::{AstLevelFnLevel, AstLevelFnLevels};
+use crate::exmdx::lv_func::{AstLevelFnLevel, AstLevelFnLevels, AstLevelFnGeneration, AstLevelFnGenerations};
 
 use crate::exmdx::mem_func::AstMemberFunction;
 use crate::exmdx::mem_func::{AstMemberFnCurrentMember, AstMemberFnParent, AstMemberFnClosingPeriod, AstMemberFnOpeningPeriod};
@@ -136,9 +136,13 @@ extern {
     "Head" => Token::Head,
     "Subset" => Token::Subset,
 
-    // Level Functions
+    // #####################################################
+    // ##  Level(Role) Functions                          ##
+    // #####################################################
     "Level" => Token::Level,
     "Levels" => Token::Levels,
+    "Generation" => Token::Generation,
+    "Generations" => Token::Generations,
 
     // Expression Numeric Functions
     "Avg" => Token::Avg,
@@ -662,6 +666,12 @@ Level_Func: AstLevelFunction = {
   <lv_func: Levels> => {
     AstLevelFunction::Levels(lv_func)
   },
+  <lv_func: Generation> => {
+    AstLevelFunction::Generation(lv_func)
+  },
+  <lv_func: Generations> => {
+    AstLevelFunction::Generations(lv_func)
+  },
 }
 
 Level: AstLevelFnLevel = {
@@ -679,6 +689,27 @@ Levels: AstLevelFnLevels = {
   },
   "Levels" "(" <segs_obj: Segs_Obj> "," <exp: Expression> ")" => {
     AstLevelFnLevels::SegsObj_Exp(segs_obj, exp)
+  },
+}
+
+Generation: AstLevelFnGeneration = {
+  // member.Generation
+  "Generation" ("(" ")")? => {
+    AstLevelFnGeneration::Chain
+  },
+  "Generation" "(" <mem_segs: Segs_Obj> ")" => {
+    AstLevelFnGeneration::MemberRoleSegs(mem_segs)
+  },
+}
+
+Generations: AstLevelFnGenerations = {
+  // dimension.Generations ( index )
+  "Generations" "(" <index: Expression> ")" => {
+    AstLevelFnGenerations::Chain_IndexExp(index)
+  },
+  // Generations ( dimension, index )
+  "Generations" "(" <olap_obj: Segs_Obj> "," <index: Expression> ")" => {
+    AstLevelFnGenerations::OlapObj_IndexExp(olap_obj, index)
   },
 }
 

@@ -292,6 +292,10 @@ pub enum Token {
     Level,
     #[regex("(?i)Levels")]
     Levels,
+    #[regex("(?i)Generation")]
+    Generation,
+    #[regex("(?i)Generations")]
+    Generations,
 
     // #####################################################
     // ##  Boolean Expression Keywords                    ##
