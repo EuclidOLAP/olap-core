@@ -19,6 +19,9 @@ use crate::exmdx::ast::{AstFactory, AstTerm, AstExpression};
 
 use crate::exmdx::ast::{AstCaseStatement, AstCaseItems};
 
+use crate::exmdx::hier_func::AstHierarchyFunction;
+use crate::exmdx::hier_func::{AstHierFnDimension, AstHierFnDimensions, AstHierFnHierarchy};
+
 use crate::exmdx::exp_func::AstExpFunction;
 use crate::exmdx::exp_func::{AstNumFnSum, AstNumFnMax, AstNumFnMin};
 use crate::exmdx::exp_func::{AstNumFnCount, AstNumFnAvg, AstNumFnIIf};
@@ -135,6 +138,13 @@ extern {
     "Generate" => Token::Generate,
     "Head" => Token::Head,
     "Subset" => Token::Subset,
+
+    // #####################################################
+    // ##  Hierarchy(Role) Functions                      ##
+    // #####################################################
+    "Dimension" => Token::Dimension,
+    "Dimensions" => Token::Dimensions,
+    "Hierarchy" => Token::Hierarchy,
 
     // #####################################################
     // ##  Level(Role) Functions                          ##
@@ -441,6 +451,9 @@ Seg: AstSeg = {
   <func: Level_Func> => {
     AstSeg::LevelFunc(func)
   },
+  <func: Hierarchy_Func> => {
+    AstSeg::HierarchyFunc(func)
+  },
 }
 
 Member_Func: AstMemberFunction = {
@@ -710,6 +723,36 @@ Generations: AstLevelFnGenerations = {
   // Generations ( dimension, index )
   "Generations" "(" <olap_obj: Segs_Obj> "," <index: Expression> ")" => {
     AstLevelFnGenerations::OlapObj_IndexExp(olap_obj, index)
+  },
+}
+
+Hierarchy_Func: AstHierarchyFunction = {
+  <hi_func: Hi_Dimension> => AstHierarchyFunction::Dimension(hi_func),
+  <hi_func: Hi_Dimensions> => AstHierarchyFunction::Dimensions(hi_func),
+  <hi_func: Hi_Hierarchy> => AstHierarchyFunction::Hierarchy(hi_func),
+}
+
+Hi_Dimension: AstHierFnDimension = {
+  "Dimension" ("(" ")")? => {
+    AstHierFnDimension::Chain
+  },
+  "Dimension" "(" <olap_obj: Segs_Obj> ")" => {
+    AstHierFnDimension::OlapObj(olap_obj)
+  },
+}
+
+Hi_Dimensions: AstHierFnDimensions = {
+  "Dimensions" "(" <exp: Expression> ")" => {
+    AstHierFnDimensions { exp }
+  },
+}
+
+Hi_Hierarchy: AstHierFnHierarchy = {
+  "Hierarchy" ("(" ")")? => {
+    AstHierFnHierarchy::Chain
+  },
+  "Hierarchy" "(" <olap_obj: Segs_Obj> ")" => {
+    AstHierFnHierarchy::OlapObj(olap_obj)
   },
 }
 

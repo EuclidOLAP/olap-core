@@ -19,6 +19,8 @@ use crate::exmdx::lv_func::AstLevelFunction;
 
 use crate::exmdx::set_func::AstSetFunction;
 
+use crate::exmdx::hier_func::AstHierarchyFunction;
+
 use core::panic;
 use std::collections::HashMap;
 
@@ -164,6 +166,7 @@ pub enum AstSeg {
     SetFunc(AstSetFunction),
     ExpFunc(AstExpFunction),
     LevelFunc(AstLevelFunction),
+    HierarchyFunc(AstHierarchyFunction),
 }
 
 impl AstSeg {
@@ -202,6 +205,9 @@ impl Materializable for AstSeg {
                 AstSeg::SetFunc(set_fn) => {
                     let set = set_fn.get_set(None, slice_tuple, context).await;
                     MultiDimensionalEntity::SetWrap(set)
+                }
+                Self::HierarchyFunc(_hier_func) => {
+                    todo!("[NVBh-5676] HierarchyFunc is not implemented yet.")
                 }
             }
         })

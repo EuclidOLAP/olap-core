@@ -15,12 +15,6 @@
 	UnixDate		(O)
 
 
-<< Hierarchy Functions >>
-	Dimension		(M)
-	Dimensions		(M)
-	Hierarchy		(M)
-
-
 << Logical Functions >>
 	Contains		(O)
 	Is		(O)

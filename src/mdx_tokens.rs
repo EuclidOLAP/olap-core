@@ -286,6 +286,16 @@ pub enum Token {
     Name,
 
     // #####################################################
+    // ##  Hierarchy(Role) Functions                      ##
+    // #####################################################
+    #[regex("(?i)Dimension")]
+    Dimension,
+    #[regex("(?i)Dimensions")]
+    Dimensions,
+    #[regex("(?i)Hierarchy")]
+    Hierarchy,
+
+    // #####################################################
     // ##  Level(Role) Functions                          ##
     // #####################################################
     #[regex("(?i)Level")]
