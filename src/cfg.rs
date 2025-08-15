@@ -23,30 +23,14 @@ impl Settings {
     }
 }
 
-// pub fn get_cfg() -> Config {
-//     let settings = Settings::load("config.toml").expect("Failed to load config");
-
-//     match env::var("OLAP_ENV").unwrap_or_else(|_| "def".to_string()).as_str() {
-//         "dev" => settings.dev,
-//         "prod" => settings.prod,
-//         _ => settings.def,
-//     }
-// }
-
 pub fn get_cfg() -> Config {
-    // 加载配置
     let settings = Settings::load("config.toml").expect("Failed to load config");
 
-    // 获取环境变量
     let env_var = env::var("OLAP_ENV");
 
-    // 如果没有设置环境变量，打印消息
     match env_var {
         Ok(value) => {
-            println!(
-                "<<<<<<<<<<<<<<<<< <<<<<<<<<<<<<<<<< <<<<<<<<<<<<<<<<< OLAP_ENV is set to: {}",
-                value
-            );
+            println!("OLAP_ENV is set to '{}', using corresponding configuration.", value);
             match value.as_str() {
                 "dev" => settings.dev,
                 "prod" => settings.prod,
@@ -54,8 +38,8 @@ pub fn get_cfg() -> Config {
             }
         }
         Err(_) => {
-            println!("<<<<<<<<<<<<<<<<< <<<<<<<<<<<<<<<<< <<<<<<<<<<<<<<<<< 没有OLAP_ENV环境变量");
-            settings.def // 默认配置
+            println!("OLAP_ENV not set, using default configuration.");
+            settings.def
         }
     }
 }

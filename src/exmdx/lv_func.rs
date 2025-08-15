@@ -4,20 +4,22 @@ use crate::exmdx::ast::AstSegsObj;
 
 use crate::exmdx::mdd::TupleVector;
 
-use crate::mdd::CellValue;
 use crate::mdd::MultiDimensionalContext;
+use crate::mdd::VectorValue;
 use crate::mdd::{DimensionRole, Level, LevelRole};
 use crate::mdd::{MemberRole, MultiDimensionalEntity};
 
 use crate::meta_cache;
 
 use crate::exmdx::ast::Materializable;
-use crate::exmdx::ast::{AstExpression, ToCellValue};
+use crate::exmdx::ast::{AstExpression, ToVectorValue};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AstLevelFunction {
     Level(AstLevelFnLevel),
     Levels(AstLevelFnLevels),
+    Generation(AstLevelFnGeneration),
+    Generations(AstLevelFnGenerations),
 }
 
 impl AstLevelFunction {
@@ -38,6 +40,7 @@ impl AstLevelFunction {
                     .get_level_role(left_outer_param, slice_tuple, context)
                     .await
             }
+            _ => panic!("[003BHE] The entity is not a LevelFunction variant."),
         }
     }
 }
@@ -128,7 +131,7 @@ impl AstLevelFnLevels {
         };
 
         let cell_val = idx_exp.val(slice_tuple, context, None).await;
-        if let CellValue::Double(idx) = cell_val {
+        if let VectorValue::Double(idx) = cell_val {
             let lv_val = idx as u32;
 
             let olap_obj_level: Level = meta_cache::get_hierarchy_level(def_hierarchy_gid, lv_val);
@@ -137,4 +140,18 @@ impl AstLevelFnLevels {
             panic!("[klu704] AstLevelFnLevel::do_get_level_role()");
         }
     }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstLevelFnGeneration {
+    Chain,
+    MemberRoleSegs(AstSegsObj),
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Clone, Debug, PartialEq)]
+pub enum AstLevelFnGenerations {
+    Chain_IndexExp(AstExpression),
+    OlapObj_IndexExp(AstSegsObj, AstExpression),
 }

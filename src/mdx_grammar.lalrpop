@@ -1,7 +1,11 @@
+// https://docs.oracle.com/en/database/other-databases/essbase/21/esscq/mdx-function-list.html
+// https://learn.microsoft.com/en-us/sql/mdx/mdx-function-reference-mdx?view=sql-server-ver17
+// https://www.ibm.com/docs/en/planning-analytics/2.0.0?topic=references-mdx-function-support
+
 use crate::mdx_tokens::{Token, LexicalError};
 
 use crate::exmdx::lv_func::AstLevelFunction;
-use crate::exmdx::lv_func::{AstLevelFnLevel, AstLevelFnLevels};
+use crate::exmdx::lv_func::{AstLevelFnLevel, AstLevelFnLevels, AstLevelFnGeneration, AstLevelFnGenerations};
 
 use crate::exmdx::mem_func::AstMemberFunction;
 use crate::exmdx::mem_func::{AstMemberFnCurrentMember, AstMemberFnParent, AstMemberFnClosingPeriod, AstMemberFnOpeningPeriod};
@@ -14,6 +18,9 @@ use crate::exmdx::ast::{AstSeg, AstSegsObj, AstMdxStatement, AstSet, AstTuple, A
 use crate::exmdx::ast::{AstFactory, AstTerm, AstExpression};
 
 use crate::exmdx::ast::{AstCaseStatement, AstCaseItems};
+
+use crate::exmdx::hier_func::AstHierarchyFunction;
+use crate::exmdx::hier_func::{AstHierFnDimension, AstHierFnDimensions, AstHierFnHierarchy};
 
 use crate::exmdx::exp_func::AstExpFunction;
 use crate::exmdx::exp_func::{AstNumFnSum, AstNumFnMax, AstNumFnMin};
@@ -132,9 +139,20 @@ extern {
     "Head" => Token::Head,
     "Subset" => Token::Subset,
 
-    // Level Functions
+    // #####################################################
+    // ##  Hierarchy(Role) Functions                      ##
+    // #####################################################
+    "Dimension" => Token::Dimension,
+    "Dimensions" => Token::Dimensions,
+    "Hierarchy" => Token::Hierarchy,
+
+    // #####################################################
+    // ##  Level(Role) Functions                          ##
+    // #####################################################
     "Level" => Token::Level,
     "Levels" => Token::Levels,
+    "Generation" => Token::Generation,
+    "Generations" => Token::Generations,
 
     // Expression Numeric Functions
     "Avg" => Token::Avg,
@@ -183,11 +201,6 @@ extern {
     "IsSibling" => Token::IsSibling,
   }
 }
-
-// MDX Function Reference
-// https://docs.oracle.com/en/database/other-databases/essbase/21/esscq/mdx-function-list.html
-// https://learn.microsoft.com/en-us/sql/mdx/mdx-function-reference-mdx?view=sql-server-ver17
-// https://www.ibm.com/docs/en/planning-analytics/2.0.0?topic=references-mdx-function-support
 
 pub MdxStatement: AstMdxStatement = {
   <querying: Slicing_Querying> (";")? => {
@@ -414,6 +427,12 @@ Seg: AstSeg = {
   "&" <int: "unsigned_int"> => {
     AstSeg::Gid(int)
   },
+  "&" <int: "unsigned_int"> <id_str: "Identifier"> => {
+    AstSeg::GidStr(int, id_str)
+  },
+  <id_str: "Identifier"> => {
+    AstSeg::Str(id_str)
+  },
   "&" <int: "unsigned_int"> <bra_str: "BracketedString"> => {
     AstSeg::GidStr(int, bra_str)
   },
@@ -431,6 +450,9 @@ Seg: AstSeg = {
   },
   <func: Level_Func> => {
     AstSeg::LevelFunc(func)
+  },
+  <func: Hierarchy_Func> => {
+    AstSeg::HierarchyFunc(func)
   },
 }
 
@@ -657,6 +679,12 @@ Level_Func: AstLevelFunction = {
   <lv_func: Levels> => {
     AstLevelFunction::Levels(lv_func)
   },
+  <lv_func: Generation> => {
+    AstLevelFunction::Generation(lv_func)
+  },
+  <lv_func: Generations> => {
+    AstLevelFunction::Generations(lv_func)
+  },
 }
 
 Level: AstLevelFnLevel = {
@@ -674,6 +702,57 @@ Levels: AstLevelFnLevels = {
   },
   "Levels" "(" <segs_obj: Segs_Obj> "," <exp: Expression> ")" => {
     AstLevelFnLevels::SegsObj_Exp(segs_obj, exp)
+  },
+}
+
+Generation: AstLevelFnGeneration = {
+  // member.Generation
+  "Generation" ("(" ")")? => {
+    AstLevelFnGeneration::Chain
+  },
+  "Generation" "(" <mem_segs: Segs_Obj> ")" => {
+    AstLevelFnGeneration::MemberRoleSegs(mem_segs)
+  },
+}
+
+Generations: AstLevelFnGenerations = {
+  // dimension.Generations ( index )
+  "Generations" "(" <index: Expression> ")" => {
+    AstLevelFnGenerations::Chain_IndexExp(index)
+  },
+  // Generations ( dimension, index )
+  "Generations" "(" <olap_obj: Segs_Obj> "," <index: Expression> ")" => {
+    AstLevelFnGenerations::OlapObj_IndexExp(olap_obj, index)
+  },
+}
+
+Hierarchy_Func: AstHierarchyFunction = {
+  <hi_func: Hi_Dimension> => AstHierarchyFunction::Dimension(hi_func),
+  <hi_func: Hi_Dimensions> => AstHierarchyFunction::Dimensions(hi_func),
+  <hi_func: Hi_Hierarchy> => AstHierarchyFunction::Hierarchy(hi_func),
+}
+
+Hi_Dimension: AstHierFnDimension = {
+  "Dimension" ("(" ")")? => {
+    AstHierFnDimension::Chain
+  },
+  "Dimension" "(" <olap_obj: Segs_Obj> ")" => {
+    AstHierFnDimension::OlapObj(olap_obj)
+  },
+}
+
+Hi_Dimensions: AstHierFnDimensions = {
+  "Dimensions" "(" <exp: Expression> ")" => {
+    AstHierFnDimensions { exp }
+  },
+}
+
+Hi_Hierarchy: AstHierFnHierarchy = {
+  "Hierarchy" ("(" ")")? => {
+    AstHierFnHierarchy::Chain
+  },
+  "Hierarchy" "(" <olap_obj: Segs_Obj> ")" => {
+    AstHierFnHierarchy::OlapObj(olap_obj)
   },
 }
 

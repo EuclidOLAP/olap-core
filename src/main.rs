@@ -23,7 +23,7 @@ lalrpop_mod!(pub mdx_grammar);
 
 use euclidolap::olap_api_server::{OlapApi, OlapApiServer};
 use euclidolap::{GrpcOlapVector, OlapRequest, OlapResponse};
-use mdd::CellValue;
+use mdd::VectorValue;
 use tonic::{transport::Server, Request, Response, Status};
 
 use lalrpop_util::lalrpop_mod;
@@ -72,22 +72,22 @@ impl OlapApi for EuclidOLAPService {
         let grpc_olap_vectors: Vec<GrpcOlapVector> = cell_vals
             .iter()
             .map(|cell| match cell {
-                CellValue::Double(val) => GrpcOlapVector {
+                VectorValue::Double(val) => GrpcOlapVector {
                     null_flag: false,
                     val: *val,
                     str: format!("{}", *val),
                 },
-                CellValue::Str(str) => GrpcOlapVector {
+                VectorValue::Str(str) => GrpcOlapVector {
                     null_flag: false,
                     val: 0.0,
                     str: String::from(str),
                 },
-                CellValue::Null => GrpcOlapVector {
+                VectorValue::Null => GrpcOlapVector {
                     null_flag: true,
                     val: 0.0,
                     str: String::from(""),
                 },
-                CellValue::Invalid => GrpcOlapVector {
+                VectorValue::Invalid => GrpcOlapVector {
                     null_flag: false,
                     val: 0.0,
                     str: String::from("Invalid"),
@@ -103,7 +103,7 @@ impl OlapApi for EuclidOLAPService {
     }
 }
 
-async fn handle_stat(optype: String, statement: String) -> (u64, Vec<CellValue>) {
+async fn handle_stat(optype: String, statement: String) -> (u64, Vec<VectorValue>) {
     match optype.as_str() {
         "MDX" => {
             let ast_selstat = MdxStatementParser::new()
@@ -121,7 +121,7 @@ async fn handle_stat(optype: String, statement: String) -> (u64, Vec<CellValue>)
     }
 }
 
-async fn exe_md_query(ast_selstat: AstMdxStatement) -> (u64, Vec<CellValue>) {
+async fn exe_md_query(ast_selstat: AstMdxStatement) -> (u64, Vec<VectorValue>) {
     let mut context = ast_selstat.gen_md_context().await;
     let axes = ast_selstat.build_axes(&mut context).await;
     let coordinates: Vec<TupleVector> = mdd::Axis::axis_vec_cartesian_product(&axes, &context);

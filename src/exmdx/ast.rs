@@ -1,7 +1,7 @@
 use futures::future::BoxFuture;
 
 use crate::exmdx::mdd::TupleVector;
-use crate::mdd::CellValue;
+use crate::mdd::VectorValue;
 use crate::mdd::GidType;
 use crate::mdd::MemberRole;
 use crate::mdd::MultiDimensionalContext;
@@ -19,6 +19,8 @@ use crate::exmdx::lv_func::AstLevelFunction;
 
 use crate::exmdx::set_func::AstSetFunction;
 
+use crate::exmdx::hier_func::AstHierarchyFunction;
+
 use core::panic;
 use std::collections::HashMap;
 
@@ -33,13 +35,13 @@ pub trait Materializable {
     ) -> BoxFuture<'a, MultiDimensionalEntity>;
 }
 
-pub trait ToCellValue {
+pub trait ToVectorValue {
     fn val<'a>(
         &'a self,
         slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue>;
+    ) -> BoxFuture<'a, VectorValue>;
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -164,6 +166,7 @@ pub enum AstSeg {
     SetFunc(AstSetFunction),
     ExpFunc(AstExpFunction),
     LevelFunc(AstLevelFunction),
+    HierarchyFunc(AstHierarchyFunction),
 }
 
 impl AstSeg {
@@ -197,11 +200,14 @@ impl Materializable for AstSeg {
                 }
                 AstSeg::ExpFunc(exp_fn) => {
                     let exp_val = exp_fn.val(slice_tuple, context, None).await;
-                    MultiDimensionalEntity::CellValue(exp_val)
+                    MultiDimensionalEntity::VectorValue(exp_val)
                 }
                 AstSeg::SetFunc(set_fn) => {
                     let set = set_fn.get_set(None, slice_tuple, context).await;
                     MultiDimensionalEntity::SetWrap(set)
+                }
+                Self::HierarchyFunc(_hier_func) => {
+                    todo!("[NVBh-5676] HierarchyFunc is not implemented yet.")
                 }
             }
         })
@@ -599,15 +605,15 @@ pub struct AstExpression {
     pub terms: Vec<(char, AstTerm)>,
 }
 
-impl ToCellValue for AstExpression {
+impl ToVectorValue for AstExpression {
     fn val<'a>(
         &'a self,
         slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
+    ) -> BoxFuture<'a, VectorValue> {
         Box::pin(async move {
-            let mut result = CellValue::Invalid;
+            let mut result = VectorValue::Invalid;
             for (index, (op, term)) in self.terms.iter().enumerate() {
                 if index == 0 {
                     result = Box::pin(term.val(slice_tuple, context, None)).await;
@@ -636,17 +642,17 @@ pub enum AstFactory {
     AstCaseStatement(AstCaseStatement),
 }
 
-impl ToCellValue for AstFactory {
+impl ToVectorValue for AstFactory {
     fn val<'a>(
         &'a self,
         slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
+    ) -> BoxFuture<'a, VectorValue> {
         Box::pin(async move {
             match self {
-                AstFactory::Numeric(num) => CellValue::Double(*num),
-                AstFactory::String(str) => CellValue::Str(String::from(str)),
+                AstFactory::Numeric(num) => VectorValue::Double(*num),
+                AstFactory::String(str) => VectorValue::Str(String::from(str)),
                 AstFactory::AstSegsObj(segs) => {
                     match segs.materialize(slice_tuple, context).await {
                         MultiDimensionalEntity::MemberRoleWrap(mr) => {
@@ -668,8 +674,8 @@ impl ToCellValue for AstFactory {
                         // MultiDimensionalEntity::ExpFn(exp_fn) => {
                         //     exp_fn.val(slice_tuple, context, None).await
                         // }
-                        MultiDimensionalEntity::CellValue(cell_value) => cell_value.clone(),
-                        _ => panic!("The entity is not a CellValue variant."),
+                        MultiDimensionalEntity::VectorValue(cell_value) => cell_value.clone(),
+                        _ => panic!("The entity is not a VectorValue variant."),
                     }
                 }
                 AstFactory::AstTuple(tuple) => {
@@ -698,15 +704,15 @@ pub struct AstTerm {
     pub factories: Vec<(char, AstFactory)>,
 }
 
-impl ToCellValue for AstTerm {
+impl ToVectorValue for AstTerm {
     fn val<'a>(
         &'a self,
         slice_tuple: &'a TupleVector,
         context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
+    ) -> BoxFuture<'a, VectorValue> {
         Box::pin(async move {
-            let mut result = CellValue::Invalid;
+            let mut result = VectorValue::Invalid;
             for (index, (op, factory)) in self.factories.iter().enumerate() {
                 if index == 0 {
                     result = factory.val(slice_tuple, context, None).await;
@@ -738,15 +744,15 @@ pub enum AstCaseItems {
     Searched_Case(Vec<(AstBoolExp, AstExpression)>),
 }
 
-impl ToCellValue for AstCaseStatement {
+impl ToVectorValue for AstCaseStatement {
     fn val<'a>(
         &'a self,
         _slice_tuple: &'a TupleVector,
         _context: &'a mut MultiDimensionalContext,
         _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, CellValue> {
+    ) -> BoxFuture<'a, VectorValue> {
         Box::pin(async move {
-            CellValue::Null
+            VectorValue::Null
         })
     }
 }
