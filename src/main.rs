@@ -45,9 +45,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!(">>> EuclidOLAP Server is listening on {} <<<", addr);
 
-    // 启动 gRPC 服务端
+    // start the gRPC service
     Server::builder()
-        .add_service(OlapApiServer::new(olap_api_server)) // 添加 Greeter 服务
+        .add_service(OlapApiServer::new(olap_api_server))
         .serve(addr)
         .await?;
 
