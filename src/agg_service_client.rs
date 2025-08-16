@@ -17,13 +17,13 @@ pub struct AggServiceGrpcClient {
 }
 
 impl AggServiceGrpcClient {
-    /// 创建新的 gRPC 客户端实例
+    // Create a new gRPC client instance
     pub async fn new(addr: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let client = AggServiceClient::connect(addr.to_string()).await?;
         Ok(Self { client })
     }
 
-    /// 发送 AggregationRequest 并获取 AggregationResponse
+    // Send AggregationRequest and get AggregationResponse
     pub async fn aggregates(
         &mut self,
         cube_gid: u64,
