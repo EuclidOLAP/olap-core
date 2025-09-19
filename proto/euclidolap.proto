@@ -16,6 +16,8 @@ message OLAPRequest {
 
   // Operation statement (e.g., MDX query expression)
   string statement = 2;
+
+  string user_name = 3;
 }
 
 message OLAPResponse {

@@ -251,7 +251,10 @@ impl ToVectorValue for AstExpFnLookupCube {
             let tunnel_ast = MdxStatementParser::new()
                 .parse(MdxLexer::new(&tunnel_mdx))
                 .unwrap();
-            let mut tunnel_context = tunnel_ast.gen_md_context().await;
+            let mut tunnel_context = tunnel_ast.gen_md_context(context.user_acol.clone()).await;
+            // [warning] !!! look above code, the method - 'context.user_acol.clone()' may cause performance issue.
+            // please consider to use '&context.user_acol'
+
 
             param_exp
                 .val(

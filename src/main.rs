@@ -5,10 +5,13 @@ mod exmdx;
 mod mdd;
 mod meta_cache;
 mod olapmeta_grpc_client;
+mod permission;
 
 mod euclidolap {
     tonic::include_proto!("euclidolap");
 }
+
+use crate::permission::UserAccessesCollection;
 
 use crate::exmdx::ast::AstMdxStatement;
 use crate::exmdx::mdd::TupleVector;
@@ -67,7 +70,9 @@ impl OlapApi for EuclidOLAPService {
         let operation_type = olap_request.operation_type;
         let statement = olap_request.statement;
 
-        let (_cube_gid, cell_vals) = handle_stat(operation_type, statement).await;
+        println!("\t\tOlapApi - executing operation, user_name is >>>>>>>>> {} <<<<<<<<<", olap_request.user_name);
+
+        let (_cube_gid, cell_vals) = handle_stat(operation_type, statement, olap_request.user_name).await;
 
         let grpc_olap_vectors: Vec<GrpcOlapVector> = cell_vals
             .iter()
@@ -103,14 +108,14 @@ impl OlapApi for EuclidOLAPService {
     }
 }
 
-async fn handle_stat(optype: String, statement: String) -> (u64, Vec<VectorValue>) {
+async fn handle_stat(optype: String, statement: String, user_name: String) -> (u64, Vec<VectorValue>) {
     match optype.as_str() {
         "MDX" => {
             let ast_selstat = MdxStatementParser::new()
                 .parse(MdxLexer::new(&statement))
                 .unwrap();
 
-            exe_md_query(ast_selstat).await
+            exe_md_query(ast_selstat, user_name).await
         }
         _ => {
             panic!(
@@ -121,8 +126,9 @@ async fn handle_stat(optype: String, statement: String) -> (u64, Vec<VectorValue
     }
 }
 
-async fn exe_md_query(ast_selstat: AstMdxStatement) -> (u64, Vec<VectorValue>) {
-    let mut context = ast_selstat.gen_md_context().await;
+async fn exe_md_query(ast_selstat: AstMdxStatement, user_name: String) -> (u64, Vec<VectorValue>) {
+
+    let mut context = ast_selstat.gen_md_context(UserAccessesCollection::new(String::from(user_name))).await;
     let axes = ast_selstat.build_axes(&mut context).await;
     let coordinates: Vec<TupleVector> = mdd::Axis::axis_vec_cartesian_product(&axes, &context);
 

@@ -9,6 +9,8 @@ use crate::exmdx::exp_func::AstExpFunction;
 use crate::exmdx::ast::{AstCustomObject, AstSegsObj};
 use crate::exmdx::mdd::TupleVector;
 
+use crate::permission::UserAccessesCollection;
+
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
 use std::collections::HashMap;
@@ -218,6 +220,7 @@ pub struct MultiDimensionalContext {
     pub query_slice_tuple: TupleVector,
     pub grpc_client: GrpcClient,
     pub formulas_map: HashMap<u64, AstCustomObject>,
+    pub user_acol: UserAccessesCollection,
 }
 
 impl MultiDimensionalContext {
