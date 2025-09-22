@@ -70,9 +70,13 @@ impl OlapApi for EuclidOLAPService {
         let operation_type = olap_request.operation_type;
         let statement = olap_request.statement;
 
-        println!("\t\tOlapApi - executing operation, user_name is >>>>>>>>> {} <<<<<<<<<", olap_request.user_name);
+        // println!(
+        //     "\t\tOlapApi - executing operation, user_name is >>>>>>>>> {} <<<<<<<<<",
+        //     olap_request.user_name
+        // );
 
-        let (_cube_gid, cell_vals) = handle_stat(operation_type, statement, olap_request.user_name).await;
+        let (_cube_gid, cell_vals) =
+            handle_stat(operation_type, statement, olap_request.user_name).await;
 
         let grpc_olap_vectors: Vec<GrpcOlapVector> = cell_vals
             .iter()
@@ -108,7 +112,11 @@ impl OlapApi for EuclidOLAPService {
     }
 }
 
-async fn handle_stat(optype: String, statement: String, user_name: String) -> (u64, Vec<VectorValue>) {
+async fn handle_stat(
+    optype: String,
+    statement: String,
+    user_name: String,
+) -> (u64, Vec<VectorValue>) {
     match optype.as_str() {
         "MDX" => {
             let ast_selstat = MdxStatementParser::new()
@@ -127,8 +135,9 @@ async fn handle_stat(optype: String, statement: String, user_name: String) -> (u
 }
 
 async fn exe_md_query(ast_selstat: AstMdxStatement, user_name: String) -> (u64, Vec<VectorValue>) {
-
-    let mut context = ast_selstat.gen_md_context(UserAccessesCollection::new(String::from(user_name))).await;
+    let mut context = ast_selstat
+        .gen_md_context(UserAccessesCollection::new(String::from(user_name)).await)
+        .await;
     let axes = ast_selstat.build_axes(&mut context).await;
     let coordinates: Vec<TupleVector> = mdd::Axis::axis_vec_cartesian_product(&axes, &context);
 

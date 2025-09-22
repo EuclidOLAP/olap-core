@@ -93,6 +93,7 @@ service OlapMetaService {
     rpc GetAllMembers (EmptyParameterRequest) returns (GetAllMembersResponse);
     rpc GetAllCubes (EmptyParameterRequest) returns (GetAllCubesResponse);
     rpc GetAllFormulaMembers (EmptyParameterRequest) returns (GetAllFormulaMembersResponse);
+    rpc LoadUserOlapModelAccesses (LoadUserOlapModelAccessesRequest) returns (LoadUserOlapModelAccessesResponse);
 }
 
 message GetAllDimensionRolesResponse {
@@ -155,4 +156,24 @@ message GetAllCubesResponse {
 
 message GetAllFormulaMembersResponse {
     repeated UniversalOlapEntity formulaMembers = 1;
+}
+
+message LoadUserOlapModelAccessesRequest {
+    uint64 user_id       = 1;
+    string user_name     = 2;
+    uint64 account_id    = 3;
+    string account_name  = 4;
+}
+
+message GrpcUserOlapModelAccess {
+    uint64 id                 = 1;
+    string user_name          = 2;
+    string permission_scope   = 3;
+    uint64 dimension_role_gid = 4;
+    uint64 olap_entity_gid    = 5;
+    bool has_access           = 6;
+}
+
+message LoadUserOlapModelAccessesResponse {
+    repeated GrpcUserOlapModelAccess model_accesses = 1;
 }

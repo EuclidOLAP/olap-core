@@ -14,11 +14,14 @@ use olapmeta::GrpcMember;
 use olapmeta::LocateOlapEntityRequest;
 use olapmeta::UniversalOlapEntity;
 use olapmeta::{CubeGidRequest, CubeMetaResponse, CubeNameRequest};
+use olapmeta::{GrpcUserOlapModelAccess, LoadUserOlapModelAccessesRequest};
 use std::fmt;
 use tonic::{transport::Channel, Request};
 
 use crate::mdd;
 use crate::mdd::MultiDimensionalEntity;
+
+use crate::permission::permis_obj::UserOlapModelAccess;
 
 pub mod olapmeta {
     tonic::include_proto!("olapmeta");
@@ -362,6 +365,36 @@ impl GrpcClient {
             .collect();
 
         Ok(formula_members)
+    }
+
+    pub async fn load_user_olap_model_accesses(
+        &mut self,
+        user_name: String,
+    ) -> Result<Vec<UserOlapModelAccess>, Box<dyn std::error::Error>> {
+        let request = Request::new(LoadUserOlapModelAccessesRequest {
+            user_id: 0,
+            user_name, // only be used for now, 2025-09-20 07:37:56
+            account_id: 0,
+            account_name: String::from("[ // Todo ] No Account yet."),
+        });
+
+        let response = self.client.load_user_olap_model_accesses(request).await?;
+
+        let user_olap_accesses: Vec<UserOlapModelAccess> = response
+            .into_inner()
+            .model_accesses
+            .into_iter()
+            .map(|acc: GrpcUserOlapModelAccess| UserOlapModelAccess {
+                id: acc.id,
+                user_name: acc.user_name,
+                permission_scope: acc.permission_scope,
+                dimension_role_gid: acc.dimension_role_gid,
+                olap_entity_gid: acc.olap_entity_gid,
+                has_access: acc.has_access,
+            })
+            .collect();
+
+        Ok(user_olap_accesses)
     }
 }
 
