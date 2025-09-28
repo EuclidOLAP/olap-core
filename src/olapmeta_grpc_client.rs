@@ -10,7 +10,7 @@ use olapmeta::GetDefaultDimensionMemberRequest;
 use olapmeta::GetDimensionRoleByGidRequest;
 use olapmeta::GetDimensionRolesByCubeGidRequest;
 use olapmeta::GetUniversalOlapEntityByGidRequest;
-use olapmeta::GrpcMember;
+// use olapmeta::GrpcMember;
 use olapmeta::LocateOlapEntityRequest;
 use olapmeta::UniversalOlapEntity;
 use olapmeta::{CubeGidRequest, CubeMetaResponse, CubeNameRequest};
@@ -31,17 +31,18 @@ pub struct GrpcClient {
     client: OlapMetaServiceClient<Channel>,
 }
 
-fn grpc_to_olap_member(grpc_member: GrpcMember) -> mdd::Member {
+fn grpc_to_olap_member(grpc_olap_obj: UniversalOlapEntity) -> mdd::Member {
     mdd::Member {
-        gid: grpc_member.gid,
-        name: grpc_member.name,
+        gid: grpc_olap_obj.gid,
+        name: grpc_olap_obj.name,
         // dimension_gid: grpc_member.dimension_gid,
         // hierarchy_gid: grpc_member.hierarchy_gid,
-        level_gid: grpc_member.level_gid,
-        level: grpc_member.level,
-        parent_gid: grpc_member.parent_gid,
-        measure_index: grpc_member.measure_index,
-        leaf: grpc_member.leaf,
+        level_gid: grpc_olap_obj.level_gid,
+        level: grpc_olap_obj.level,
+        parent_gid: grpc_olap_obj.parent_gid,
+        measure_index: grpc_olap_obj.measure_index,
+        leaf: grpc_olap_obj.leaf,
+        full_path: grpc_olap_obj.member_gid_full_path.clone(),
     }
 }
 
@@ -327,6 +328,7 @@ impl GrpcClient {
                 parent_gid: grpc_olap_obj.parent_gid,
                 measure_index: grpc_olap_obj.measure_index,
                 leaf: grpc_olap_obj.leaf,
+                full_path: grpc_olap_obj.member_gid_full_path.clone(),
             })
             .collect();
 

@@ -180,6 +180,7 @@ impl MultiDimensionalEntity {
                 measure_index: entity.measure_index,
                 parent_gid: entity.parent_gid,
                 leaf: entity.leaf,
+                full_path: entity.member_gid_full_path.clone(),
             }),
             _ => {
                 panic!("Unsupported entity class: {}", entity.olap_entity_class);
@@ -651,6 +652,7 @@ pub struct Member {
     pub parent_gid: u64,
     pub measure_index: u32,
     pub leaf: bool,
+    pub full_path: Vec<u64>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

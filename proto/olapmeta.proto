@@ -22,6 +22,7 @@ message UniversalOlapEntity {
     uint64 dimensionRoleGid = 14;
     uint64 mountPointGid = 15;
     string exp = 16;
+    repeated uint64 member_gid_full_path = 17;
 }
 
 message LocateOlapEntityRequest {
@@ -50,17 +51,17 @@ message CubeMetaResponse {
     CubeMeta cubeMeta = 1;  // Returned CubeMeta object
 }
 
-message GrpcMember {
-    uint64 gid = 1;
-    string name = 2;
-    uint64 dimensionGid = 3;
-    uint64 hierarchyGid = 4;
-    uint64 levelGid = 5;
-    uint32 level = 6;
-    uint64 parentGid = 7;
-    uint32 measureIndex = 8;
-    bool leaf = 9;
-}
+// message GrpcMember {
+//     uint64 gid = 1;
+//     string name = 2;
+//     uint64 dimensionGid = 3;
+//     uint64 hierarchyGid = 4;
+//     uint64 levelGid = 5;
+//     uint32 level = 6;
+//     uint64 parentGid = 7;
+//     uint32 measureIndex = 8;
+//     bool leaf = 9;
+// }
 
 // Request message to get the default member for a given dimension GID
 message GetDefaultDimensionMemberRequest {
@@ -76,7 +77,7 @@ service OlapMetaService {
     rpc GetDimensionRolesByCubeGid (GetDimensionRolesByCubeGidRequest) returns (GetDimensionRolesByCubeGidResponse);
     
     // Retrieve the default dimension member by dimension GID
-    rpc GetDefaultDimensionMemberByDimensionGid (GetDefaultDimensionMemberRequest) returns (GrpcMember);
+    rpc GetDefaultDimensionMemberByDimensionGid (GetDefaultDimensionMemberRequest) returns (UniversalOlapEntity);
     rpc GetChildMembersByGid (GetChildMembersByGidRequest) returns (GetChildMembersByGidResponse);
 
     // Retrieve DimensionRole by GID
@@ -139,7 +140,7 @@ message GetChildMembersByGidRequest {
 }
 
 message GetChildMembersByGidResponse {
-    repeated GrpcMember childMembers = 1;
+    repeated UniversalOlapEntity childMembers = 1;
 }
 
 message GetAllLevelsResponse {
