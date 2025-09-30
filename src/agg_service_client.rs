@@ -1,5 +1,7 @@
 use core::panic;
 
+use std::collections::HashMap;
+
 use agg_service::agg_service_client::AggServiceClient;
 use agg_service::{GrpcAggregationRequest, GrpcVectorCoordinate};
 use tonic::transport::Channel;
@@ -48,17 +50,71 @@ pub async fn basic_aggregates(
         return (context.cube.gid, vec![], vec![]);
     }
 
+    let coordinates_len = coordinates.len();
+
+    let pass_list: Vec<bool> = context.user_acol.check_access_permission(&coordinates);
+    /*
+        pass_list中元素数量和coordinates数量相同
+        根据pass_list中的值将coordinates分成两部分，创建下面2个变量，在将coordinates分成两部分时还要保留每个元素的初始索引
+            let true_indexes: Vec<usize>
+            let true_coordinates: Vec<TupleVector>
+    */
+    let true_elements: Vec<_> = coordinates
+        .into_iter()
+        .zip(pass_list.into_iter())
+        .enumerate()
+        .filter(|(_, (_, has_access))| *has_access)
+        .collect();
+
+    let true_indexes: Vec<usize> = true_elements.iter().map(|(idx, _)| *idx).collect();
+    let true_coordinates: Vec<TupleVector> = true_elements
+        .into_iter()
+        .map(|(_, (coord, _))| coord)
+        .collect();
+
+    if true_indexes.is_empty() {
+        // 如果没有有权限的坐标，返回 (context.cube.gid, coordinates 长度的 vec 值都为 0, coordinates 长度的 vec 值都为 true)
+        return (
+            context.cube.gid,
+            vec![0.0; coordinates_len],
+            vec![true; coordinates_len],
+        );
+    }
+
     let mut grpc_cli = AggServiceGrpcClient::new("http://127.0.0.1:16060")
         .await
         .expect("Failed to create client");
 
-    let gvc_list: Vec<GrpcVectorCoordinate> = transform_coordinates(coordinates);
+    let gvc_list: Vec<GrpcVectorCoordinate> = transform_coordinates(true_coordinates);
 
-    let cube_gid = context.cube.gid;
+    let result: (u64, Vec<f64>, Vec<bool>) = grpc_cli
+        .aggregates(context.cube.gid, gvc_list)
+        .await
+        .unwrap();
 
-    let result = grpc_cli.aggregates(cube_gid, gvc_list).await.unwrap();
+    /*
+        根据 true_indexes 创建一个 map，
+        key 是 true_indexes 中的索引，value 是 true_indexes 中的具体值
+    */
+    let mut index_map: HashMap<usize, usize> = HashMap::new();
+    for (key, val) in true_indexes.iter().enumerate() {
+        index_map.insert(key, *val); // Key 和 Value 都是 idx
+    }
 
-    result
+    let mut fin_values: Vec<f64> = vec![0.0; coordinates_len];
+    let mut fin_null_flags: Vec<bool> = vec![true; coordinates_len];
+
+    let (_, rs_vals, rs_null_fgs) = result;
+    for (idx, null_flag) in rs_null_fgs.iter().enumerate() {
+        if !(*null_flag) {
+            let val = rs_vals[idx];
+            let com_index = index_map.get(&idx).unwrap();
+            fin_values[*com_index] = val;
+            fin_null_flags[*com_index] = false;
+        }
+    }
+
+    (context.cube.gid, fin_values, fin_null_flags)
 }
 
 fn transform_coordinates(coordinates: Vec<TupleVector>) -> Vec<GrpcVectorCoordinate> {
