@@ -1,8 +1,8 @@
 [def]
-meta_grpc_url = "http://192.168.66.51:50051"
+meta_grpc_url = "http://127.0.0.1:50051"
 
 [dev]
-meta_grpc_url = "http://192.168.66.51:50051"
+meta_grpc_url = "http://127.0.0.1:50051"
 
 [prod]
-meta_grpc_url = "http://192.168.66.51:50051"
+meta_grpc_url = "http://127.0.0.1:50051"
