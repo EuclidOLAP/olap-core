@@ -159,11 +159,59 @@ impl AstMemberFunction {
                     .resolve_member_role(slice_tuple, context, left_outer_param)
                     .await,
             ),
-            Self::ParallelPeriod(member_role_fn) => MultiDimensionalEntity::MemberRoleWrap(
-                member_role_fn
-                    .resolve_member_role(slice_tuple, context, left_outer_param)
-                    .await,
-            ),
+            // ParallelPeriod( [ Level_Expression [ ,Index [ , Member_Expression ] ] ] )
+            AstMemberFunction::ParallelPeriod(AstMemberFnParallelPeriod::Chain) => {
+                AstMemberFnParallelPeriod::do_get_member(
+                    left_outer_param,
+                    None,
+                    None,
+                    None,
+                    slice_tuple,
+                    context,
+                )
+                .await
+            }
+            AstMemberFunction::ParallelPeriod(AstMemberFnParallelPeriod::LevelSegs(level_segs)) => {
+                AstMemberFnParallelPeriod::do_get_member(
+                    left_outer_param,
+                    Some(level_segs),
+                    None,
+                    None,
+                    slice_tuple,
+                    context,
+                )
+                .await
+            }
+            AstMemberFunction::ParallelPeriod(
+                AstMemberFnParallelPeriod::LevelSegs_IndexExp(level_segs, idx_exp),
+            ) => {
+                AstMemberFnParallelPeriod::do_get_member(
+                    left_outer_param,
+                    Some(level_segs),
+                    Some(idx_exp),
+                    None,
+                    slice_tuple,
+                    context,
+                )
+                .await
+            }
+            AstMemberFunction::ParallelPeriod(
+                AstMemberFnParallelPeriod::LevelSegs_IndexExp_MemberSegs(
+                    level_segs,
+                    idx_exp,
+                    member_segs,
+                ),
+            ) => {
+                AstMemberFnParallelPeriod::do_get_member(
+                    left_outer_param,
+                    Some(level_segs),
+                    Some(idx_exp),
+                    Some(member_segs),
+                    slice_tuple,
+                    context,
+                )
+                .await
+            }
             Self::PrevMember(member_role_fn) => MultiDimensionalEntity::MemberRoleWrap(
                 member_role_fn
                     .resolve_member_role(slice_tuple, context, left_outer_param)
@@ -476,17 +524,39 @@ pub enum AstMemberFnParallelPeriod {
     LevelSegs_IndexExp(AstSegsObj, AstExpression),
     LevelSegs_IndexExp_MemberSegs(AstSegsObj, AstExpression, AstSegsObj),
 }
+impl AstMemberFnParallelPeriod {
+    async fn do_get_member(
+        left_outer_param: Option<MultiDimensionalEntity>,
+        level_param: Option<&AstSegsObj>,
+        idx_param: Option<&AstExpression>,
+        member_param: Option<&AstSegsObj>,
+        slice_tuple: &TupleVector,
+        context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        println!(
+            "AstMemberFnParallelPeriod::do_get_member called with:\n  left_outer_param={:#?}\n  level_param={:#?}\n  idx_param={:#?}\n  member_param={:#?}\n  slice_tuple={:#?}\n  context.cube={:#?}",
+            left_outer_param,
+            level_param,
+            idx_param,
+            member_param,
+            slice_tuple,
+            context.cube
+        );
 
-impl MemberRoleAccess for AstMemberFnParallelPeriod {
-    fn resolve_member_role<'a>(
-        &'a self,
-        _slice_tuple: &'a TupleVector,
-        _context: &'a mut MultiDimensionalContext,
-        _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, MemberRole> {
-        Box::pin(async move { todo!() })
+        todo!()
     }
 }
+
+// impl MemberRoleAccess for AstMemberFnParallelPeriod {
+//     fn resolve_member_role<'a>(
+//         &'a self,
+//         _slice_tuple: &'a TupleVector,
+//         _context: &'a mut MultiDimensionalContext,
+//         _outer_param: Option<MultiDimensionalEntity>,
+//     ) -> BoxFuture<'a, MemberRole> {
+//         Box::pin(async move { todo!() })
+//     }
+// }
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
