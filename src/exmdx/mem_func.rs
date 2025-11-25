@@ -182,9 +182,10 @@ impl AstMemberFunction {
                 )
                 .await
             }
-            AstMemberFunction::ParallelPeriod(
-                AstMemberFnParallelPeriod::LevelSegs_IndexExp(level_segs, idx_exp),
-            ) => {
+            AstMemberFunction::ParallelPeriod(AstMemberFnParallelPeriod::LevelSegs_IndexExp(
+                level_segs,
+                idx_exp,
+            )) => {
                 AstMemberFnParallelPeriod::do_get_member(
                     left_outer_param,
                     Some(level_segs),
@@ -533,9 +534,36 @@ impl AstMemberFnParallelPeriod {
         slice_tuple: &TupleVector,
         context: &mut MultiDimensionalContext,
     ) -> MultiDimensionalEntity {
+
+        /*
+         Resolve member priority: 1) if `member_param` is present, materialize it
+         and use its `MemberRole`; 2) otherwise use `left_outer_param` if it
+         is a `MemberRole`; otherwise panic. After resolution print debug info;
+         the actual ParallelPeriod computation is not implemented yet.
+        */
+        let member_role: Option<MemberRole> = if let Some(member_segs) = member_param {
+            match member_segs.materialize(slice_tuple, context).await {
+                MultiDimensionalEntity::MemberRoleWrap(mr) => Some(mr),
+                _ => None,
+            }
+        } else if let Some(outer_ins_param) = left_outer_param {
+            match outer_ins_param {
+                MultiDimensionalEntity::MemberRoleWrap(mr) => Some(mr),
+                _ => None,
+            }
+        } else {
+            None
+        };
+
+        if member_role.is_none() {
+            panic!("[pp-003] ParallelPeriod requires a member (member_param) or left_outer_param that resolves to a MemberRole");
+        }
+
+        let member_role = member_role.unwrap();
+
         println!(
-            "AstMemberFnParallelPeriod::do_get_member called with:\n  left_outer_param={:#?}\n  level_param={:#?}\n  idx_param={:#?}\n  member_param={:#?}\n  slice_tuple={:#?}\n  context.cube={:#?}",
-            left_outer_param,
+            "AstMemberFnParallelPeriod::do_get_member called with:\n  resolved_member={:#?}\n  level_param={:#?}\n  idx_param={:#?}\n  member_param={:#?}\n  slice_tuple={:#?}\n  context.cube={:#?}",
+            member_role,
             level_param,
             idx_param,
             member_param,
@@ -543,20 +571,10 @@ impl AstMemberFnParallelPeriod {
             context.cube
         );
 
+        // remaining logic to compute parallel period is not implemented yet
         todo!()
     }
 }
-
-// impl MemberRoleAccess for AstMemberFnParallelPeriod {
-//     fn resolve_member_role<'a>(
-//         &'a self,
-//         _slice_tuple: &'a TupleVector,
-//         _context: &'a mut MultiDimensionalContext,
-//         _outer_param: Option<MultiDimensionalEntity>,
-//     ) -> BoxFuture<'a, MemberRole> {
-//         Box::pin(async move { todo!() })
-//     }
-// }
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
