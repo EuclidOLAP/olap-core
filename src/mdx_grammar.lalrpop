@@ -585,8 +585,8 @@ Lead: AstMemberFnLead = {
   },
 }
 
+// ParallelPeriod( [ Level_Expression [ ,Index [ , Member_Expression ] ] ] )
 ParallelPeriod: AstMemberFnParallelPeriod = {
-  // ParallelPeriod( [ Level_Expression [ ,Index [ , Member_Expression ] ] ] )
   "ParallelPeriod" ("(" ")")? => {
     AstMemberFnParallelPeriod::Chain
   },
@@ -594,6 +594,7 @@ ParallelPeriod: AstMemberFnParallelPeriod = {
   // "ParallelPeriod" "(" <idx_exp: Expression> ")" => {
   //   AstMemberFnParallelPeriod::Chain_IndexExp(idx_exp)
   // },
+
   // "ParallelPeriod" "(" <idx_exp: Expression> "," <mem_segs: Segs_Obj> ")" => {
   //   AstMemberFnParallelPeriod::Chain_IndexExp_MemberSegs(idx_exp, mem_segs)
   // },
