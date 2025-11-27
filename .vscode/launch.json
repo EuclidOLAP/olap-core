@@ -1,22 +1,39 @@
+// VS Code 调试配置（JSONC，允许注释）
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  // launch.json 的 schema 版本
   "version": "0.2.0",
+
+  // configurations: 可包含多个调试配置，Run 面板会列出这些配置供选择
   "configurations": [
     {
+      // type: 使用的调试器类型，这里使用 CodeLLDB（LLDB 后端）
+      // 需要在 VS Code 中安装 CodeLLDB 扩展才能生效
       "type": "lldb",
+
+      // request: 调试器请求类型 — "launch" 表示启动新进程，"attach" 表示附加到已运行进程
       "request": "launch",
-      "name": "olap-core",
+
+      // name: 在 VS Code UI 中显示的该配置的名称，选择该配置并按 F5 即可启动
+      "name": "olap-core (cargo)",
+
+      // cargo: CodeLLDB 对 Rust 的集成，用于在启动调试前执行 cargo 命令
+      // args: 传给 `cargo` 的参数数组。本配置会运行 `cargo build --bin=olap-core`
+      // 你也可以改为 `run`（直接构建并运行）或在数组里添加 `--release`。
       "cargo": {
-        "args": ["build", "--bin=olap-core", "--package=olap-core"],
-        "filter": {
-          "name": "olap-core",
-          "kind": "bin"
-        }
+        "args": [
+          "build",
+          "--bin=olap-core"
+        ]
       },
-      "args": [],
-      "cwd": "${workspaceFolder}"
+
+      // env: 传给被调试进程的环境变量（可用于控制日志级别、回溯等）
+      "env": {
+        // RUST_LOG: 控制 Rust 日志过滤级别（env_logger/tracing 等会读取）
+        "RUST_LOG": "debug",
+
+        // RUST_BACKTRACE: 在 panic 时启用回溯信息，便于定位错误
+        "RUST_BACKTRACE": "1"
+      }
     }
   ]
 }

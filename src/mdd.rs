@@ -9,6 +9,8 @@ use crate::exmdx::exp_func::AstExpFunction;
 use crate::exmdx::ast::{AstCustomObject, AstSegsObj};
 use crate::exmdx::mdd::TupleVector;
 
+use crate::permission::UserAccessesCollection;
+
 use crate::olapmeta_grpc_client::olapmeta::UniversalOlapEntity;
 use crate::olapmeta_grpc_client::GrpcClient;
 use std::collections::HashMap;
@@ -178,6 +180,7 @@ impl MultiDimensionalEntity {
                 measure_index: entity.measure_index,
                 parent_gid: entity.parent_gid,
                 leaf: entity.leaf,
+                full_path: entity.member_gid_full_path.clone(),
             }),
             _ => {
                 panic!("Unsupported entity class: {}", entity.olap_entity_class);
@@ -218,6 +221,7 @@ pub struct MultiDimensionalContext {
     pub query_slice_tuple: TupleVector,
     pub grpc_client: GrpcClient,
     pub formulas_map: HashMap<u64, AstCustomObject>,
+    pub user_acol: UserAccessesCollection,
 }
 
 impl MultiDimensionalContext {
@@ -648,6 +652,7 @@ pub struct Member {
     pub parent_gid: u64,
     pub measure_index: u32,
     pub leaf: bool,
+    pub full_path: Vec<u64>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

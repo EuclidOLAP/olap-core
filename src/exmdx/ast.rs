@@ -9,6 +9,8 @@ use crate::mdd::MultiDimensionalEntity;
 use crate::mdd::MultiDimensionalEntityLocator;
 use crate::mdd::{Axis, Cube, Set};
 
+use crate::permission::UserAccessesCollection;
+
 use crate::exmdx::exp_func::AstExpFunction;
 use crate::exmdx::mem_func::AstMemberFunction;
 
@@ -237,7 +239,7 @@ impl AstMdxStatement {
 }
 
 impl AstMdxStatement {
-    pub async fn gen_md_context(&self) -> MultiDimensionalContext {
+    pub async fn gen_md_context(&self, user_acol: UserAccessesCollection) -> MultiDimensionalContext {
         // 获取真正的 Cube 实例
         let cube_pro = &self.cube_segs.segs;
         let ast_seg_opt = cube_pro.get(0);
@@ -316,6 +318,7 @@ impl AstMdxStatement {
             },
             grpc_client: grpc_cli,
             formulas_map,
+            user_acol,
         };
 
         let mut where_tuple: Option<TupleVector> = None;

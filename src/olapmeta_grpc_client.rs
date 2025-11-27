@@ -10,15 +10,18 @@ use olapmeta::GetDefaultDimensionMemberRequest;
 use olapmeta::GetDimensionRoleByGidRequest;
 use olapmeta::GetDimensionRolesByCubeGidRequest;
 use olapmeta::GetUniversalOlapEntityByGidRequest;
-use olapmeta::GrpcMember;
+// use olapmeta::GrpcMember;
 use olapmeta::LocateOlapEntityRequest;
 use olapmeta::UniversalOlapEntity;
 use olapmeta::{CubeGidRequest, CubeMetaResponse, CubeNameRequest};
+use olapmeta::{GrpcUserOlapModelAccess, LoadUserOlapModelAccessesRequest};
 use std::fmt;
 use tonic::{transport::Channel, Request};
 
 use crate::mdd;
 use crate::mdd::MultiDimensionalEntity;
+
+use crate::permission::permis_obj::UserOlapModelAccess;
 
 pub mod olapmeta {
     tonic::include_proto!("olapmeta");
@@ -28,17 +31,18 @@ pub struct GrpcClient {
     client: OlapMetaServiceClient<Channel>,
 }
 
-fn grpc_to_olap_member(grpc_member: GrpcMember) -> mdd::Member {
+fn grpc_to_olap_member(grpc_olap_obj: UniversalOlapEntity) -> mdd::Member {
     mdd::Member {
-        gid: grpc_member.gid,
-        name: grpc_member.name,
+        gid: grpc_olap_obj.gid,
+        name: grpc_olap_obj.name,
         // dimension_gid: grpc_member.dimension_gid,
         // hierarchy_gid: grpc_member.hierarchy_gid,
-        level_gid: grpc_member.level_gid,
-        level: grpc_member.level,
-        parent_gid: grpc_member.parent_gid,
-        measure_index: grpc_member.measure_index,
-        leaf: grpc_member.leaf,
+        level_gid: grpc_olap_obj.level_gid,
+        level: grpc_olap_obj.level,
+        parent_gid: grpc_olap_obj.parent_gid,
+        measure_index: grpc_olap_obj.measure_index,
+        leaf: grpc_olap_obj.leaf,
+        full_path: grpc_olap_obj.member_gid_full_path.clone(),
     }
 }
 
@@ -324,6 +328,7 @@ impl GrpcClient {
                 parent_gid: grpc_olap_obj.parent_gid,
                 measure_index: grpc_olap_obj.measure_index,
                 leaf: grpc_olap_obj.leaf,
+                full_path: grpc_olap_obj.member_gid_full_path.clone(),
             })
             .collect();
 
@@ -362,6 +367,36 @@ impl GrpcClient {
             .collect();
 
         Ok(formula_members)
+    }
+
+    pub async fn load_user_olap_model_accesses(
+        &mut self,
+        user_name: String,
+    ) -> Result<Vec<UserOlapModelAccess>, Box<dyn std::error::Error>> {
+        let request = Request::new(LoadUserOlapModelAccessesRequest {
+            user_id: 0,
+            user_name, // only be used for now, 2025-09-20 07:37:56
+            account_id: 0,
+            account_name: String::from("[ // Todo ] No Account yet."),
+        });
+
+        let response = self.client.load_user_olap_model_accesses(request).await?;
+
+        let user_olap_accesses: Vec<UserOlapModelAccess> = response
+            .into_inner()
+            .model_accesses
+            .into_iter()
+            .map(|acc: GrpcUserOlapModelAccess| UserOlapModelAccess {
+                id: acc.id,
+                user_name: acc.user_name,
+                permission_scope: acc.permission_scope,
+                dimension_role_gid: acc.dimension_role_gid,
+                olap_entity_gid: acc.olap_entity_gid,
+                has_access: acc.has_access,
+            })
+            .collect();
+
+        Ok(user_olap_accesses)
     }
 }
 

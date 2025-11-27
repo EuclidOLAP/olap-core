@@ -5,7 +5,7 @@ use core::panic;
 use crate::exmdx::ast::AstExpression;
 use crate::exmdx::ast::AstSegsObj;
 
-use crate::exmdx::ast::Materializable;
+use crate::exmdx::ast::{Materializable, ToVectorValue};
 use crate::exmdx::mdd::TupleVector;
 use crate::mdd::MultiDimensionalContext;
 use crate::mdd::{MemberRole, MultiDimensionalEntity};
@@ -159,11 +159,60 @@ impl AstMemberFunction {
                     .resolve_member_role(slice_tuple, context, left_outer_param)
                     .await,
             ),
-            Self::ParallelPeriod(member_role_fn) => MultiDimensionalEntity::MemberRoleWrap(
-                member_role_fn
-                    .resolve_member_role(slice_tuple, context, left_outer_param)
-                    .await,
-            ),
+            // ParallelPeriod( [ Level_Expression [ ,Index [ , Member_Expression ] ] ] )
+            AstMemberFunction::ParallelPeriod(AstMemberFnParallelPeriod::Chain) => {
+                AstMemberFnParallelPeriod::do_get_member(
+                    left_outer_param,
+                    None,
+                    None,
+                    None,
+                    slice_tuple,
+                    context,
+                )
+                .await
+            }
+            AstMemberFunction::ParallelPeriod(AstMemberFnParallelPeriod::LevelSegs(level_segs)) => {
+                AstMemberFnParallelPeriod::do_get_member(
+                    left_outer_param,
+                    Some(level_segs),
+                    None,
+                    None,
+                    slice_tuple,
+                    context,
+                )
+                .await
+            }
+            AstMemberFunction::ParallelPeriod(AstMemberFnParallelPeriod::LevelSegs_IndexExp(
+                level_segs,
+                idx_exp,
+            )) => {
+                AstMemberFnParallelPeriod::do_get_member(
+                    left_outer_param,
+                    Some(level_segs),
+                    Some(idx_exp),
+                    None,
+                    slice_tuple,
+                    context,
+                )
+                .await
+            }
+            AstMemberFunction::ParallelPeriod(
+                AstMemberFnParallelPeriod::LevelSegs_IndexExp_MemberSegs(
+                    level_segs,
+                    idx_exp,
+                    member_segs,
+                ),
+            ) => {
+                AstMemberFnParallelPeriod::do_get_member(
+                    left_outer_param,
+                    Some(level_segs),
+                    Some(idx_exp),
+                    Some(member_segs),
+                    slice_tuple,
+                    context,
+                )
+                .await
+            }
             Self::PrevMember(member_role_fn) => MultiDimensionalEntity::MemberRoleWrap(
                 member_role_fn
                     .resolve_member_role(slice_tuple, context, left_outer_param)
@@ -476,15 +525,176 @@ pub enum AstMemberFnParallelPeriod {
     LevelSegs_IndexExp(AstSegsObj, AstExpression),
     LevelSegs_IndexExp_MemberSegs(AstSegsObj, AstExpression, AstSegsObj),
 }
+impl AstMemberFnParallelPeriod {
+    async fn do_get_member(
+        left_outer_param: Option<MultiDimensionalEntity>,
+        level_param: Option<&AstSegsObj>,
+        idx_param: Option<&AstExpression>,
+        member_param: Option<&AstSegsObj>,
+        slice_tuple: &TupleVector,
+        context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
 
-impl MemberRoleAccess for AstMemberFnParallelPeriod {
-    fn resolve_member_role<'a>(
-        &'a self,
-        _slice_tuple: &'a TupleVector,
-        _context: &'a mut MultiDimensionalContext,
-        _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, MemberRole> {
-        Box::pin(async move { todo!() })
+        /*
+         Resolve member priority: 1) if `member_param` is present, materialize it
+         and use its `MemberRole`; 2) otherwise use `left_outer_param` if it
+         is a `MemberRole`; otherwise panic. After resolution print debug info;
+         the actual ParallelPeriod computation is not implemented yet.
+        */
+        let member_role: Option<MemberRole> = if let Some(member_segs) = member_param {
+            match member_segs.materialize(slice_tuple, context).await {
+                MultiDimensionalEntity::MemberRoleWrap(mr) => Some(mr),
+                _ => None,
+            }
+        } else if let Some(outer_ins_param) = left_outer_param {
+            match outer_ins_param {
+                MultiDimensionalEntity::MemberRoleWrap(mr) => Some(mr),
+                _ => None,
+            }
+        } else {
+            None
+        };
+
+        if member_role.is_none() {
+            panic!("[pp-003] ParallelPeriod requires a member (member_param) or left_outer_param that resolves to a MemberRole");
+        }
+
+        let member_role = member_role.unwrap();
+
+
+        // Resolve the LevelRole to use for ParallelPeriod:
+        // 1) If `level_param` is provided, materialize it and require a LevelRole.
+        // 2) Otherwise derive the LevelRole from `member_role` (must be BaseMember).
+        // Panic with clear messages if neither path yields a LevelRole.
+        let lv_role = if let Some(level_segs) = level_param {
+            let olap_obj = level_segs.materialize(slice_tuple, context).await;
+            if let MultiDimensionalEntity::LevelRole(lv_role) = olap_obj {
+                lv_role
+            } else {
+                panic!("[pp-101] level_param did not materialize to LevelRole");
+            }
+        } else {
+            match &member_role {
+                MemberRole::BaseMember { dim_role, member } => {
+                    // If possible, derive the target Level from the member's parent
+                    // (the "upper" level). If the member has no parent or parent
+                    // can't be fetched, fall back to the member's own level.
+                    let level = if member.parent_gid != 0 {
+                        let parent_obj = context
+                            .grpc_client
+                            .get_universal_olap_entity_by_gid(member.parent_gid)
+                            .await
+                            .ok();
+
+                        if let Some(MultiDimensionalEntity::MemberWrap(parent_member)) = parent_obj {
+                            meta_cache::get_level_by_gid(parent_member.level_gid)
+                        } else {
+                            // Fallback to member's level
+                            meta_cache::get_level_by_gid(member.level_gid)
+                        }
+                    } else {
+                        meta_cache::get_level_by_gid(member.level_gid)
+                    };
+
+                    crate::mdd::LevelRole::new(dim_role.clone(), level)
+                }
+                MemberRole::FormulaMember { .. } => {
+                    panic!("[pp-102] Cannot derive LevelRole from a FormulaMember");
+                }
+            }
+        };
+
+
+        // Determine parallel offset: evaluate `idx_param` to an integer, default to 1.
+        let offset: i64 = if let Some(idx_exp) = idx_param {
+            let val = idx_exp.val(slice_tuple, context, None).await;
+            match val {
+                crate::mdd::VectorValue::Double(n) => n as i64,
+                crate::mdd::VectorValue::Str(s) => s.parse::<i64>().unwrap_or_else(|_| {
+                    panic!("[pp-201] idx_param string could not be parsed as integer: {}", s)
+                }),
+                crate::mdd::VectorValue::Null | crate::mdd::VectorValue::Invalid => {
+                    panic!("[pp-202] idx_param evaluated to Null/Invalid")
+                }
+            }
+        } else {
+            1
+        };
+
+        // Ensure the resolved member and the target level belong to the same DimensionRole.
+        // If not, panic with a clear message. Also print the target level and the
+        // source member in separate, concise lines for debugging. Use the cached
+        // helper `meta_cache::get_member_ancestor_on_level` to obtain the ancestor.
+        let ancestor_member = match &member_role {
+            MemberRole::BaseMember { dim_role, member } => {
+                if dim_role.gid != lv_role.dim_role.gid {
+                    panic!("[pp-400] ParallelPeriod: member and level belong to different DimensionRole (member.dim_role_gid={} vs level.dim_role_gid={})", dim_role.gid, lv_role.dim_role.gid);
+                }
+
+                if lv_role.level.level > member.level {
+                    panic!("[pp-300] ParallelPeriod: target level is deeper than member's level (not supported yet)");
+                }
+
+                println!("ParallelPeriod: target level = {}", lv_role.level.level);
+                println!("ParallelPeriod: source member gid = {}, member level = {}", member.gid, member.level);
+
+                // Use cache-based traversal to get the ancestor at the target level.
+                meta_cache::get_member_ancestor_on_level(member.gid, lv_role.level.gid)
+            }
+            MemberRole::FormulaMember { .. } => {
+                panic!("[pp-401] ParallelPeriod: member is a FormulaMember (unsupported)");
+            }
+        };
+
+
+        // 找到平行的member：使用 caching helper 或 gRPC 路径（按需）
+        // Basic ParallelPeriod implementation:
+        // - require a BaseMember as the source member
+        // - determine the target level (from param or from the member)
+        // - climb the member's parent chain until we reach the target level
+        // - apply `offset` as a positional shift among siblings of that ancestor
+        // Note: This implements a pragmatic, consistent behaviour; full MDX
+        // semantics (e.g. when target level is deeper than source) may need
+        // further refinement.
+
+        match member_role {
+            MemberRole::BaseMember { dim_role, member: source_member } => {
+                // Use the ancestor obtained from cache above.
+                let cur_member = ancestor_member.clone();
+
+                // If offset == 0 simply return the ancestor at target level.
+                if offset == 0 {
+                    return MultiDimensionalEntity::MemberRoleWrap(MemberRole::BaseMember {
+                        dim_role: dim_role.clone(),
+                        member: meta_cache::get_member_by_gid(cur_member.gid),
+                    });
+                }
+
+                // Prefer the gRPC-based helper which shifts ancestor and finds
+                // the corresponding descendant by path indices. Convert offset
+                // to i32 with bounds check.
+                if offset < i64::from(i32::MIN) || offset > i64::from(i32::MAX) {
+                    panic!("[pp-500] offset out of i32 range: {}", offset);
+                }
+                let offset_i32 = offset as i32;
+
+                let shifted = meta_cache::shift_ancestor_and_find_member(
+                    &mut context.grpc_client,
+                    cur_member.gid,
+                    source_member.gid,
+                    offset_i32,
+                )
+                .await;
+
+                return MultiDimensionalEntity::MemberRoleWrap(MemberRole::BaseMember {
+                    dim_role: dim_role.clone(),
+                    member: meta_cache::get_member_by_gid(shifted.gid),
+                });
+            }
+            MemberRole::FormulaMember { .. } => {
+                panic!("[pp-306] ParallelPeriod not supported for FormulaMember");
+            }
+        }
     }
 }
 
