@@ -122,6 +122,23 @@ pub fn mdx_formula_members_fragment(cube: &Cube) -> String {
     fragments.join(",\n")
 }
 
+/// 获取指定 level_gid 上的所有成员，按 gid 排序返回。
+///
+/// 从 MEMBER_CACHE 中筛选出 level_gid 相同的所有成员，
+/// 按 gid 排序后返回。这样可以保证同一层级的成员有确定的顺序。
+pub fn get_members_at_level(level_gid: u64) -> Vec<Member> {
+    let cache = MEMBER_CACHE.lock().unwrap();
+    let mut members: Vec<Member> = cache
+        .values()
+        .filter(|m| m.level_gid == level_gid)
+        .cloned()
+        .collect();
+    
+    // 按 gid 排序，确保顺序稳定
+    members.sort_by_key(|m| m.gid);
+    members
+}
+
 /// 返回给定 `member_gid` 在指定 `level_gid` 上的祖先 Member。
 ///
 /// 实现策略：使用内存缓存 `MEMBER_CACHE`，通过 member.parent_gid 向上遍历，
