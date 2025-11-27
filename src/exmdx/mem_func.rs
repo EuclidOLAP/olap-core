@@ -11,6 +11,17 @@ use crate::mdd::MultiDimensionalContext;
 use crate::mdd::{MemberRole, MultiDimensionalEntity};
 use crate::meta_cache;
 
+// declare submodule for specific member function implementations
+pub mod first_child;
+// re-export so generated parser and other modules can refer to `mem_func::AstMemberFnFirstChild`
+pub use first_child::AstMemberFnFirstChild;
+pub mod first_sibling;
+pub use first_sibling::AstMemberFnFirstSibling;
+pub mod last_child;
+pub use last_child::AstMemberFnLastChild;
+pub mod last_sibling;
+pub use last_sibling::AstMemberFnLastSibling;
+
 pub trait MemberRoleAccess {
     fn resolve_member_role<'a>(
         &'a self,
@@ -129,31 +140,32 @@ impl AstMemberFunction {
                 )
                 .await
             } // _ => todo!("AstMemberFunction::get_member() - [NNNNNN-887766]"),
-            Self::FirstChild(member_role_fn) => MultiDimensionalEntity::MemberRoleWrap(
+            // 调用 first_child.rs 中的 AstMemberFnFirstChild::do_get_member
+            Self::FirstChild(member_role_fn) => {
                 member_role_fn
-                    .resolve_member_role(slice_tuple, context, left_outer_param)
-                    .await,
-            ),
-            Self::FirstSibling(member_role_fn) => MultiDimensionalEntity::MemberRoleWrap(
+                    .do_get_member(left_outer_param, slice_tuple, context)
+                    .await
+            }
+            Self::FirstSibling(member_role_fn) => {
                 member_role_fn
-                    .resolve_member_role(slice_tuple, context, left_outer_param)
-                    .await,
-            ),
+                    .do_get_member(left_outer_param, slice_tuple, context)
+                    .await
+            }
             Self::Lag(member_role_fn) => MultiDimensionalEntity::MemberRoleWrap(
                 member_role_fn
                     .resolve_member_role(slice_tuple, context, left_outer_param)
                     .await,
             ),
-            Self::LastChild(member_role_fn) => MultiDimensionalEntity::MemberRoleWrap(
+            Self::LastChild(member_role_fn) => {
                 member_role_fn
-                    .resolve_member_role(slice_tuple, context, left_outer_param)
-                    .await,
-            ),
-            Self::LastSibling(member_role_fn) => MultiDimensionalEntity::MemberRoleWrap(
+                    .do_get_member(left_outer_param, slice_tuple, context)
+                    .await
+            }
+            Self::LastSibling(member_role_fn) => {
                 member_role_fn
-                    .resolve_member_role(slice_tuple, context, left_outer_param)
-                    .await,
-            ),
+                    .do_get_member(left_outer_param, slice_tuple, context)
+                    .await
+            }
             Self::Lead(member_role_fn) => MultiDimensionalEntity::MemberRoleWrap(
                 member_role_fn
                     .resolve_member_role(slice_tuple, context, left_outer_param)
@@ -401,41 +413,8 @@ impl AstMemberFnParent {
     }
 }
 
-#[allow(non_camel_case_types)]
-#[derive(Clone, Debug, PartialEq)]
-pub enum AstMemberFnFirstChild {
-    Chain,
-    MemberSegs(AstSegsObj),
-}
+// AstMemberFnFirstSibling moved to `mem_func/first_sibling.rs`
 
-impl MemberRoleAccess for AstMemberFnFirstChild {
-    fn resolve_member_role<'a>(
-        &'a self,
-        _slice_tuple: &'a TupleVector,
-        _context: &'a mut MultiDimensionalContext,
-        _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, MemberRole> {
-        Box::pin(async move { todo!() })
-    }
-}
-
-#[allow(non_camel_case_types)]
-#[derive(Clone, Debug, PartialEq)]
-pub enum AstMemberFnFirstSibling {
-    Chain,
-    MemberSegs(AstSegsObj),
-}
-
-impl MemberRoleAccess for AstMemberFnFirstSibling {
-    fn resolve_member_role<'a>(
-        &'a self,
-        _slice_tuple: &'a TupleVector,
-        _context: &'a mut MultiDimensionalContext,
-        _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, MemberRole> {
-        Box::pin(async move { todo!() })
-    }
-}
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
@@ -460,41 +439,11 @@ impl MemberRoleAccess for AstMemberFnLag {
     }
 }
 
-#[allow(non_camel_case_types)]
-#[derive(Clone, Debug, PartialEq)]
-pub enum AstMemberFnLastChild {
-    Chain,
-    MemberSegs(AstSegsObj),
-}
+// AstMemberFnLastChild moved to `mem_func/last_child.rs`
 
-impl MemberRoleAccess for AstMemberFnLastChild {
-    fn resolve_member_role<'a>(
-        &'a self,
-        _slice_tuple: &'a TupleVector,
-        _context: &'a mut MultiDimensionalContext,
-        _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, MemberRole> {
-        Box::pin(async move { todo!() })
-    }
-}
 
-#[allow(non_camel_case_types)]
-#[derive(Clone, Debug, PartialEq)]
-pub enum AstMemberFnLastSibling {
-    Chain,
-    MemberSegs(AstSegsObj),
-}
+// AstMemberFnLastSibling moved to `mem_func/last_sibling.rs`
 
-impl MemberRoleAccess for AstMemberFnLastSibling {
-    fn resolve_member_role<'a>(
-        &'a self,
-        _slice_tuple: &'a TupleVector,
-        _context: &'a mut MultiDimensionalContext,
-        _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, MemberRole> {
-        Box::pin(async move { todo!() })
-    }
-}
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
