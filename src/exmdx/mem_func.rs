@@ -213,11 +213,11 @@ impl AstMemberFunction {
                 )
                 .await
             }
-            Self::PrevMember(member_role_fn) => MultiDimensionalEntity::MemberRoleWrap(
-                member_role_fn
-                    .resolve_member_role(slice_tuple, context, left_outer_param)
-                    .await,
-            ),
+            Self::PrevMember(prev_member) => {
+                prev_member
+                    .do_get_member(left_outer_param, slice_tuple, context)
+                    .await
+            },
             Self::NextMember(member_role_fn) => MultiDimensionalEntity::MemberRoleWrap(
                 member_role_fn
                     .resolve_member_role(slice_tuple, context, left_outer_param)
@@ -525,6 +525,7 @@ pub enum AstMemberFnParallelPeriod {
     LevelSegs_IndexExp(AstSegsObj, AstExpression),
     LevelSegs_IndexExp_MemberSegs(AstSegsObj, AstExpression, AstSegsObj),
 }
+
 impl AstMemberFnParallelPeriod {
     async fn do_get_member(
         left_outer_param: Option<MultiDimensionalEntity>,
@@ -705,14 +706,65 @@ pub enum AstMemberFnPrevMember {
     MemberSegs(AstSegsObj),
 }
 
-impl MemberRoleAccess for AstMemberFnPrevMember {
-    fn resolve_member_role<'a>(
-        &'a self,
-        _slice_tuple: &'a TupleVector,
-        _context: &'a mut MultiDimensionalContext,
-        _outer_param: Option<MultiDimensionalEntity>,
-    ) -> BoxFuture<'a, MemberRole> {
-        Box::pin(async move { todo!() })
+impl AstMemberFnPrevMember {
+    async fn do_get_member(
+        &self,
+        outer_param: Option<MultiDimensionalEntity>,
+        slice_tuple: &TupleVector,
+        context: &mut MultiDimensionalContext,
+    ) -> MultiDimensionalEntity {
+        // 第一步：获得 memberRole 对象
+        let member_role: Option<MemberRole> = match self {
+            AstMemberFnPrevMember::MemberSegs(member_segs) => {
+                match member_segs.materialize(slice_tuple, context).await {
+                    MultiDimensionalEntity::MemberRoleWrap(mr) => Some(mr),
+                    _ => None,
+                }
+            }
+            AstMemberFnPrevMember::Chain => {
+                if let Some(MultiDimensionalEntity::MemberRoleWrap(mr)) = outer_param {
+                    Some(mr)
+                } else {
+                    None
+                }
+            }
+        };
+
+        if member_role.is_none() {
+            panic!("[pm-001] PrevMember requires a member (MemberSegs) or outer_param that resolves to a MemberRole");
+        }
+
+        let member_role = member_role.unwrap();
+
+        // 第二步：找到同一 level 上的前一个成员
+        match member_role {
+            MemberRole::BaseMember { dim_role, member } => {
+                println!("PrevMember: source member gid = {}, level_gid = {}, member level = {}", 
+                    member.gid, member.level_gid, member.level);
+
+                // 获取同一 level_gid 的所有成员（已按 gid 排序）
+                let members_at_level = meta_cache::get_members_at_level(member.level_gid);
+
+                // 找到当前成员在同层级成员中的位置
+                let pos_opt = members_at_level.iter().position(|m| m.gid == member.gid);
+                let pos = pos_opt.expect("[pm-102] current member not found at its level");
+
+                if pos == 0 {
+                    panic!("[pm-103] PrevMember: no previous member (index is 0 at this level)");
+                } else {
+                    // 取出前一个成员
+                    let prev = &members_at_level[pos - 1];
+                    println!("PrevMember: found previous member gid = {}", prev.gid);
+                    MultiDimensionalEntity::MemberRoleWrap(MemberRole::BaseMember {
+                        dim_role,
+                        member: meta_cache::get_member_by_gid(prev.gid),
+                    })
+                }
+            }
+            MemberRole::FormulaMember { .. } => {
+                panic!("[pm-104] PrevMember not supported for FormulaMember");
+            }
+        }
     }
 }
 
